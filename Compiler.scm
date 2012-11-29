@@ -18,13 +18,40 @@
 
 ;;compile :: Lisp -> SECD
 (define (compile program)
-  (fold-right compile- `((,stop)) program))
+  (fold-right nadekompile `((,stop)) program))
+
+;;nadekompile :: Nadeko -> code -> code
+(define (nadekompile exp code)
+  (cond
+    [(atom? exp)
+     (cons `(,stack-constant ,exp) code)]
+
+    [(symbol? exp)
+     (cons `(,ref-arg ,exp) (cons `(,thaw) code))]
+
+    [(eq? (car exp) 'quote)
+     (cons `(,stack-constant ,(cadr exp)) code)]
+
+    [(eq? (cadr exp) '=)
+     (nadekompile `(delay ,(caddr exp)) (cons `(,def ,(car exp)) code))]
+
+    [(eq? (cadr exp) '->)
+     (let ([body (nadekompile (caddr exp) `((,restore)))])
+      (cons `(,stack-closure ,(car exp) ,body) code))]
+
+    [(eq? (car exp) 'delay)
+     (cons `(,freeze ,(nadekompile (cadr exp) `((,restore)))) code)]
+
+    [else 
+     (let ([closure-app (nadekompile (car exp) (cons `(,app) code))])
+      (nadekompile `(delay ,(cadr exp)) closure-app))]))
+
 
 ;;compile- :: Lisp -> code -> code
 (define (compile- exp code)
   ;(print (format "exp : ~S" exp))
   ;(print (format "code: ~S" code))
-  (newline)
+  ;(newline)
   (cond
     [(atom? exp)
       ;;(stack-constant const)
@@ -67,13 +94,19 @@
 ;;; experiment ;;;
 (print (SECD '() '() (compile 
   
-  '(
+  #|'(
     ;((lambda x x) 5)
     (define cons- (lambda head (lambda tail (lambda f ((f head) tail)))))
     (define infinite ((cons- 5) infinite)) ;infinit recursion creating a list
     (define car- (lambda lis (lis (lambda head (lambda tail head)))))
     (define cdr- (lambda lis (lis (lambda head (lambda tail tail)))))
     (car- (cdr- infinite))
+  )|#
+
+  '(
+    (cons- = (head -> (tail -> (f -> ((f head) tail)))))
+    (car-  = (head -> (tail -> head)))
+    (((cons- 1) 2) car-)
   )
 
   ) '() '()))

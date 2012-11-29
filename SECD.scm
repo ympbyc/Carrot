@@ -13,7 +13,7 @@
 ;;
 ;; VM is responsible of looking up the environment unlike the original SECD
 ;;
-;; VM is capable of handling `freeze` and `thaw` instruction which is used to simulate lazy evaluation
+;; VM is capable of handling `freeze` and `thaw` instruction which can be used to simulate lazy evaluation
 
 (use srfi-1)
 
@@ -33,7 +33,7 @@
 (define (thk-code c e) c)
 (define (thk-env  c e) e)
 
-;;get value from key
+;;get the value associated with the key symbol
 (define (env-ref env key)
   (let ((binding (assq key env)))
     (if binding (cdr binding) 'lookup-fail)))
