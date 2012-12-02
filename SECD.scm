@@ -13,7 +13,7 @@
 ;;
 ;; VM is responsible of looking up the environment unlike the original SECD
 ;;
-;; VM is capable of handling `freeze` and `thaw` instruction which is used to simulate lazy evaluation
+;; VM is capable of handling `freeze` and `thaw` instruction which can be used to simulate lazy evaluation
 
 (use srfi-1)
 
@@ -33,19 +33,19 @@
 (define (thk-code c e) c)
 (define (thk-env  c e) e)
 
-;;get value from key
+;;get the value associated with the key symbol
 (define (env-ref env key)
   (let ((binding (assq key env)))
     (if binding (cdr binding) 'lookup-fail)))
 
 ;;; SECD Machine ;;;
 (define (SECD stack env code dump g-env)
-  (print (format "stack: ~S" stack))
-  (print (format "env  : ~S" env))
-  (print (format "code : ~S" code))
-  (print (format "dump : ~S" dump))
-  (print (format "g-env: ~S" g-env))
-  (newline)
+  ;(print (format "stack: ~S" stack))
+  ;(print (format "env  : ~S" env))
+  ;(print (format "code : ~S" code))
+  ;(print (format "dump : ~S" dump))
+  ;(print (format "g-env: ~S" g-env))
+  ;(newline)
 
   ;inst        args        stack env code       dump global-env
   ((caar code) (cdar code) stack env (cdr code) dump g-env))
@@ -157,7 +157,7 @@
 ;; push stack top to g-env
 (define (def args stack env code dump g-env)
   (SECD
-    (cdr stack) ;S
+    (cons (car args) (cdr stack)) ;S
     env         ;E
     code        ;C
     dump        ;D
@@ -192,7 +192,7 @@
 ;;stop
 ;; stops the Machine and return the value at the top of the stack
 (define (stop args stack env code dump g-env)
-  (car stack))
+  (values (car stack) g-env)) ;;return `values`. useful for REPL
 
 
 

@@ -16,6 +16,12 @@
     [(char?    x) #t]
     [else #f]))
 
+;;uncurry function applications
+(define (complis exp code)
+  (if (null? exp)
+    code
+    (compile- `(delay ,(car exp)) (complis (cdr exp) code))))
+
 ;;compile :: Lisp -> SECD
 (define (compile program)
   (fold-right compile- `((,stop)) program))
@@ -24,7 +30,7 @@
 (define (compile- exp code)
   ;(print (format "exp : ~S" exp))
   ;(print (format "code: ~S" code))
-  (newline)
+  ;(newline)
   (cond
     [(atom? exp)
       ;;(stack-constant const)
@@ -38,42 +44,74 @@
       ;;(stack-constant symbol)
       (cons `(,stack-constant ,(cadr exp)) code)]
     
-    [(eq? (car exp) 'define)
+    [(eq? (car exp) ':=)
+      ;;(:= (foo bar baz) (bar baz))
       ;;bound (def symbol)
-     (compile- `(delay ,(caddr exp)) (cons `(,def ,(cadr exp)) code))]
+      (if (< (length (cadr exp)) 2)
+       (compile- `(delay ,(caddr exp)) (cons `(,def ,(caadr exp)) code)) ;no param
+       (compile- `(delay (-> ,(cdadr exp) ,(caddr exp))) (cons `(,def ,(caadr exp)) code)))]
     
-    [(eq? (car exp) 'if)
+    [(eq? (car exp) '??)
       ;;bool (sel ((code) (join)) ((code) (join)))
      (let ([t-clause (compile- (caddr exp)  `((,join)))]
            [f-clause (compile- (cadddr exp) `((,join)))])
       (compile- (cadr exp)
         (cons `(,sel ,t-clause ,f-clause) code)))]
     
-    [(eq? (car exp) 'lambda)
+    [(eq? (car exp) '->)
+      ;;(-> (x y) z)
       ;;(stack-closure symbol ((code) (restore)))
-     (let ([body (compile- (caddr exp) `((,restore)))])
-       (cons `(,stack-closure ,(cadr exp) ,body) code))]
+     (letrec ([body (compile- (caddr exp) `((,restore)))]
+       [curry (lambda (params) 
+        (if (null? (cdr params))
+          `(,stack-closure ,(car params) ,body)
+          `(,stack-closure ,(car params) (,(curry (cdr params)) (,restore)))))])
+     (cons (curry (cadr exp)) code))]
+
     
     [(eq? (car exp) 'delay)
      ;;(freeze ((code) (restore)))
      (cons `(,freeze ,(compile- (cadr exp) `((,restore)))) code)]
     
     [else
-      ;;arg closure (app)
-      (let* ([closure-app (compile- (car exp) (cons `(,app) code))])
-        (compile- `(delay ,(cadr exp)) closure-app))]))
+      ;;(foo 1 2 3) = (((foo 1) 2) 3)
+      ;;arg arg ... closure (app) (app) ...
+      (complis (reverse (cdr exp))
+        (compile- 
+          (car exp) 
+          (append (map (lambda (arg) `(,app)) (cdr exp)) code)))
+    ]))
 
+
+;;; REPL ;;;
+(define (REPL g-env)
+  (display "nadeko> ")
+  (flush)
+  (receive (result bindings) (SECD '() '() (compile `(,(read))) '() g-env)
+    (print result)
+    (REPL bindings))) ;loop with new global-environment
+
+(define (main args)
+  (print "Nadeko, version 1.0.0: https://github.com/ympbyc/Nadeko ^C to exit")
+  (REPL '()))
 
 ;;; experiment ;;;
-(print (SECD '() '() (compile 
+#|(print (SECD '() '() (compile 
   
   '(
-    ;((lambda x x) 5)
-    (define cons- (lambda head (lambda tail (lambda f ((f head) tail)))))
-    (define infinite ((cons- 5) infinite)) ;infinit recursion creating a list
-    (define car- (lambda lis (lis (lambda head (lambda tail head)))))
-    (define cdr- (lambda lis (lis (lambda head (lambda tail tail)))))
-    (car- (cdr- infinite))
+    ;(:= (d a b c x e) a)
+    ;(d 6 7 8 9 10)
+    (:= (cons- head tail f) (f head tail))
+    (:= (car- head tail) head)
+    (:= (cdr- head tail) tail)
+    (:= (infinite5) (cons- 5 infinite5))
+    ;(:= (map h t f)
+    ;  (?? (eq? t nil)
+    ;    (f h)
+    ;    (cons- (f h) (map (t car-) (t cdr-) f))))
+    ;((cons- 1 (cons- 2 (cons- 3 'nil))) map (-> (it) "ee"))
+    ((cons- 1 (cons- 2 (cons- 3 'nil))) cdr- cdr- car-)
+    (infinite5 (-> (x y) x))
   )
 
-  ) '() '()))
+  ) '() '()))|#
