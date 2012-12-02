@@ -22,12 +22,6 @@
     code
     (compile- `(delay ,(car exp)) (complis (cdr exp) code))))
 
-;;curry
-(define (curry params body) 
-  (if (null? params)
-    body
-    `(,stack-closure ,(car params) (,(curry (cdr params) body) (,restore)))))
-
 ;;stack all the arguments to the primitive procedure
 ;;and apply the procedure
 (define (primitive-compile args prim)
