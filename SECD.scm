@@ -79,30 +79,6 @@
       dump                         ;D
       g-env)))
 
-;;sel
-;; expects two list arguments, and pops a value from the stack. 
-;; The first list is executed if the popped value was non-nil, the second list otherwise. 
-;; Before one of these list pointers is made the new C,
-;; a pointer to the instruction following sel is saved on the dump.
-(define (sel args stack env code dump g-env)
-  (SECD
-    (cdr stack)                             ;S - bool is poped
-    env                                     ;E
-    (if (car stack) (car args) (cadr args)) ;C - conditional
-    (cons code dump)                        ;D - following code is saved
-    g-env))
-
-;;join
-;; pops a list reference from the dump and makes this the new value of C. 
-;; This instruction occurs at the end of both alternatives of a sel.
-(define (join args stack env code dump g-env)
-  (SECD
-    stack         ;S
-    env           ;E
-    (car dump)    ;C
-    (cdr dump)    ;D
-    g-env))
-
 ;;ldf
 ;; takes one list argument representing a function. 
 ;; It constructs a closure (a pair containing the function and the current environment)
@@ -196,12 +172,27 @@
 
 
 
-;;; experiments ;;;
-;;((lambda (x) x) 3)
-;(display (SECD '() '() `((,stack-constant 3) (,stack-closure x ((,ref-arg x) (,restore))) (,app) (,stop)) '() '())) ;;should be 3
-;(newline)
-;;(if #f "so true" "so false")
-;(display (SECD '() '() `((,stack-constant #f) (,sel ((,stack-constant "so true") (,join)) ((,stack-constant "so false") (,join))) (,stop)) '() '())) ;;should be "so false"
-;(newline)
-;(print (SECD '() '() `((,stack-closure x ((,stack-constant "hello, world") (,restore))) (,def hello) (,stack-constant 'nil) (,ref-arg hello) (,app) (,stop)) '() '()))
-;(print (SECD '() '() `((,freeze ((,stack-constant 5) (,restore))) (,stack-closure x ((,ref-arg x) (,thaw) (,restore))) (,app) (,stop)) '() '())) ;lazy-evaluation ;;should be 5
+;;; primitives ;;;
+(define (primitive args stack env code dump g-env)
+  (let ((subr (car args)))
+  (cond
+    [(eq? subr 'equal) 
+      (SECD 
+        (cons (equal? (car stack) (cadr stack)) (cddr stack))
+        env code dump g-env)]
+    [(eq? subr '+)
+      (SECD
+        (cons (+ (car stack) (cadr stack)) (cddr stack))
+        env code dump g-env)]
+    [(eq? subr '-)
+      (SECD
+        (cons (- (car stack) (cadr stack)) (cddr stack))
+        env code dump g-env)]
+    [(eq? subr '*)
+      (SECD
+        (cons (* (car stack) (cadr stack)) (cddr stack))
+        env code dump g-env)]
+    [(eq? subr '/)
+      (SECD
+        (cons (/ (car stack) (cadr stack)) (cddr stack))
+        env code dump g-env)])))
