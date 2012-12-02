@@ -177,9 +177,12 @@
   (let ((subr (car args)))
   (cond
     [(eq? subr 'equal) 
-      (SECD 
-        (cons (equal? (car stack) (cadr stack)) (cddr stack))
-        env code dump g-env)]
+      (let ([bool (if (equal? (car stack) (cadr stack)) 'true 'false)])
+        (SECD 
+        stack;(cons (equal? (car stack) (cadr stack)) (cddr stack))
+        env 
+        (cons `(,ref-arg ,bool) (cons `(,thaw) code)) 
+        dump g-env))]
     [(eq? subr '+)
       (SECD
         (cons (+ (car stack) (cadr stack)) (cddr stack))
