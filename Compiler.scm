@@ -16,15 +16,21 @@
     [(char?    x) #t]
     [else #f]))
 
+;;uncurry function applications
+(define (complis exp code)
+  (if (null? exp)
+    code
+    (compile- `(delay ,(car exp)) (complis (cdr exp) code))))
+
 ;;compile :: Lisp -> SECD
 (define (compile program)
   (fold-right compile- `((,stop)) program))
 
 ;;compile- :: Lisp -> code -> code
 (define (compile- exp code)
-  (print (format "exp : ~S" exp))
-  (print (format "code: ~S" code))
-  (newline)
+  ;(print (format "exp : ~S" exp))
+  ;(print (format "code: ~S" code))
+  ;(newline)
   (cond
     [(atom? exp)
       ;;(stack-constant const)
@@ -69,24 +75,28 @@
     
     [else
       ;;(foo 1 2 3) = (((foo 1) 2) 3)
-      ;;arg closure (app)
+      ;;arg arg ... closure (app) (app) ...
       (complis (reverse (cdr exp))
         (compile- 
           (car exp) 
           (append (map (lambda (arg) `(,app)) (cdr exp)) code)))
-
-      ;(let* ([closure-app (compile- (car exp) (cons `(,app) code))])
-        ;(compile- `(delay ,(cadr exp)) closure-app))
     ]))
 
-(define (complis exp code)
-  (if (null? exp)
-    code
-    (compile- `(delay ,(car exp)) (complis (cdr exp) code))))
 
+;;; REPL ;;;
+(define (REPL g-env)
+  (display "nadeko> ")
+  (flush)
+  (receive (result bindings) (SECD '() '() (compile `(,(read))) '() g-env)
+    (print result)
+    (REPL bindings))) ;loop with new global-environment
+
+(define (main args)
+  (print "Nadeko, version 1.0.0: https://github.com/ympbyc/Nadeko ^C to exit")
+  (REPL '()))
 
 ;;; experiment ;;;
-(print (SECD '() '() (compile 
+#|(print (SECD '() '() (compile 
   
   '(
     ;(:= (d a b c x e) a)
@@ -104,4 +114,4 @@
     (infinite5 (-> (x y) x))
   )
 
-  ) '() '()))
+  ) '() '()))|#
