@@ -22,6 +22,19 @@
     code
     (compile- `(delay ,(car exp)) (complis (cdr exp) code))))
 
+;;curry
+(define (curry params body) 
+  (if (null? params)
+    body
+    `(,stack-closure ,(car params) (,(curry (cdr params) body) (,restore)))))
+
+;;stack all the arguments to the primitive procedure
+;;and apply the procedure
+(define (primitive-compile args prim)
+  (if (null? args)
+    prim
+    (compile- (car args) (primitive-compile (cdr args) prim))))
+  
 ;;compile :: Lisp -> SECD
 (define (compile program)
   (fold-right compile- `((,stop)) program))
@@ -43,6 +56,11 @@
     [(eq? (car exp) 'quote)
       ;;(stack-constant symbol)
       (cons `(,stack-constant ,(cadr exp)) code)]
+
+    [(eq? (car exp) '**) 
+     ;; call primitive procedures
+     (append (primitive-compile (cddr exp) `((,primitive ,(cadr exp)))) code)]
+     
     
     [(eq? (car exp) ':=)
       ;;(:= (foo bar baz) (bar baz))
@@ -51,23 +69,14 @@
        (compile- `(delay ,(caddr exp)) (cons `(,def ,(caadr exp)) code)) ;no param
        (compile- `(delay (-> ,(cdadr exp) ,(caddr exp))) (cons `(,def ,(caadr exp)) code)))]
     
-    [(eq? (car exp) '??)
-      ;;bool (sel ((code) (join)) ((code) (join)))
-     (let ([t-clause (compile- (caddr exp)  `((,join)))]
-           [f-clause (compile- (cadddr exp) `((,join)))])
-      (compile- (cadr exp)
-        (cons `(,sel ,t-clause ,f-clause) code)))]
-    
     [(eq? (car exp) '->)
-      ;;(-> (x y) z)
+      ;;(-> (x y z) (x y z)) = (-> (x) (-> (y) (-> (z) (x y z)))) ;auto-currying
       ;;(stack-closure symbol ((code) (restore)))
-     (letrec ([body (compile- (caddr exp) `((,restore)))]
-       [curry (lambda (params) 
+      (let ((params (cadr exp))
+            (body (caddr exp)))
         (if (null? (cdr params))
-          `(,stack-closure ,(car params) ,body)
-          `(,stack-closure ,(car params) (,(curry (cdr params)) (,restore)))))])
-     (cons (curry (cadr exp)) code))]
-
+          (cons `(,stack-closure ,(car params) ,(compile- body `((,restore)))) code)
+          (cons `(,stack-closure ,(car params) ,(compile- `(-> ,(cdr params) ,body) `((,restore)))) code)))]
     
     [(eq? (car exp) 'delay)
      ;;(freeze ((code) (restore)))
@@ -82,36 +91,3 @@
           (append (map (lambda (arg) `(,app)) (cdr exp)) code)))
     ]))
 
-
-;;; REPL ;;;
-(define (REPL g-env)
-  (display "nadeko> ")
-  (flush)
-  (receive (result bindings) (SECD '() '() (compile `(,(read))) '() g-env)
-    (print result)
-    (REPL bindings))) ;loop with new global-environment
-
-(define (main args)
-  (print "Nadeko, version 1.0.0: https://github.com/ympbyc/Nadeko ^C to exit")
-  (REPL '()))
-
-;;; experiment ;;;
-#|(print (SECD '() '() (compile 
-  
-  '(
-    ;(:= (d a b c x e) a)
-    ;(d 6 7 8 9 10)
-    (:= (cons- head tail f) (f head tail))
-    (:= (car- head tail) head)
-    (:= (cdr- head tail) tail)
-    (:= (infinite5) (cons- 5 infinite5))
-    ;(:= (map h t f)
-    ;  (?? (eq? t nil)
-    ;    (f h)
-    ;    (cons- (f h) (map (t car-) (t cdr-) f))))
-    ;((cons- 1 (cons- 2 (cons- 3 'nil))) map (-> (it) "ee"))
-    ((cons- 1 (cons- 2 (cons- 3 'nil))) cdr- cdr- car-)
-    (infinite5 (-> (x y) x))
-  )
-
-  ) '() '()))|#
