@@ -1,0 +1,5 @@
+(:= (Y f) ((-> (x) (f (x x))) (-> (x) (f (x x)))))
+
+(:= (make-integers f x) (cons x (f (+ x 1))))
+
+(:= (integers) (Y make-integers 0))
