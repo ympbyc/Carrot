@@ -133,7 +133,7 @@
 ;; push stack top to g-env
 (define (def args stack env code dump g-env)
   (SECD
-    (cons (car args) (cdr stack)) ;S
+    (cdr stack) ;S
     env         ;E
     code        ;C
     dump        ;D
@@ -168,7 +168,7 @@
 ;;stop
 ;; stops the Machine and return the value at the top of the stack
 (define (stop args stack env code dump g-env)
-  (values (car stack) g-env)) ;;return `values`. useful for REPL
+  (values (if (null? stack) stack (car stack)) g-env)) ;;return `values`. useful for REPL
 
 
 
@@ -199,3 +199,4 @@
       (SECD
         (cons (/ (car stack) (cadr stack)) (cddr stack))
         env code dump g-env)])))
+
