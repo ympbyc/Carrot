@@ -46,5 +46,20 @@
   (:= (- a b) (** - a b))
   (:= (* a b) (** * a b))
   (:= (/ a b) (** / a b))
+
+  (:= (help) "SYNTAX:\n\
+(:= (name parameter ...) expression) ;(statement) binds a function to a name\n\
+(-> (parameter ...) expression)      ;(expression) lambda expression\n\
+(** primitive-name argument ...)     ;(expression) call a primitive function. Most of them are abstructed so you rarely have to use this syntax\n\
+(function-name argument ...)         ;(expression) apply a function to values
+\"string\"                             ;(expression)\n\
+number                               ;(expression)\n\
+'symbol                              ;(expression)\n\n\
+FEATURE:\n\
+* Default lazy evaluation\n\
+* Automatic currying\n\n\
+REPL:\n\
+^C to exit\n\
+help to see this help")
 )) '() '())
   (set! *prelude* g-env))
