@@ -133,7 +133,7 @@
 ;; push stack top to g-env
 (define (def args stack env code dump g-env)
   (SECD
-    (cons (car args) (cdr stack)) ;S
+    (cdr stack) ;S
     env         ;E
     code        ;C
     dump        ;D
@@ -168,7 +168,7 @@
 ;;stop
 ;; stops the Machine and return the value at the top of the stack
 (define (stop args stack env code dump g-env)
-  (values (car stack) g-env)) ;;return `values`. useful for REPL
+  (values (if (null? stack) stack (car stack)) g-env)) ;;return `values`. useful for REPL
 
 
 
@@ -177,9 +177,12 @@
   (let ((subr (car args)))
   (cond
     [(eq? subr 'equal) 
-      (SECD 
-        (cons (equal? (car stack) (cadr stack)) (cddr stack))
-        env code dump g-env)]
+      (let ([bool (if (equal? (car stack) (cadr stack)) 'true 'false)])
+        (SECD 
+        stack;(cons (equal? (car stack) (cadr stack)) (cddr stack))
+        env 
+        (cons `(,ref-arg ,bool) (cons `(,thaw) code)) 
+        dump g-env))]
     [(eq? subr '+)
       (SECD
         (cons (+ (car stack) (cadr stack)) (cddr stack))
@@ -196,3 +199,4 @@
       (SECD
         (cons (/ (car stack) (cadr stack)) (cddr stack))
         env code dump g-env)])))
+
