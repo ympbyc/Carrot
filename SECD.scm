@@ -177,7 +177,7 @@
   (let ((subr (car args)))
   (cond
     [(eq? subr 'equal) 
-      (let ([bool (if (equal? (car stack) (cadr stack)) 'true 'false)])
+      (let ([bool (if (equal? (cadr stack) (car stack)) 'true 'false)])
         (SECD 
         stack;(cons (equal? (car stack) (cadr stack)) (cddr stack))
         env 
@@ -185,18 +185,18 @@
         dump g-env))]
     [(eq? subr '+)
       (SECD
-        (cons (+ (car stack) (cadr stack)) (cddr stack))
+        (cons (+ (cadr stack) (car stack)) (cddr stack))
         env code dump g-env)]
     [(eq? subr '-)
       (SECD
-        (cons (- (car stack) (cadr stack)) (cddr stack))
+        (cons (- (cadr stack) (car stack)) (cddr stack))
         env code dump g-env)]
     [(eq? subr '*)
       (SECD
-        (cons (* (car stack) (cadr stack)) (cddr stack))
+        (cons (* (cadr stack) (car stack)) (cddr stack))
         env code dump g-env)]
     [(eq? subr '/)
       (SECD
-        (cons (/ (car stack) (cadr stack)) (cddr stack))
+        (cons (/ (cadr stack) (car stack)) (cddr stack))
         env code dump g-env)])))
 
