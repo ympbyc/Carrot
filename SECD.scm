@@ -42,13 +42,13 @@
 (define (SECD stack env code dump g-env)
   ;(print (format "stack: ~S" stack))
   ;(print (format "env  : ~S" env))
-  (print (format "code : ~S" code))
+  ;(print (format "code : ~S" code))
   ;(print (format "dump : ~S" dump))
   ;(print (format "g-env: ~S" g-env))
-  (newline)
+  ;(newline)
 
   ;inst        args        stack env code       dump global-env
-  (values '() '()));((caar code) (cdar code) stack env (cdr code) dump g-env))
+  ((caar code) (cdar code) stack env (cdr code) dump g-env))
 
 
 ;;; Instructions ;;;
