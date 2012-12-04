@@ -18,9 +18,10 @@
 (:= (cdr lst) (lst (-> (h t) t)))
 (:= (list-ref lst i)
   (eq? i 0 (car lst) (list-ref (cdr lst) (- i 1))))
-(:= (take) (take- nil))
-(:= (take- cars lst i)
-  (nil? lst false (eq? i 0 cars (take- (cons (car lst) cars) (cdr lst) (- i 1)))))
+(:= (take lst n)
+  (nil? lst false
+    (eq? n 0 lst
+      (cons (car lst) (take (cdr lst) (- n 1))))))
 (:= (drop lst i)
   (eq? i 0 lst (drop (cdr lst) (- i 1))))
 (:= (take-right lst i)
