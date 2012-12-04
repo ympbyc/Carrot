@@ -161,6 +161,48 @@ Another important idea we saw is **Currying**. `(+ 2)` inspite of shortage of ar
 
 Implementations SHOLD implement "call-by-need" instead of "call-by-name".
 
+
+Almost everything is a closure
+-------------------------------
+
+Nadeko does not have to provide lists as primitive data type because they can easily be simulated with closures.
+
+Similarly, booleans are closures and `if` can be implemented as a function.
+
+This does not necessarily mean inconvinience. We will see why in the next chapter.
+
+S-expression without paren hell
+-------------------------------
+
+Nadeko's auto-currying feature togather with lazyness gave us an unexpected gift -- Reducutions of parentheses.
+
+Because the arguments are delayed automaticaly, we can implement booleans as functions. 
+
+```lisp
+(:= (true t e) t)
+(:= (false t e) e)
+
+;scheme
+(if (eq? a b) "equal" "not equal")
+
+;nadeko
+(eq? a b "equal" "not equal")
+```
+
+Invention of suffix functions is mind-blowingly awesome.
+
+```lisp
+;scheme
+(fold + 0 (map (lambda (x) (* x 2)) (take (iota 100) 5)))
+
+;nadeko
+(integers -take 5 -map (* 2) -fold + 0)
+```
+
+See the source of this magic in examples/srfi-1.nadeko.
+
+
+
 <br /> 
 <br /> 
 <br /> 
