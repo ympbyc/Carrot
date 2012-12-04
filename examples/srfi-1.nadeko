@@ -3,14 +3,14 @@
 ;;;;
 ; Certain portions of this document -- the specific, marked segments of text describing the R5RS procedures -- were adapted with permission from the R5RS report.
 ; All other text is copyright (C) Olin Shivers (1998, 1999). All Rights Reserved.
-; Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+; Permission is hereby granted, free of charge, to any? person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 ; The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 ; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ;;;;
 
 ;; Constructors
 (:= (cons h t f) (f h t))
-(:= (make-integers-from n) (cons n (make-integers (+ n 1))))
+(:= (make-integers-from n) (cons n (make-integers-from (+ n 1))))
 (:= (integers) (make-integers-from 0))
 
 ;; Selectors
@@ -27,13 +27,13 @@
   (nil? lst false
     (eq? i 0 lst (drop (cdr lst) (- i 1)))))
 (:= (take-right lst i)
-  (lst -drop (- (lst -length) i)))
+  (drop lst (- (length lst) i)))
 (:= (drop-right lst i)
-  (lst -take (- (lst -length) i)))
+  (take lst (- (length lst) i)))
 (:= (split-at) (split-at- nil))
 (:= (split-at- cars lst i)
   (eq? i 0
-    (2-tuple cars lst)
+    (2-tuple (reverse cars) lst)
     (split-at- (cons (car lst) cars) (cdr lst) (- i 1))))
 (:= (last lst)
   (nil? (cdr lst) (car lst) (last (cdr lst))))
@@ -42,9 +42,11 @@
 (:= (length) (length- 0))
 (:= (length- i lst)
   (nil? lst i (length- (+ i 1) (cdr lst))))
-(:= (append lst1 lst2)
-  (nil? lst2 lst1 (append (cons (car lst2) lst1) (cdr lst2))))
-(:= (concatenate) (compose apply append))
+(:= (append lst1) (append- (reverse lst1)))
+(:= (append- lst1 lst2)
+  (nil? lst1 lst2
+    (append- (cdr lst1) (cons (car lst1) lst2))))
+(:= (concatenate) (apply append))
 (:= (reverse) (reverse- nil))
 (:= (reverse- rev lst)
   (nil? lst rev (reverse- (cons (car lst) rev) (cdr lst))))
@@ -54,17 +56,18 @@
     (nil? lst2 nil 
       (cons (2-tuple (car lst1) (car lst2))
         (zip2 (cdr lst1) (cdr lst2))))))
-(:= (unzip2) (unzip- nil nil))
+(:= (unzip2 lst) (unzip2- nil nil (reverse lst)))
 (:= (unzip2- lst1 lst2 zipped)
   (nil? zipped 
     (2-tuple lst1 lst2)
     (unzip2- 
       (cons (fst (car zipped)) lst1)
-      (cons (snd (car zipped)) lst2))
-    (cdr zipped)))
+      (cons (snd (car zipped)) lst2)
+      (cdr zipped))))
 (:= (count1) (count1- 0))
 (:= (count1- ct lst pred)
-  (nil? lst ct (count1- (pred (car lst) (+ ct 1) ct) (cdr lst) pred)))
+  (nil? lst ct 
+    (count1- (pred (car lst) (+ ct 1) ct) (cdr lst) pred)))
 (:= (count2) (count2- 0))
 (:= (count2- ct lst1 lst2 pred)
   (nil? lst1 ct
@@ -74,12 +77,8 @@
 ;; Fold, unfold & map
 (:= (fold lst f init)
   (nil? lst init
-    (fold (cdr lst) f (f (car lst)))))
+    (fold (cdr lst) f (f (car lst) init))))
 (:= (fold-right) (compose fold reverse))
-(:= (reduce lst f ridentity)
-  (nil? lst ridentity 
-    (fold (cdr lst) f (car lst))))
-(:= (reduce-right) (compose reduce reverse))
 (:= (unfold) (unfold- nil))
 (:= (unfold- lst1 p f g seed)
   (p seed lst
@@ -87,21 +86,19 @@
 (:= (unfold-right) (compose unfold reverse))
 (:= (map lst f)
   (nil? lst nil (cons (f h) (map (cdr lst) f))))
-(:= (append-map) (compose (apply append) map))
-(:= (filter-map lst p) (filter (map lst p) p))
 
 ;; Filtering & partitioning
-(:= (filter) (filter- nil))
+(:= (filter lst) (filter- nil (reverse lst)))
 (:= (filter- acc lst p)
-  (nil? lst nil
-    (filter (p (car lst) (cons (car lst) acc) acc) (cdr lst) p)))
-(:= (partition) (partition- nil nil))
+  (nil? lst acc
+    (filter- (p (car lst) (cons (car lst) acc) acc) (cdr lst) p)))
+(:= (partition lst) (partition- nil nil (reverse lst)))
 (:= (partition- acc1 acc2 lst p)
   (nil? lst (2-tuple acc1 acc2)
     (p (car lst)
       (partition (cons (car lst) acc1) acc2 (cdr lst) p)
       (partition acc1 (cons (car lst) acc2) (cdr lst) p))))
-(:= (remove lst p) (filter lst (compose not pred)))
+(:= (remove lst p) (filter lst (compose not p)))
 
 ;; Searching
 (:= (find lst pred)
@@ -112,18 +109,18 @@
   (nil? lst false
     (pred (car lst) lst
       (find-tail (cdr lst) pred))))
-(:= (take-wile lst pred)
+(:= (take-while lst pred)
   (nil? lst nil
-    (pred (car lst) (cons (car lst) (take-wile (cdr lst) pred)) lst)))
+    (pred (car lst) (cons (car lst) (take-while (cdr lst) pred)) nil)))
 (:= (drop-while lst pred)
   (nil? lst nil
     (pred (car lst) (drop-while (cdr lst) pred) lst)))
-(:= (any lst pred)
+(:= (any? lst pred)
   (nil? lst false
-    (pred (car lst) true (any (cdr lst) pred))))
-(:= (every lst pred)
+    (pred (car lst) true (any? (cdr lst) pred))))
+(:= (every? lst pred)
   (nil? lst true
-    (pred (car lst) (every (cdr lst) pred) false)))
+    (pred (car lst) (every? (cdr lst) pred) false)))
 (:= (list-index) (list-index- 0))
 (:= (list-index- i lst pred)
   (nil? lst false
@@ -142,10 +139,10 @@
 
 ;; Association lists
 (:= (assoc alst key)
-  (nil? lst false
+  (nil? alst false
     (eq? (fst (car alst)) key (car alst)
       (assoc (cdr alst) key))))
-(:= (alist-cons alst key datum)
+(:= (alist-cons key datum alst)
   (cons (2-tuple key datum) alst))
 (:= (alist-copy alst)
   (nil? alst nil
@@ -180,31 +177,20 @@
 (:= (-count2 h t) (count2 (cons h t)))
 (:= (-fold h t) (fold (cons h t)))
 (:= (-fold-right h t) (fold-right (cons h t)))
-(:= (-reduce h t) (reduce (cons h t)))
 (:= (-map h t) (map (cons h t)))
-(:= (-append-map h t) (append-map (cons h t)))
-(:= (-filter-map h t) (filter-map (cons h t)))
 (:= (-filter h t) (filter (cons h t)))
 (:= (-partition h t) (partition (cons h t)))
 (:= (-remove h t) (remove (cons h t)))
 (:= (-find h t) (find (cons h t)))
 (:= (-find-tail h t) (find-tail (cons h t)))
-(:= (-take-wile h t) (take-wile (cons h t)))
+(:= (-take-while h t) (take-while (cons h t)))
 (:= (-drop-while h t) (drop-while (cons h t)))
-(:= (-any h t) (any (cons h t)))
-(:= (-every h t) (every (cons h t)))
+(:= (-any? h t) (any? (cons h t)))
+(:= (-every? h t) (every? (cons h t)))
 (:= (-list-index h t) (list-index (cons h t)))
 (:= (-member h t) (member (cons h t)))
 (:= (-delete h t) (delete (cons h t)))
 (:= (-delete-duplicates h t) (delete-duplicates (cons h t)))
 (:= (-assoc h t) (assoc (cons h t)))
-(:= (-alist-cons h t) (alist-cons (cons h t)))
 (:= (-alist-copy h t) (alist-copy (cons h t)))
 (:= (-alist-delete h t) (alist-delete (cons h t)))
-
-
-
-
-
-;;; examples
-;(cons 1 (cons 2 (cons 3 'nil)) map (+ 2) map (* 2) fold +)
