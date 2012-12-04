@@ -85,7 +85,7 @@
     (unfold- (cons (f seed) lst) p f g (g seed))))
 (:= (unfold-right) (compose unfold reverse))
 (:= (map lst f)
-  (nil? lst nil (cons (f h) (map (cdr lst) f))))
+  (nil? lst nil (cons (f (car lst)) (map (cdr lst) f))))
 
 ;; Filtering & partitioning
 (:= (filter lst) (filter- nil (reverse lst)))
