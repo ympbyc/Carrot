@@ -158,8 +158,8 @@
 ;;; suffix functions ;;;
 (:= (prefix f h t) (f (cons h t)))
 
-(:= (-car) h)
-(:= (-cdr) t)
+(:= (-car)               (prefix car))
+(:= (-cdr)               (prefix cdr))
 (:= (-list-ref)          (prefix list-ref))
 (:= (-take)              (prefix take))
 (:= (-drop)              (prefix drop))
