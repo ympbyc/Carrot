@@ -42,13 +42,13 @@
 (define (SECD stack env code dump g-env)
   ;(print (format "stack: ~S" stack))
   ;(print (format "env  : ~S" env))
-  ;(print (format "code : ~S" code))
+  (print (format "code : ~S" code))
   ;(print (format "dump : ~S" dump))
   ;(print (format "g-env: ~S" g-env))
-  ;(newline)
+  (newline)
 
   ;inst        args        stack env code       dump global-env
-  ((caar code) (cdar code) stack env (cdr code) dump g-env))
+  (values '() '()));((caar code) (cdar code) stack env (cdr code) dump g-env))
 
 
 ;;; Instructions ;;;
@@ -179,10 +179,10 @@
     [(eq? subr 'equal) 
       (let ([bool (if (equal? (cadr stack) (car stack)) 'true 'false)])
         (SECD 
-        stack;(cons (equal? (car stack) (cadr stack)) (cddr stack))
-        env 
-        (cons `(,ref-arg ,bool) (cons `(,thaw) code)) 
-        dump g-env))]
+          (cddr stack)
+          env 
+          (cons `(,ref-arg ,bool) (cons `(,thaw) code)) 
+          dump g-env))]
     [(eq? subr '+)
       (SECD
         (cons (+ (cadr stack) (car stack)) (cddr stack))
