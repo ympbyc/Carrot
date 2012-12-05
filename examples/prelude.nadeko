@@ -22,13 +22,28 @@
 (:= (fst) car)
 (:= (snd) cdr)
 
+;;Y-combinator
+;;(Y (-> (f) f)) ;now f refers to the function itself
+(:= (Y f) ((-> (x) (f (x x))) (-> (x) (f (x x)))))
+
+;;show
+(:= (show a)
+  (string? a a
+    (number? a (num->str a)
+      (nil? a ""
+        (++ (show (car a)) (show (cdr a)))))))
+
 ;;primitive wrapper
 (:= (eq? a b) (** equal a b))
 (:= (+ a b) (** + a b))
 (:= (- a b) (** - a b))
 (:= (* a b) (** * a b))
 (:= (/ a b) (** / a b))
-
+(:= (% a b) (** % a b))
+(:= (++ a b) (** ++ a b))
+(:= (num->str a) (** num->str a))
+(:= (number? a) (** number? a))
+(:= (string? a) (** string? a))
 
 ;;help
 (:= (help) "SYNTAX:\n\

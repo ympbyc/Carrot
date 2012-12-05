@@ -5,7 +5,7 @@ Dec 2012 Minori Yamashita <ympbyc@gmail.com>
 
 
 ```lisp
-(integers -take 5 -map (* 2) -fold + 0)
+(Y (-> (f) (cons 1 (zipWith f + (cdr f)) -cons 1)) -take 10 -reverse -fold (compose (compose ++ (++ ",")) show) "")
 ```
 
 
@@ -88,7 +88,7 @@ We will discuss the significance of it later.
 ### Definition (Statement)
 
 The expression  
-(:= (*name* *[identifier ...]*) *expression*)  
+(:= ( *name* *[identifier ...]*) *expression*)  
 Binds the *expression* to the *name*.  
 If one or more parameters( *identifier ...* ) are given, they can be used in the *expression* to refer to the values the function is applied to.  
 (:= ( *name* *identifier ...*) *expression*) is interpreted the same as
