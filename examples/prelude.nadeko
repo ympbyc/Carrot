@@ -22,6 +22,10 @@
 (:= (fst) car)
 (:= (snd) cdr)
 
+;;Y-combinator
+;;(Y (-> (f) f)) ;now f refers to the function itself
+(:= (Y f) ((-> (x) (f (x x))) (-> (x) (f (x x)))))
+
 ;;primitive wrapper
 (:= (eq? a b) (** equal a b))
 (:= (+ a b) (** + a b))

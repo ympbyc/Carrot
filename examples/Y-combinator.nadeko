@@ -3,3 +3,5 @@
 (:= (make-integers f x) (cons x (f (+ x 1))))
 
 (:= (integers) (Y make-integers 0))
+
+(Y (-> (f n) (cons n (f (+ n 1)))) 0 -take 5 -map (* 2) -fold + 0)
