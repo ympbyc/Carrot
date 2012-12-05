@@ -159,6 +159,7 @@
 (:= (prefix f h t) (f (cons h t)))
 
 (:= (-cons h t _h) (cons _h (cons h t)))
+(:= (-:) -cons)
 (:= (-car)               (prefix car))
 (:= (-cdr)               (prefix cdr))
 (:= (-list-ref)          (prefix list-ref))
