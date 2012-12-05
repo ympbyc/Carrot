@@ -51,16 +51,21 @@
 (:= (reverse- rev lst)
   (nil? lst rev (reverse- (cons (car lst) rev) (cdr lst))))
 (:= (append-reverse) (compose append reverse))
-(:= (zip2 lst1 lst2)
+(:= (zip lst1 lst2)
   (nil? lst1 nil 
     (nil? lst2 nil 
       (cons (2-tuple (car lst1) (car lst2))
-        (zip2 (cdr lst1) (cdr lst2))))))
-(:= (unzip2 lst) (unzip2- nil nil (reverse lst)))
-(:= (unzip2- lst1 lst2 zipped)
+        (zip (cdr lst1) (cdr lst2))))))
+(:= (zipWith lst1 f lst2)
+  (nil? lst1 nil 
+    (nil? lst2 nil 
+      (cons (f (car lst1) (car lst2))
+        (zipWith (cdr lst1) f (cdr lst2))))))
+(:= (unzip lst) (unzip- nil nil (reverse lst)))
+(:= (unzip- lst1 lst2 zipped)
   (nil? zipped 
     (2-tuple lst1 lst2)
-    (unzip2- 
+    (unzip- 
       (cons (fst (car zipped)) lst1)
       (cons (snd (car zipped)) lst2)
       (cdr zipped))))
@@ -174,8 +179,9 @@
 (:= (-concatenate)       (prefix concatenate))
 (:= (-reverse)           (prefix reverse))
 (:= (-append-reverse)    (prefix append-reverse))
-(:= (-zip2)              (prefix zip2))
-(:= (-unzip2)            (prefix unzip2))
+(:= (-zip)               (prefix zip))
+(:= (-unzip)             (prefix unzip))
+(:= (-zipWith)           (prefix zipWith))
 (:= (-count1)            (prefix count1))
 (:= (-count2)            (prefix count2))
 (:= (-fold)              (prefix fold))

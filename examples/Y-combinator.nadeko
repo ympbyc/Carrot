@@ -4,4 +4,4 @@
 
 (:= (integers) (Y make-integers 0))
 
-(Y (-> (f n) (cons n (f (+ n 1)))) 0 -take 5 -map (* 2) -fold + 0)
+(Y (-> (f) (cons 1 (zipWith f + (cdr f)) -cons 1)) -take 10 -reverse -fold (compose (compose ++ (++ ",")) show) "")
