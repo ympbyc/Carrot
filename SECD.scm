@@ -174,14 +174,16 @@
 
 ;;; primitives ;;;
 (define (primitive args stack env code dump g-env)
-  (let ((subr (car args)))
+  (let ([subr (car args)] 
+    [true `((,ref-arg true) (,thaw))]
+    [false `((,ref-arg false) (,thaw))])
   (cond
     [(eq? subr 'equal) 
-      (let ([bool (if (equal? (cadr stack) (car stack)) 'true 'false)])
+      (let ([bool (if (equal? (cadr stack) (car stack)) true false)])
         (SECD 
           (cddr stack)
           env 
-          (cons `(,ref-arg ,bool) (cons `(,thaw) code)) 
+          (append bool code) 
           dump g-env))]
     [(eq? subr '+)
       (SECD
@@ -198,5 +200,28 @@
     [(eq? subr '/)
       (SECD
         (cons (/ (cadr stack) (car stack)) (cddr stack))
-        env code dump g-env)])))
-
+        env code dump g-env)]
+    [(eq? subr '%)
+      (SECD
+        (cons (mod (cadr stack) (car stack)) (cddr stack))
+        env code dump g-env)]
+    [(eq? subr '++)
+      (SECD
+        (cons (string-append (cadr stack) (car stack)) (cddr stack))
+        env code dump g-env)]
+    [(eq? subr 'num->str)
+      (SECD
+        (cons (number->string (car stack)) (cdr stack))
+        env code dump g-env)]
+    [(eq? subr 'number?)
+      (SECD
+        (cdr stack)
+        env  
+        (append (if (number? (car stack)) true false) code)
+        dump g-env)]
+    [(eq? subr 'string?)
+      (SECD
+        (cdr stack)
+        env  
+        (append (if (string? (car stack)) true false) code)
+        dump g-env)])))
