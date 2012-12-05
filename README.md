@@ -41,7 +41,7 @@ Nadeko does not specify what primitive values have to be provided by the impleme
 
 ### Identifiers **(Expression)**
 
-Identifiers are symbols that are or to be bound to another value. They are used to name functions, and as a parameter of functions.
+Identifiers are symbols that are or to be bound to another value. They are used to name functions, and as parameters of functions.
 An identifier consists of one or more non-whitespace charactors. Some combinations are reserved as they are syntactic forms.
 
 **code 2** *examples of identifiers*
@@ -87,7 +87,7 @@ We will discuss the significance of it later.
 
 ### Definition (Statement)
 
-The expression  
+The syntactic form  
 (:= (*name* *[identifier ...]*) *expression*)  
 Binds the *expression* to the *name*.  
 If one or more parameters( *identifier ...* ) are given, they can be used in the *expression* to refer to the values the function is applied to.  
@@ -142,7 +142,7 @@ The expression B is a bit more complicated and it introduces some important feat
 > > `false` is a function that take two arguments, ignoring the first argument and return the second argument.
 > > So we get `(cons (f ...`
 >
-> 5. `cons` gets two arguments; `(f (car lst))` and `(map (cdr ...`. `cons` in order to produce the value of itself, evaluates the expression `f` which is bound to `(+ 2)`
+> 5. `cons` gets two arguments; `(f (car lst))` and `(map (cdr ...`. `cons`, in order to produce the value of itself, first have to evaluate the expression `f` which is bound to `(+ 2)`
 > > `+` is a function that take **two** arguments and returns the addition of those two values.
 > > However `+` is applied to only **one** argument which is **2**.
 > > The expression `(+ 2)` returns a function that  take **one** argument and add it to **2**.
