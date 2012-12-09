@@ -18,39 +18,34 @@
 (:= (cdr lst) (lst (-> (h t) t)))
 (:= (list-ref lst i)
   (nil? lst false
-    (eq? i 0 (car lst) (list-ref (cdr lst) (- i 1)))))
+    (= i 0 (car lst) (list-ref (cdr lst) (- i 1)))))
 (:= (take lst n)
   (nil? lst false
-    (eq? n 0 nil
+    (= n 0 nil
       (cons (car lst) (take (cdr lst) (- n 1))))))
 (:= (drop lst i)
   (nil? lst false
-    (eq? i 0 lst (drop (cdr lst) (- i 1)))))
+    (= i 0 lst (drop (cdr lst) (- i 1)))))
 (:= (take-right lst i)
   (drop lst (- (length lst) i)))
 (:= (drop-right lst i)
   (take lst (- (length lst) i)))
 (:= (split-at) (split-at- nil))
 (:= (split-at- cars lst i)
-  (eq? i 0
-    (2-tuple (reverse cars) lst)
-    (split-at- (cons (car lst) cars) (cdr lst) (- i 1))))
+  (= i 0 (2-taple cars lst)
+    (split-at- (cons (car lst) cars) (cdr lst) (- n 1))))
 (:= (last lst)
   (nil? (cdr lst) (car lst) (last (cdr lst))))
 
 ;; Miscellaneous
-(:= (length) (length- 0))
-(:= (length- i lst)
-  (nil? lst i (length- (+ i 1) (cdr lst))))
-(:= (append lst1) (append- (reverse lst1)))
-(:= (append- lst1 lst2)
+(:= (length lst) (nil? lst 0 (+ 1 (length (cdr lst)))))
+(:= (append lst1 lst2)
   (nil? lst1 lst2
-    (append- (cdr lst1) (cons (car lst1) lst2))))
+    (cons (car lst1) (append (cdr lst1) lst2))))
 (:= (concatenate) (apply append))
-(:= (reverse) (reverse- nil))
-(:= (reverse- rev lst)
-  (nil? lst rev (reverse- (cons (car lst) rev) (cdr lst))))
-(:= (append-reverse) (compose append reverse))
+(:= (reverse lst)
+  (fold lst (-> (x ac) (cons x ac)) nil))
+
 (:= (zip lst1 lst2)
   (nil? lst1 nil 
     (nil? lst2 nil 
@@ -69,25 +64,24 @@
       (cons (fst (car zipped)) lst1)
       (cons (snd (car zipped)) lst2)
       (cdr zipped))))
-(:= (count1) (count1- 0))
-(:= (count1- ct lst pred)
-  (nil? lst ct 
-    (count1- (pred (car lst) (+ ct 1) ct) (cdr lst) pred)))
-(:= (count2) (count2- 0))
-(:= (count2- ct lst1 lst2 pred)
-  (nil? lst1 ct
-    (nil? lst2 ct
-      (count2- (pred (car lst1) (car lst2) (+ ct 1) ct) (cdr lst1) (cdr lst2) pred))))
+(:= (count1 lst pred)
+  (nil? lst 0
+    (pred (car lst) (+ 1 (count1 (cdr lst) pred))
+      (count1 (cdr lst) pred))))
+(:= (count2 lst1 lst2 pred)
+  (nil? lst1 0
+    (nil? lst2 0
+      (pred (car lst1) (car lst2) (+ 1 (count2 (cdr lst1) (cdr lst2) pred))
+        (count2 (cdr lst1) (cdr lst2) pred)))))
 
 ;; Fold, unfold & map
 (:= (fold lst f init)
   (nil? lst init
     (fold (cdr lst) f (f (car lst) init))))
 (:= (fold-right) (compose fold reverse))
-(:= (unfold) (unfold- nil))
-(:= (unfold- lst1 p f g seed)
-  (p seed lst
-    (unfold- (cons (f seed) lst) p f g (g seed))))
+(:= (unfold p f g seed)
+  (p seed nil
+    (cons (f seed) (unfold p f g (g seed)))))
 (:= (unfold-right) (compose unfold reverse))
 (:= (map lst f)
   (nil? lst nil (cons (f (car lst)) (map (cdr lst) f))))
@@ -128,10 +122,10 @@
 (:= (every? lst pred)
   (nil? lst true
     (pred (car lst) (every? (cdr lst) pred) false)))
-(:= (list-index) (list-index- 0))
-(:= (list-index- i lst pred)
+(:= (list-index lst pred)
   (nil? lst false
-    (pred (car lst) i (list-index- (+ i 1) (cdr lst) pred))))
+    (pred (car lst) 0
+      (+ 1 (list-index (cdr lst) pred)))))
 (:= (member lst x)
   (nil? lst false
     (eq? (car lst) x lst (member (cdr lst) x))))
