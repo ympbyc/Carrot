@@ -1,14 +1,16 @@
 ;;;; Nadeko ;;;;
 ;;; 2012 Minori Yamashita <ympbyc@gmail.com> ;;add your name here
 
-(load "./Compiler.scm")
+(add-load-path "./lib/" :relative)
+
+(use Compiler)
 (use gauche.parseopt)
 
 ;;; REPL ;;;
 (define (REPL g-env)
   (display "nadeko> ")
   (flush)
-  (receive (result bindings) (SECD '() '() (compile `(,(read))) '() g-env)
+  (receive (result bindings) (Krivine (compile `(,(read))) '() '() g-env)
     (print result)
     (REPL bindings))) ;loop with new global-environment
 
@@ -24,7 +26,7 @@
 (define (pre-load fname)
   (call-with-input-file fname (lambda (file-port)
     (receive (result g-env) 
-             (SECD '() '() (compile (read-list file-port)) '() '())
+             (Krivine (compile (read-list file-port)) '() '() '())
       g-env))))
 
 (define (read-list port)
