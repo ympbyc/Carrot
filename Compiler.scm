@@ -1,13 +1,10 @@
-;;;; S-expression to SECD instruction Compiler ;;;;
+;;;; Nadeko -> Krivine's Machine instruction ;;;;
 ;;; 2012 Minori Yamashita <ympbyc@gmail.com> ;;add your name here
 ;;;
-;;; reference:
-;;;   http://www.geocities.jp/m_hiroi/func/abcscm33.html
-;;;
 
-(load "./SECD.scm")
+(load "./Krivine.scm")
 
-;;; Helpers ;;;
+;;Helper
 (define (atom? x)
   (cond
     [(string?  x) #t]
@@ -16,11 +13,14 @@
     [(char?    x) #t]
     [else #f]))
 
-;;uncurry function applications
-(define (complis exp code)
-  (if (null? exp)
-    code
-    (compile- `(delay ,(car exp)) (complis (cdr exp) code))))
+;;curry
+(define (curry-grabs params)
+  (map (lambda (p) `(,GRAB ,p)) params))
+
+;;partial-application
+(define (partial-arg args continuation)
+  (map (lambda (arg)
+    `(,CLOSURE ,(compile- arg continuation))) (reverse args)))
 
 ;;stack all the arguments to the primitive procedure
 ;;and apply the procedure
@@ -28,60 +28,44 @@
   (if (null? args)
     prim
     (compile- (car args) (primitive-compile (cdr args) prim))))
-  
-;;compile :: Lisp -> SECD
-(define (compile program)
-  (fold-right compile- `((,stop)) program))
 
-;;compile- :: Lisp -> code -> code
+
+;;; Compiler ;;;
+
+;;compile :: Nadeko -> Krivine
+(define (compile program)
+  (fold-right compile- `((,STOP)) program))
+
+;;compile- :: Nadeko -> code -> code
 (define (compile- exp code)
   ;(print (format "exp : ~S" exp))
   ;(print (format "code: ~S" code))
   ;(newline)
   (cond
     [(atom? exp)
-      ;;(stack-constant const)
-      (cons `(,stack-constant ,exp) code)]
-    
+     (cons `(,CONSTANT ,exp) code)]
+
     [(symbol? exp)
-      ;;(ref-arg symbol) (thaw) 
-      (cons `(,ref-arg ,exp) (cons `(,thaw) code))]
-    
+     `((,ACCESS ,exp) (,CONTINUE))] ;;CONTINUE dumps the remaining code
+
     [(eq? (car exp) 'quote)
-      ;;(stack-constant symbol)
-      (cons `(,stack-constant ,(cadr exp)) code)]
+     (cons `(,CONSTANT ,(cadr exp)) code)]
 
-    [(eq? (car exp) '**) 
-     ;; call primitive procedures
-     (append (primitive-compile (cddr exp) `((,primitive ,(cadr exp)))) code)]
-     
-    
+    [(eq? (car exp) '**)
+     ; (** / 3 2)
+     (cons 
+      (append `(,PRIMITIVE ,(cadr exp)) (map (lambda (x) (compile- x `((,STOP)))) (cddr exp)))
+      code)]
+
     [(eq? (car exp) ':=)
-      ;;(:= (foo bar baz) (bar baz))
-      ;;bound (def symbol)
-      (if (< (length (cadr exp)) 2)
-       (compile- `(delay ,(caddr exp)) (cons `(,def ,(caadr exp)) code)) ;no param
-       (compile- `(delay (-> ,(cdadr exp) ,(caddr exp))) (cons `(,def ,(caadr exp)) code)))]
-    
-    [(eq? (car exp) '->)
-      ;;(-> (x y z) (x y z)) = (-> (x) (-> (y) (-> (z) (x y z)))) ;auto-currying
-      ;;(stack-closure symbol ((code) (restore)))
-      (let ((params (cadr exp))
-            (body (caddr exp)))
-        (if (null? (cdr params))
-          (cons `(,stack-closure ,(car params) ,(compile- body `((,restore)))) code)
-          (cons `(,stack-closure ,(car params) ,(compile- `(-> ,(cdr params) ,body) `((,restore)))) code)))]
-    
-    [(eq? (car exp) 'delay)
-     ;;(freeze ((code) (restore)))
-     (cons `(,freeze ,(compile- (cadr exp) `((,restore)))) code)]
-    
-    [else
-      ;;(foo 1 2 3) = (((foo 1) 2) 3)
-      ;;arg arg ... closure (app) (app) ...
-      (complis (reverse (cdr exp))
-        (compile- 
-          (car exp) 
-          (append (map (lambda (arg) `(,app)) (cdr exp)) code)))
-    ]))
+     (let ([body (compile- (caddr exp) `((,STOP)))]) ;;if no CONTINUE it must be STOP
+       (cons 
+         `(,CLOSURE ,(append (curry-grabs (cdadr exp)) body)) 
+          (cons `(,DEFINE ,(caadr exp)) code)))]
 
+    [(eq? (car exp) '->)
+     (append (curry-grabs (cadr exp)) (compile- (caddr exp) code))]
+
+    [else
+     (append (partial-arg (cdr exp) code)
+      (compile- (car exp) code))]))
