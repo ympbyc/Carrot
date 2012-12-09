@@ -1,7 +1,9 @@
 ;;;; Nadeko ;;;;
 ;;; 2012 Minori Yamashita <ympbyc@gmail.com> ;;add your name here
 
-(load "./Compiler.scm")
+(add-load-path "./lib/" :relative)
+
+(use Compiler)
 (use gauche.parseopt)
 
 ;;; REPL ;;;
