@@ -35,6 +35,11 @@
 
 ;;primitive wrapper
 (:= (eq? a b) (** equal a b))
+(:= (= a b) (** equal a b))
+(:= (< a b) (** < a b))
+(:= (> a b) (** < b a))
+(:= (<= a b) (** <= a b))
+(:= (>= a b) (** <= b a))
 (:= (+ a b) (** + a b))
 (:= (- a b) (** - a b))
 (:= (* a b) (** * a b))

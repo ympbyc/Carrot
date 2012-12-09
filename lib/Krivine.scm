@@ -111,6 +111,14 @@
        (Krivine
         (append (if (equal? (get-constant (car p-args)) (get-constant (cadr p-args))) true false) code)
         env stack g-env)]
+      [(eq? subr '<)
+       (Krivine
+        (append (if (< (get-constant (car p-args)) (get-constant (cadr p-args))) true false) code)
+        env stack g-env)]
+      [(eq? subr '<=)
+       (Krivine
+        (append (if (<= (get-constant (car p-args)) (get-constant (cadr p-args))) true false) code)
+        env stack g-env)]
       [(eq? subr '+)
        (Krivine
         code env
