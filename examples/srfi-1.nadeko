@@ -30,10 +30,8 @@
   (drop lst (- (length lst) i)))
 (:= (drop-right lst i)
   (take lst (- (length lst) i)))
-(:= (split-at) (split-at- nil))
-(:= (split-at- cars lst i)
-  (= i 0 (2-taple cars lst)
-    (split-at- (cons (car lst) cars) (cdr lst) (- n 1))))
+(:= (split-at lst i)
+  (2-tuple (take lst i) (drop lst i)))
 (:= (last lst)
   (nil? (cdr lst) (car lst) (last (cdr lst))))
 
@@ -45,7 +43,6 @@
 (:= (concatenate) (apply append))
 (:= (reverse lst)
   (fold lst (-> (x ac) (cons x ac)) nil))
-
 (:= (zip lst1 lst2)
   (nil? lst1 nil 
     (nil? lst2 nil 
@@ -82,7 +79,7 @@
 (:= (unfold p f g seed)
   (p seed nil
     (cons (f seed) (unfold p f g (g seed)))))
-(:= (unfold-right) (compose unfold reverse))
+;(:= (unfold-right) ) ;pending
 (:= (map lst f)
   (nil? lst nil (cons (f (car lst)) (map (cdr lst) f))))
 
@@ -94,11 +91,11 @@
 (:= (partition- acc1 acc2 lst p)
   (nil? lst (2-tuple acc1 acc2)
     (p (car lst)
-      (partition (cons (car lst) acc1) acc2 (cdr lst) p)
-      (partition acc1 (cons (car lst) acc2) (cdr lst) p))))
+      (partition- (cons (car lst) acc1) acc2 (cdr lst) p)
+      (partition- acc1 (cons (car lst) acc2) (cdr lst) p))))
 (:= (remove lst f)
   (nil? lst nil
-    (f (car lst) (filter (cdr lst) f) (cons (car lst) (filter (cdr lst) f)))))
+    (f (car lst) (remove (cdr lst) f) (cons (car lst) (remove (cdr lst) f)))))
 
 
 ;; Searching
@@ -133,7 +130,7 @@
   (nil? lst nil
     (eq? (car lst) x 
       (delete (cdr lst) x)
-      (cons (car a) (delete (cdr lst) x)))))
+      (cons (car lst) (delete (cdr lst) x)))))
 (:= (delete-duplicates lst)
   (nil? lst nil
     (cons (car lst) (delete-duplicates (delete lst (car lst))))))

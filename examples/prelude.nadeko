@@ -31,7 +31,7 @@
   (string? a a
     (number? a (num->str a)
       (nil? a "nil"
-        (++ (++ (show (car a)) ",") (show (cdr a)))))))
+        (++ (++ (show (car a)) ", ") (show (cdr a)))))))
 
 ;;primitive wrapper
 (:= (eq? a b) (** equal a b))
