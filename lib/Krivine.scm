@@ -165,4 +165,8 @@
       [(eq? subr 'print)
        (print (get-constant (car p-args)))
        (Krivine
+        code env stack g-env)]
+      [(eq? subr 'time)
+       (time (get-constant (car p-args)))
+       (Krivine
         code env stack g-env)]))))
