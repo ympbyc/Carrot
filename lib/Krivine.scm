@@ -25,11 +25,11 @@
   
   ;;; Krivine's Machine ;;;
   (define (Krivine code env stack g-env) 
-    ;(print (format "code : ~S" code))
+    (print (format "code : ~S" code))
     ;(print (format "env  : ~S" env))
     ;(print (format "stack: ~S" stack))
     ;(print (format "g-env: ~S" g-env))
-    ;(newline)
+    (newline)
   
     ;inst        inst-arg    code-rest  env stack global
     ((caar code) (cdar code) (cdr code) env stack g-env))

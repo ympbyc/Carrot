@@ -93,17 +93,19 @@
   (nil? lst nil (cons (f (car lst)) (map (cdr lst) f))))
 
 ;; Filtering & partitioning
-(:= (filter lst) (filter- nil (reverse lst)))
-(:= (filter- acc lst p)
-  (nil? lst acc
-    (filter- (p (car lst) (cons (car lst) acc) acc) (cdr lst) p)))
+(:= (filter lst f)
+  (nil? lst nil
+    (f (car lst) (cons (car lst) (filter (cdr lst) f)) (filter (cdr lst) f))))
 (:= (partition lst) (partition- nil nil (reverse lst)))
 (:= (partition- acc1 acc2 lst p)
   (nil? lst (2-tuple acc1 acc2)
     (p (car lst)
       (partition (cons (car lst) acc1) acc2 (cdr lst) p)
       (partition acc1 (cons (car lst) acc2) (cdr lst) p))))
-(:= (remove lst p) (filter lst (compose not p)))
+(:= (remove lst f)
+  (nil? lst nil
+    (f (car lst) (filter (cdr lst) f) (cons (car lst) (filter (cdr lst) f)))))
+
 
 ;; Searching
 (:= (find lst pred)

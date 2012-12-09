@@ -1,0 +1,15 @@
+(:= (inf-int n) (cons n (inf-int (+ n 1))))
+
+(:= (-remove x xs f)
+  (nil? xs (cons x nil)
+    (f x (xs -remove f) (cons x (xs -remove f)))))
+
+(:= (-filter x xs f)
+  (nil? xs (cons x nil)
+    (f x (cons x (xs -filter f)) (xs -filter f))))
+
+(:= (primes) (inf-int 2 -sieve))
+
+(:= (-sieve p ps)
+  (cons p
+    (ps -remove (-> (x) (= (% x p) 0)) -sieve)))
