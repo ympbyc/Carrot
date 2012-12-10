@@ -1,3 +1,5 @@
+#!/usr/local/bin/gosh
+
 ;;;; Nadeko ;;;;
 ;;; 2012 Minori Yamashita <ympbyc@gmail.com> ;;add your name here
 
