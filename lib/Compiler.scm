@@ -24,14 +24,6 @@
     (map (lambda (arg)
       `(,CLOSURE ,(compile- arg continuation))) (reverse args)))
   
-  ;;stack all the arguments to the primitive procedure
-  ;;and apply the procedure
-  (define (primitive-compile args prim)
-    (if (null? args)
-      prim
-      (compile- (car args) (primitive-compile (cdr args) prim))))
-  
-  
   ;;; Compiler ;;;
   
   ;;compile :: Nadeko -> Krivine
