@@ -75,7 +75,9 @@
 (:= (fold lst f init)
   (nil? lst init
     (fold (cdr lst) f (f (car lst) init))))
-(:= (fold-right) (compose fold reverse))
+(:= (fold-right lst f init) 
+  (nil? lst init
+    (f (car lst) (fold-right (cdr lst) f init))))
 (:= (unfold p f g seed)
   (p seed nil
     (cons (f seed) (unfold p f g (g seed)))))
@@ -171,7 +173,6 @@
 (:= (-append)            (prefix append))
 (:= (-concatenate)       (prefix concatenate))
 (:= (-reverse)           (prefix reverse))
-(:= (-append-reverse)    (prefix append-reverse))
 (:= (-zip)               (prefix zip))
 (:= (-unzip)             (prefix unzip))
 (:= (-zipWith)           (prefix zipWith))

@@ -4,10 +4,10 @@
 (test-start "srfi-1")
 (use Compiler)
 
-(define (pre-load fname)
+(define (pre-load fname g-e)
   (call-with-input-file fname (lambda (file-port)
     (receive (result g-env) 
-             (Krivine (compile (read-list file-port)) '() '() '())
+             (Krivine (compile (read-list file-port)) '() '() g-e)
       g-env))))
 
 (define (read-list port)
@@ -16,8 +16,7 @@
       (cons exp (read-list port)))))
 
 (define g-env
-  (append (pre-load "examples/srfi-1.nadeko")
-    (pre-load "examples/prelude.nadeko")))
+  (pre-load "examples/prelude.nadeko" (pre-load "examples/srfi-1.nadeko" '())))
 
 (define (run code)
   (receive (result bindings) (Krivine (compile `((show ,code))) '() '() g-env)

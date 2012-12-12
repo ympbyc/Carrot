@@ -7,8 +7,10 @@
 (test-module 'Krivine)
 
 (define default-global
-  `((true  . ((code . ((,GRAB a) (,GRAB b) (,ACCESS a) (,CONTINUE))) (env . ())))
-    (false . ((code . ((,GRAB a) (,GRAB b) (,ACCESS b) (,CONTINUE))) (env . ())))))
+  (let ([*gl-env* (make-hash-table)])
+    (hash-table-put! *gl-env* 'true  `((code . ((,GRAB a) (,GRAB b) (,ACCESS a) (,CONTINUE))) (env . ())))
+    (hash-table-put! *gl-env* 'false `((code . ((,GRAB a) (,GRAB b) (,ACCESS b) (,CONTINUE))) (env . ())))
+    *gl-env*))
 
 (define (K code)
   (receive (result g-env) (Krivine (append code `((,STOP))) `() `() default-global)))
