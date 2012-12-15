@@ -13,7 +13,7 @@
     *gl-env*))
 
 (define (K code)
-  (receive (result g-env) (Krivine (append code `((,STOP))) `() `() default-global)))
+  (receive (result g-env) (Krivine (append code `((,STOP))) default-global)))
 
 (test-section "standard(closure, grab, access, continue) + constant + stop")
 (test* "((-> (x) x) 'helloworld)" 
@@ -34,31 +34,19 @@
 
 (test-section "primitive")
 (test* "primitive +"
-  100 (K `((,PRIMITIVE + ((,CONSTANT 60) (,STOP)) ((,CONSTANT 40) (,STOP))) (,STOP))))
-(test* "primitive -"
-  20 (K `((,PRIMITIVE - ((,CONSTANT 60) (,STOP)) ((,CONSTANT 40) (,STOP))) (,STOP))))
-(test* "primitive *"
-  24 (K `((,PRIMITIVE * ((,CONSTANT 6) (,STOP)) ((,CONSTANT 4) (,STOP))) (,STOP))))
-(test* "primitive /"
-  10 (K `((,PRIMITIVE / ((,CONSTANT 60) (,STOP)) ((,CONSTANT 6) (,STOP))) (,STOP))))
-(test* "primitive ++"
-  "Hello, world!" (K `((,PRIMITIVE ++ ((,CONSTANT "Hello, ") (,STOP)) ((,CONSTANT "world!") (,STOP))) (,STOP))))
-(test* "primitive equal"
-  'true (K `((,CLOSURE ((,CONSTANT false) (,STOP))) (,CLOSURE ((,CONSTANT true) (,STOP))) 
-    (,PRIMITIVE equal ((,CONSTANT 60) (,STOP)) ((,CONSTANT 60) (,STOP))) (,STOP))))
-(test* "primitive num->str"
-  "100" (K `((,PRIMITIVE num->str ((,CONSTANT 100) (,STOP))) (,STOP))))
-(test* "primitive number? 1"
-  'true (K `((,CLOSURE ((,CONSTANT false) (,STOP))) (,CLOSURE ((,CONSTANT true) (,STOP))) 
-    (,PRIMITIVE number? ((,CONSTANT 60) (,STOP))))))
-(test* "primitive number? 2"
-  'false (K `((,CLOSURE ((,CONSTANT false) (,STOP))) (,CLOSURE ((,CONSTANT true) (,STOP))) 
-    (,PRIMITIVE number? ((,CONSTANT "60") (,STOP))))))
-(test* "primitive string? 1"
-  'true (K `((,CLOSURE ((,CONSTANT false) (,STOP))) (,CLOSURE ((,CONSTANT true) (,STOP))) 
-    (,PRIMITIVE string? ((,CONSTANT "hello") (,STOP))))))
-(test* "primitive string? 2"
-  'false (K `((,CLOSURE ((,CONSTANT false) (,STOP))) (,CLOSURE ((,CONSTANT true) (,STOP))) 
-    (,PRIMITIVE string? ((,CONSTANT 1234) (,STOP))))))
+  100 (K `((,CONSTANT 60) (,CONSTANT 40) (,PRIMITIVE +) (,STOP))))
+
+(test-section "compound")
+(test* "((-> (x) (+ x 60)) 40)"
+  100 (K `(
+    (,CLOSURE ((,STOP))) 
+    (,CLOSURE ((,GRAB cont) (,PRIMITIVE +) (,ACCESS cont) (,CONTINUE)))
+    (,DEFINE +)
+    (,CLOSURE ((,CONSTANT 40) (,CONTINUE)))
+    (,GRAB x)
+    (,CONSTANT 60)
+    (,ACCESS +)
+    (,ACCESS x)
+    (,CONTINUE))))
 
 (test-end :exit-on-failure #t)
