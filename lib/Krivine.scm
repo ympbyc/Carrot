@@ -35,7 +35,7 @@
     ;(print (format "code : ~S" code))
     ;(print (format "env  : ~S" env))
     ;(print (format "stack: ~S" stack))
-    ;(print (format "g-env: ~S"))
+    ;(print (format "c-stack: ~S" c-stack))
     ;(newline)
   
     ;inst        inst-arg    code-rest  env stack global

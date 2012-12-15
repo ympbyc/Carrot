@@ -39,13 +39,13 @@
 (test-section "compound")
 (test* "((-> (x) (+ x 60)) 40)"
   100 (K `(
-    (,CLOSURE ((,STOP))) 
-    (,CLOSURE ((,GRAB cont) (,PRIMITIVE +) (,ACCESS cont) (,CONTINUE)))
+    (,CLOSURE ((,STOP))) ;always here
+    (,CLOSURE ((,GRAB cont) (,PRIMITIVE +) (,ACCESS cont) (,CONTINUE))) ;this is the + "function" that wraps the + "primitive"
     (,DEFINE +)
-    (,CLOSURE ((,CONSTANT 40) (,CONTINUE)))
+    (,CLOSURE ((,CONSTANT 40) (,CONTINUE))) ;simple arguments always have CONTINUE with no preceeding ACCESS
     (,GRAB x)
     (,CONSTANT 60)
-    (,ACCESS +)
+    (,ACCESS +) ;this is kept on the stack until the invocation of CONTINUE of the argument
     (,ACCESS x)
     (,CONTINUE))))
 
