@@ -2,12 +2,12 @@
 
 (use gauche.test)
 (test-start "srfi-1")
-(use Compiler)
+(use K-Compiler)
 
 (define (pre-load fname g-e)
   (call-with-input-file fname (lambda (file-port)
     (receive (result g-env) 
-             (Krivine (compile (read-list file-port)) '() '() g-e)
+             (Krivine (compile (read-list file-port)) g-e)
       g-env))))
 
 (define (read-list port)
@@ -19,7 +19,7 @@
   (pre-load "examples/prelude.nadeko" (pre-load "examples/srfi-1.nadeko" '())))
 
 (define (run code)
-  (receive (result bindings) (Krivine (compile `((show ,code))) '() '() g-env)
+  (receive (result bindings) (Krivine (compile `((show ,code))) g-env)
     result))
 
 (test-section "constructors")

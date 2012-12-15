@@ -47,7 +47,7 @@
   
           [(eq? (car exp) '**)
            ;(** + 2 3)
-           (cons `(,CLOSURE ((,PRIMITIVE ,(cadr exp)) (,CONTINUE))) (compile- (reverse (cddr exp))))]
+           (cons `(,CLOSURE ((,PRIMITIVE ,(cadr exp)) (,CONTINUE))) (compile- (reverse (cddr exp)) ))]
 
           [(eq? (car exp) ':=)
            ;(:= (f a b) a)
@@ -65,4 +65,4 @@
            ;(f a b c)
            (append 
               (map (fn (x) `(,CLOSURE ,(append (compile- `(,x)) `((,CONTINUE))))) (reverse (cdr exp))) 
-              (compile- `(,(car exp))) `((,CONTINUE)))])))))
+              (compile- `(,(car exp))) #|`((,CONTINUE))|#)])))))
