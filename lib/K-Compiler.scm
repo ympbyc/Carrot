@@ -47,7 +47,7 @@
   
           [(eq? (car exp) '**)
            ;(** + 2 3)
-           (cons `(,CLOSURE ((,PRIMITIVE ,(cadr exp)) (,CONTINUE))) (compile- (cddr exp)))]
+           (cons `(,CLOSURE ((,PRIMITIVE ,(cadr exp)) (,CONTINUE))) (compile- (reverse (cddr exp))))]
 
           [(eq? (car exp) ':=)
            ;(:= (f a b) a)
