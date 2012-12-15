@@ -10,10 +10,9 @@
 ;; To create closures(function objects), CLOSURE the GRAB and expression followed by CONTINUE.
 ;;
 
-(use srfi-1)
-
 (define-module Krivine
   (export-all)
+  (use srfi-1)
 
   ;;; global environment ;;;
   (define *global-env*
@@ -98,17 +97,9 @@
   ;; creates a global binding
   (define (DEFINE args code env stack c-stack)
     (hash-table-put! *global-env* (car args) (car stack)) ;side effect
+    (print (car args))
     (Krivine-
       code
       env
       (cdr stack)
-      c-stack))
-  
-  (define (PRIMITIVE args code env stack c-stack)
-    (cond
-      [(eq? (car args) '+)
-        (Krivine-
-          code
-          env
-          stack
-          (cons (+ (cadr c-stack) (car c-stack)) (cddr c-stack)))])))
+      c-stack)))

@@ -20,7 +20,7 @@
   (let-args (cdr args)
     ((load-fname "l|load=s"))
    (print "Nadeko, version 1.0.0: https://github.com/ympbyc/Nadeko ^C to exit")
-   (let ([prelude-g `() #|(pre-load "examples/prelude.nadeko" '())|#])
+   (let ([prelude-g (pre-load "examples/prelude.nadeko" '())])
    (REPL 
     (if load-fname (pre-load load-fname prelude-g) prelude-g)))))
 

@@ -5,7 +5,7 @@
 (add-load-path "../lib/" :relative)
 
 (define-module K-Compiler
-  (extend Krivine)
+  (extend nadeko-primitive)
   (export compile)
   (use srfi-1)
 
@@ -28,11 +28,11 @@
   ;;compile :: Nadeko -> Krivine
   (define (compile program)
     (let ([code (cons `(,CLOSURE ((,STOP))) (concatenate (map (fn (x) (compile- `(,x))) program)))])
-      (print code)
-      code))
+      ;(print code)
+      (append code `((,CONTINUE)))))
 
   (define (compile- program)
-    (if (null? program) `((,CONTINUE))
+    (if (null? program) '()
       (let ([exp (car program)] [code-r (cdr program)])
  
         (cond
