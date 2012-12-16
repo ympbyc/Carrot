@@ -33,7 +33,7 @@
 
   ;;; Krivine's Machine ;;;
   (define (Krivine- code env stack c-stack) 
-    (print (format "code : ~S" code))
+    ;(print (format "code : ~S" code))
     ;(print (format "env  : ~S" env))
     ;(print (format "stack: ~S" stack))
     ;(print (format "c-stack: ~S" c-stack))
@@ -86,7 +86,7 @@
   
   ;; returns what's on the top of the constant stack
   (define (STOP args code env stack c-stack)
-    (values (if (null? c-stack) '() #|(car|# c-stack #|)|#) *global-env*))
+    (values (if (null? c-stack) '() (car c-stack )) *global-env*))
   
   ;; cons a self-evaluating value on to the stack
   (define (CONSTANT args code env stack c-stack)
@@ -105,3 +105,4 @@
       env
       (cdr stack)
       c-stack)))
+
