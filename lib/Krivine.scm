@@ -28,7 +28,7 @@
   (define (Krivine code g-env)
     (if (hash-table? g-env) (set! *global-env* g-env)) ;side effect
     (guard (exc
-      [else (print (format "**exception**: ~S" exc)) (values '() *global-env*)])
+      [else (print (format "**exception**: ~S at: ~S" exc code)) (values '() *global-env*)])
       (Krivine- code '() '() '())))
 
   ;;; Krivine's Machine ;;;
@@ -86,7 +86,7 @@
   
   ;; returns what's on the top of the constant stack
   (define (STOP args code env stack c-stack)
-    (values (if (null? c-stack) '() (car c-stack )) *global-env*))
+    (values (if (null? c-stack) '() (car c-stack)) *global-env*))
   
   ;; cons a self-evaluating value on to the stack
   (define (CONSTANT args code env stack c-stack)

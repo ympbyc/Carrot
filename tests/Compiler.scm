@@ -15,9 +15,9 @@
 (test* "variable 1" `((,CLOSURE ((,STOP))) (,ACCESS x) (,CONTINUE)) (compile `(x)))
 
 (test-section "primitive")
-(test* "primitive 0" `((,CLOSURE ((,STOP))) (,CLOSURE ((,PRIMITIVE foo) (,CONTINUE))) (,CONTINUE)) (compile `((** foo))))
-(test* "primitive 1" `((,CLOSURE ((,STOP))) (,CLOSURE ((,PRIMITIVE one) (,CONTINUE))) (,CONSTANT 1) (,CONTINUE)) (compile `((** one 1))))
-(test* "primitive 2" `((,CLOSURE ((,STOP))) (,CLOSURE ((,PRIMITIVE two) (,CONTINUE))) (,CONSTANT 2) (,CONSTANT 1) (,CONTINUE)) (compile `((** two 1 2))))
+(test* "primitive 0" `((,CLOSURE ((,STOP))) (,PMARK) (,CLOSURE ((,PRIMITIVE foo) (,CONTINUE))) (,CONTINUE)) (compile `((** foo))))
+(test* "primitive 1" `((,CLOSURE ((,STOP))) (,PMARK) (,CLOSURE ((,PRIMITIVE one) (,CONTINUE))) (,CONSTANT 1) (,CONTINUE)) (compile `((** one 1))))
+(test* "primitive 2" `((,CLOSURE ((,STOP))) (,PMARK) (,CLOSURE ((,PRIMITIVE two) (,CONTINUE))) (,CONSTANT 2) (,CONSTANT 1) (,CONTINUE)) (compile `((** two 1 2))))
 
 (test-section "define")
 (test* "define 0" `((,CLOSURE ((,STOP))) (,CLOSURE ((,CONSTANT 5) (,CONTINUE))) (,DEFINE five) (,CONTINUE)) (compile `((:= (five) 5))))
@@ -31,22 +31,22 @@
 (test* "lambda 3" `((,CLOSURE ((,STOP))) (,GRAB x) (,GRAB y) (,GRAB z) (,ACCESS y) (,CONTINUE)) (compile `((-> (x y z) y))))
 
 (test-section "application")
-(test* "app 1" `((,CLOSURE ((,STOP))) (,CLOSURE ((,CONSTANT 5) (,CONTINUE))) (,ACCESS id) (,CONTINUE) (,CONTINUE)) (compile `((id 5))))
-(test* "app 1 1" `((,CLOSURE ((,STOP))) (,CLOSURE ((,ACCESS x) (,CONTINUE))) (,ACCESS foo) (,CONTINUE) (,CONTINUE)) (compile `((foo x))))
+(test* "app 1" `((,CLOSURE ((,STOP))) (,CLOSURE ((,CONSTANT 5) (,CONTINUE))) (,ACCESS id) (,CONTINUE)) (compile `((id 5))))
+(test* "app 1 1" `((,CLOSURE ((,STOP))) (,CLOSURE ((,ACCESS x) (,CONTINUE))) (,ACCESS foo) (,CONTINUE)) (compile `((foo x))))
 (test* "app 2" 
-  `((,CLOSURE ((,STOP))) (,CLOSURE ((,CONSTANT 5) (,CONTINUE))) (,CLOSURE ((,CONSTANT 6) (,CONTINUE))) (,ACCESS foo) (,CONTINUE) (,CONTINUE)) (compile `((foo 6 5))))
+  `((,CLOSURE ((,STOP))) (,CLOSURE ((,CONSTANT 5) (,CONTINUE))) (,CLOSURE ((,CONSTANT 6) (,CONTINUE))) (,ACCESS foo) (,CONTINUE)) (compile `((foo 6 5))))
 (test* "app 3" 
   `((,CLOSURE ((,STOP))) (,CLOSURE ((,CONSTANT 5) (,CONTINUE))) (,CLOSURE ((,CONSTANT 6) (,CONTINUE))) (,CLOSURE ((,CONSTANT 7) (,CONTINUE)))
-    (,ACCESS foo) (,CONTINUE) (,CONTINUE)) (compile `((foo 7 6 5))))
+    (,ACCESS foo) (,CONTINUE)) (compile `((foo 7 6 5))))
 (test* "app-lambda 1"
-  `((,CLOSURE ((,STOP))) (,CLOSURE ((,CONSTANT 5) (,CONTINUE))) (,GRAB x) (,ACCESS x) (,CONTINUE) (,CONTINUE)) (compile `(((-> (x) x) 5))))
+  `((,CLOSURE ((,STOP))) (,CLOSURE ((,CONSTANT 5) (,CONTINUE))) (,GRAB x) (,ACCESS x) (,CONTINUE)) (compile `(((-> (x) x) 5))))
 (test* "app-lambda 2"
-  `((,CLOSURE ((,STOP))) (,CLOSURE ((,CONSTANT 5) (,CONTINUE))) (,CLOSURE ((,CONSTANT 6) (,CONTINUE))) (,GRAB x) (,GRAB y) (,ACCESS x) (,CONTINUE) (,CONTINUE)) (compile `(((-> (x y) x) 6 5))))
+  `((,CLOSURE ((,STOP))) (,CLOSURE ((,CONSTANT 5) (,CONTINUE))) (,CLOSURE ((,CONSTANT 6) (,CONTINUE))) (,GRAB x) (,GRAB y) (,ACCESS x) (,CONTINUE)) (compile `(((-> (x y) x) 6 5))))
 (test* "partial"
-  `((,CLOSURE ((,STOP))) (,CLOSURE ((,CONSTANT 5) (,CONTINUE))) (,CLOSURE ((,CONSTANT 6) (,CONTINUE))) (,GRAB x) (,GRAB y) (,ACCESS x) (,CONTINUE) (,CONTINUE) (,CONTINUE)) (compile `((((-> (x y) x) 6) 5))))
+  `((,CLOSURE ((,STOP))) (,CLOSURE ((,CONSTANT 5) (,CONTINUE))) (,CLOSURE ((,CONSTANT 6) (,CONTINUE))) (,GRAB x) (,GRAB y) (,ACCESS x) (,CONTINUE)) (compile `((((-> (x y) x) 6) 5))))
 (test* "higher-oeder"
   `((,CLOSURE ((,STOP))) (,CLOSURE ((,GRAB x) (,GRAB y) (,ACCESS y) (,CONTINUE)))
-    (,GRAB f) (,CLOSURE ((,CONSTANT 5) (,CONTINUE))) (,CLOSURE ((,CONSTANT 6) (,CONTINUE))) (,ACCESS f) (,CONTINUE) (,CONTINUE) (,CONTINUE))
+    (,GRAB f) (,CLOSURE ((,CONSTANT 5) (,CONTINUE))) (,CLOSURE ((,CONSTANT 6) (,CONTINUE))) (,ACCESS f) (,CONTINUE))
   (compile `(((-> (f) (f 6 5)) (-> (x y) y)))))
 
 (test-end :exit-on-failure #t)

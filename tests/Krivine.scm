@@ -2,7 +2,7 @@
 
 (use gauche.test)
 (test-start "Krivine")
-(use Krivine)
+(use nadeko-primitive)
 
 (test-module 'Krivine)
 
@@ -34,16 +34,17 @@
 
 (test-section "primitive")
 (test* "primitive +"
-  100 (K `((,CONSTANT 60) (,CONSTANT 40) (,PRIMITIVE +) (,STOP))))
+  100 (K `((,PMARK) (,CONSTANT 60) (,CONSTANT 40) (,PRIMITIVE +) (,STOP))))
 
 (test-section "compound")
 (test* "((-> (x) (+ x 60)) 40)"
   100 (K `(
     (,CLOSURE ((,STOP))) ;always here
-    (,CLOSURE ((,GRAB cont) (,PRIMITIVE +) (,ACCESS cont) (,CONTINUE))) ;this is the + "function" that wraps the + "primitive"
+    (,CLOSURE ((,PRIMITIVE +) (,CONTINUE))) ;this is the + "function" that wraps the + "primitive"
     (,DEFINE +)
     (,CLOSURE ((,CONSTANT 40) (,CONTINUE))) ;simple arguments always have CONTINUE with no preceeding ACCESS
     (,GRAB x)
+    (,PMARK)
     (,CONSTANT 60)
     (,ACCESS +) ;this is kept on the stack until the invocation of CONTINUE of the argument
     (,ACCESS x)

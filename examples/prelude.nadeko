@@ -28,7 +28,7 @@
 
 ;;show
 (:= (show a)
-  (string? a (++ 5 6)
+  (string? a a
     (number? a (num->str a)
       (nil? a "nil"
         (++ (++ (show (car a)) ", ") (show (cdr a)))))))
