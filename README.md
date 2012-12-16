@@ -121,7 +121,7 @@ Functions(closures) can be applied to arguments. The application begins with an 
 In the expression A, the `map` function defined in **code 5** is applied to two arguments; listX and functionX assuming they are defined elsewhere.
 This fills the parameter slots of the `map` function meaning that `listX` gets bound to `lst` and `functionX` gets bound to `f`. The expression inside `map` is then evaluated using both `listX` and `functionX`. Eventually the evaluation completes; producing a value(in this case a new list).
 
-The expression B is a bit more complicated and it introduces some important feature. Lets look into it in detail.
+The expression B is a bit more complicated and it introduces some important features. Lets look into it in detail.
 
 **text 1** *reduction proccess*
 
@@ -154,7 +154,7 @@ The expression B is a bit more complicated and it introduces some important feat
 The proccess showed two important evaluation strategy Nadeko uses. Lazy evaluation and Currying.  
 
 The evaluation strategy that delays the evaluation of expressions until they are needed is called **lazy evaluation**. We have seen this in **Step 2**.  
-In Scheme and most of other dialects of LISP use `call-by-value` strategy. Under such language, both `(take integers 5)` and `(+ 2)` are computed in **Step 1** before it gets applied to `map`.  
+Scheme and most of other dialects of LISP use `call-by-value` strategy. Under such language, both `(take integers 5)` and `(+ 2)` are computed in **Step 1** before it gets applied to `map`.  
 Lazy evaluation allows us to handle infinit data easily as we saw in the example of `(take integers 5)`.
 
 Another important idea we saw is **Currying**. `(+ 2)` inspite of shortage of arguments it did not cause an error. Instead it returned a closure that take an argument and + it to 2. This is made possible thanks to currying. As I mentioned in the **lambda expression** section, a function that take more than one arguments is implicitly turned into a function that "take one argument and returns a function that take another argument". Such function is called a *Curried function*.
@@ -165,7 +165,7 @@ Implementations SHOLD implement "call-by-need" instead of "call-by-name".
 Almost everything is a closure
 -------------------------------
 
-Nadeko does not have to provide lists as primitive data type because they can easily be simulated with closures.
+Nadeko implementations does not have to provide lists as primitive data type because they can easily be simulated with closures.
 
 Similarly, booleans are closures and `if` can be implemented as a function.
 
