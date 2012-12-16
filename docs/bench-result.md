@@ -14,6 +14,8 @@ gosh Nadeko.scm -l=examples/srfi-1.nadeko  4.53s user 0.02s system 99% cpu 4.548
 ### With Krivine's Machine
 gosh Nadeko.scm -l=examples/srfi-1.nadeko  2.38s user 0.01s system 99% cpu 2.396 total
 
+### With Krivine's Machine Extended with proper support for primitives
+gosh Nadeko.scm -l=examples/srfi-1.nadeko  1.76s user 0.01s system 99% cpu 1.773 total
 
 ## Tarai
 

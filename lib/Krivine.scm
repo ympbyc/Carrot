@@ -99,7 +99,7 @@
   ;; creates a global binding
   (define (DEFINE args code env stack c-stack)
     (hash-table-put! *global-env* (car args) (car stack)) ;side effect
-    (print (car args))
+    ;(print (car args))
     (Krivine-
       code
       env
