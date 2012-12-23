@@ -1,0 +1,29 @@
+;;; IO Monad ;;;
+
+;require prelude
+
+(:= (<o) eq?)
+
+(:= (world =>)
+  (<o 'putStrLn => (-> (s) (-> (f) (f (2-tuple (** print s) world))))
+  (<o 'getLine  => (-> (f) (f (2-tuple (** read) world)))
+  nil)))
+
+(:= (>>= m f) (f (fst m)(snd m)))
+
+(:= (main world)
+  (world 'putStrLn "Hello, what's your name?" >>= (-> (_ world) 
+    (world 'getLine >>= (-> (name world) 
+      (world 'putStrLn (++ (++ "Hey " name) ", you rock!")))))))
+
+
+
+(:= (world2 =>)
+  (<o 'putStrLn => (-> (s) (2-tuple (** print s) world2))
+  (<o 'getLine  => (2-tuple (** read) world2)
+  nil)))
+
+(:= (main2 world)
+  (>>= (world 'putStrLn "Helo, what's your name?") (-> (_ world)
+    (>>= (world 'getLine) (-> (name world) 
+      (world 'putStrLn (++ (++ "Hey " name) ", you rock!") >>= id))))))
