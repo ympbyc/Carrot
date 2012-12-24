@@ -28,7 +28,7 @@
   ;;compile :: Nadeko -> Krivine
   (define (compile program)
     (let ([code (cons `(,CLOSURE ((,STOP))) (concatenate (map (fn (x) (compile- `(,x))) program)))])
-      (print code)
+      ;(print code)
       (append code `((,CONTINUE)))))
 
   (define (compile- program)
