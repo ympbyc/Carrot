@@ -4,26 +4,17 @@
 
 (:= (<o) eq?)
 
-(:= (world =>)
-  (<o 'putStrLn => (-> (s) (-> (f) (f (2-tuple (** print s) world))))
-  (<o 'getLine  => (-> (f) (f (2-tuple (** read) world)))
-  nil)))
+(:= (*world* v w =>)
+  (<o 'putStrLn => (-> (s) (*world* (** print s) (++ w v)))
+  (<o 'getLine  => (*world* (** read) v)
+  (<o 'val      => (++ w v)
+  nil))))
 
-(:= (>>= m f) (f (fst m)(snd m)))
+(:= (>>= m f) (f m))
 
 (:= (main world)
-  (world 'putStrLn "Hello, what's your name?" >>= (-> (_ world) 
-    (world 'getLine >>= (-> (name world) 
-      (world 'putStrLn (++ (++ "Hey " name) ", you rock!")))))))
+  (>>= (world 'putStrLn "Hello, what's your name?")
+       (-> (world) (>>= (world 'getLine)
+                        (-> (world) (world 'putStrLn (++ (++ "Hey " (world 'val)) ", you rock!") 'val))))))
 
-
-
-(:= (world2 =>)
-  (<o 'putStrLn => (-> (s) (2-tuple (** print s) world2))
-  (<o 'getLine  => (2-tuple (** read) world2)
-  nil)))
-
-(:= (main2 world)
-  (>>= (world 'putStrLn "Helo, what's your name?") (-> (_ world)
-    (>>= (world 'getLine) (-> (name world) 
-      (world 'putStrLn (++ (++ "Hey " name) ", you rock!") >>= id))))))
+(:= (world) (*world* "" ""))
