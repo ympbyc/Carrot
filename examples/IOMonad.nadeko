@@ -3,10 +3,10 @@
 
 (:= (>>= io1 f world)
     ((-> (tuple) 
-        (f (snd tuple) (car tuple))) (io1 world)))
+        (f (snd tuple) (fst tuple))) (io1 world)))
 
 (:= (printIO message world)
-        (2-tuple world (** print message)))
+  (2-tuple world (** print message)))
 
 (:= (readIO world)
     (2-tuple world (** read-line)))
@@ -21,22 +21,3 @@
     doneIO))
 
 (unsafePerformIO main)
-
-
-
-
-
-
-
-
-
-
-
-;(:= (doItWithDate f)
-;    (>>= dateIO f))
-
-;(:= (greetIO world)
-;    (2-tuple world "Hello, what's your name?"))
-
-;(:= (responseIO name world)
-;    (2-tuple world (++ (++ "Hey " name) ", you rock!")))
