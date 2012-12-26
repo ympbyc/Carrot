@@ -18,6 +18,12 @@
           [false `((,ACCESS false)  (,CONTINUE))])
 
       (cond
+        ;zero arg
+        [(eq? subr 'read)
+          (Krivine- code env stack (cons (read) (cdr c-stack)))]
+        [(eq? subr 'read-line)
+          (Krivine- code env stack (cons (read-line) (cdr c-stack)))]
+
         ;one arg
         [(mark? (car c-stack))
          (if (find (lambda (x) (eq? x subr)) '(string? number? num->str))
@@ -34,8 +40,8 @@
           (Krivine- code env stack
             (cons (number->string (car c-stack)) (cddr c-stack)))]
         [(eq? subr 'print)
-          (print (car c-stack))
-          (Krivine- code env stack (cons (car c-stack) (cddr c-stack)))]
+          (print (car c-stack)) (flush)
+          (Krivine- code env stack (cons #|(car c-stack)|# "" (cddr c-stack)))]
 
         ;two args
         [(mark? (cadr c-stack))
