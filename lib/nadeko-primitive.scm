@@ -41,7 +41,7 @@
             (cons (number->string (car c-stack)) (cddr c-stack)))]
         [(eq? subr 'print)
           (print (car c-stack)) (flush)
-          (Krivine- code env stack (cons (car c-stack) (cddr c-stack)))]
+          (Krivine- code env stack (cons #|(car c-stack)|# "" (cddr c-stack)))]
 
         ;two args
         [(mark? (cadr c-stack))
