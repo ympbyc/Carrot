@@ -21,6 +21,8 @@
         ;zero arg
         [(eq? subr 'read)
           (Krivine- code env stack (cons (read) (cdr c-stack)))]
+        [(eq? subr 'read-line)
+          (Krivine- code env stack (cons (read-line) (cdr c-stack)))]
 
         ;one arg
         [(mark? (car c-stack))
