@@ -12,7 +12,7 @@
     (2-tuple world (** read-line)))
 
 (:= (doneIO world)
-    (2-tuple world nil))
+    (2-tuple (-> (_) "") ""))
 
 (:= (main)
   (>>=
