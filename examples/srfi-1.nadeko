@@ -152,7 +152,11 @@
   (remove alst (compose (eq? key) fst)))
 
 
-
+;; predicate
+(:= (list-eq? ls1 ls2)
+  (nil? ls1 (nil? ls2 true false)
+    (eq? (car ls1) (car ls2) (list-eq (cdr ls1) (cdr ls2))
+      false)))
 
 
 ;;; suffix functions ;;;

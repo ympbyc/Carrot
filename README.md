@@ -201,3 +201,13 @@ Invention of suffix functions is mind-blowingly awesome.
 
 See the source of this magic in examples/srfi-1.nadeko.
 
+Influenced by
+--------------
+
+Nadeko is influenced by the following languages
+
++ Haskell      - for lazyness and currying
++ Scheme       - for syntax and actors
++ Io           - for simplicity
++ Smalltalk-72 - for messaging notation
+
