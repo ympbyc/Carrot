@@ -1,0 +1,42 @@
+(:= (unsafePerformIO io)
+    (snd (io "This is the real world!!")))
+
+(:= (>>= io1 f world)
+    ((-> (tuple) 
+        (f (snd tuple) (car tuple))) (io1 world)))
+
+(:= (printIO message world)
+        (2-tuple world (** print message)))
+
+(:= (readIO world)
+    (2-tuple world (** read-line)))
+
+(:= (doneIO world)
+    (2-tuple (-> (_) "") ""))
+
+(:= (main)
+  (>>=
+    (>>= (printIO "What is ") 
+          (>>= (printIO "your name?") (>>= readIO (-> (v w) (printIO (++ "Hello " v) w)))))
+    doneIO))
+
+(unsafePerformIO main)
+
+
+
+
+
+
+
+
+
+
+
+;(:= (doItWithDate f)
+;    (>>= dateIO f))
+
+;(:= (greetIO world)
+;    (2-tuple world "Hello, what's your name?"))
+
+;(:= (responseIO name world)
+;    (2-tuple world (++ (++ "Hey " name) ", you rock!")))
