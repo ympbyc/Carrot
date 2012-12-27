@@ -1,0 +1,8 @@
+(:= (ret x) x)
+(:= (>>= m f) (f m))
+(:= (mread) (** read))
+(:= (mwrite x) (** print x))
+(:= (main m) m)
+(:= (inc x) (ret (+ x 1)))
+(:= (sqr x) (ret (* x x))) ;;executes mread twice
+(main (>>= (>>= (>>= mread inc) sqr) mwrite))
