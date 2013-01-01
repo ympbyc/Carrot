@@ -72,7 +72,7 @@ Where *identifier ...* is replaced with an arbitrary number of identifiers, and 
 ```
 
 The expression A, when applied, computes the squared value of a given number.  
-The expression B, when applied, performs a simple alithmetic operations on three numbers.  
+The expression B, when applied, performs a simple arithmetic operations on three numbers.  
 Note that the expression B is semantically the same as the following expression.
 
 **code 4** *explicit currying*
