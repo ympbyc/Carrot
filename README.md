@@ -29,14 +29,18 @@ Characters in a line after semicolon are treated as comments
 ### Primitive values **(Expression)**
 
 Primitive values are values that evaluates to itself. They include numbers, characters, strings, symbols and so on.
-Nadeko does not specify what primitive values have to be provided by the implementation nor the literal notation of them.
+Implementations must provide at least the following primitives:
+
++ Strings
++ Numbers
++ Symbols
 
 **code 1** *examples of primitive values*
 
 ```lisp
-"abcd"
-1
-'foo
+"abcd"    ;string
+1         ;number
+'foo      ;symbol
 ```
 
 ### Identifiers **(Expression)**
@@ -49,7 +53,7 @@ An identifier consists of one or more non-whitespace charactors. Some combinatio
 ```lisp
 aaa
 -he-lo-
-!#$%&-=^~|@{[]};+:*<>,_
+!#$%&-=^~|@{[]}+:*<>,_
 ```
 
 Implementations SHOULD allow every character not used for literals to be used to construct identifiers.

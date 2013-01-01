@@ -1,0 +1,17 @@
+(:= (<o) eq?)
+
+(:= (*world* v =>)
+  (<o 'print => (-> (s) (** printW s)) ;where printW returns a *world*
+  (<o 'read  => (** read-lineW) ;if we do not use read value, there's no need to read...
+  (<o 'value => v
+  nil))))
+
+(:= (->> w f)
+  (f w))
+
+(:= (main w)
+  (->> (w 'print "Hello, what's your name?")
+       (-> (w) (->> (w 'read)
+                    (-> (rw) (rw 'print (++ "Hello " (rw 'value))))))))
+
+(main (*world* ""))
