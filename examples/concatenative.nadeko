@@ -9,9 +9,18 @@
 (:= (cddr) (compose cdr cdr))
 
 (:= (cat stk =>)
-    (<o '+ => (cat (cons (+ (car stk) (cadr stk)) (cddr stk)))
-    (<o 'end => stk
-    (number? =>  (cat (cons => stk))
-    nil))))
+  (<o 'end => (car stk)
+  (number? => (cat (cons => stk))
+  (=> stk))))
 
-(car (cat nil 5 6 '+ 7 '+ 8 9 '+ '+ 'end)) ;=> 35
+(:= (cat/two-arg op stk)
+  (cat (cons (op (cadr stk) (car stk)) (cddr stk))))
+
+(:= (cat/+) (cat/two-arg +))
+(:= (cat/-) (cat/two-arg -))
+(:= (cat/*) (cat/two-arg *))
+(:= (cat//) (cat/two-arg /))
+
+(:= (cat/run) (cat nil))
+
+(cat/run 5 6 cat/+ 7 cat/+ 8 9 cat/+ cat/+ 'end) ;=> 35
