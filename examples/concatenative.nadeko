@@ -7,20 +7,42 @@
 (:= (<o) eq?)
 (:= (cadr) (compose car cdr))
 (:= (cddr) (compose cdr cdr))
+(:= (caddr) (compose car cddr))
+(:= (cdddr) (compose cdr cddr)) 
 
 (:= (cat stk =>)
-  (<o 'end => (car stk)
+  (<o 'end => stk
   (number? => (cat (cons => stk))
-  (=> stk))))
+  (cat (=> stk)))))
 
-(:= (cat/two-arg op stk)
-  (cat (cons (op (cadr stk) (car stk)) (cddr stk))))
+(:= (cat/two-arg op stk) ;( a b -- c )
+  (cons (op (cadr stk) (car stk)) (cddr stk)))
 
 (:= (cat/+) (cat/two-arg +))
 (:= (cat/-) (cat/two-arg -))
 (:= (cat/*) (cat/two-arg *))
 (:= (cat//) (cat/two-arg /))
 
+;;Stack manipulation words
+(:= (dup stk) ;( a -- a a )
+  (cons (car stk) stk))
+(:= (drop stk) ;( a -- )
+  (cdr stk))
+(:= (swap stk) ;( a b -- b a)
+  (cons (cadr stk) (cons (car stk) (cddr stk))))
+(:= (over stk) ;( a b -- a b a)
+  (cons (car stk) (cons (cadr stk) (cons (car stk) (cddr stk)))))
+(:= (rot stk) ;( a b c -- b c a)
+  (cons (cadr stk) (cons (caddr stk) (cons (car stk) (cdddr stk)))))
+(:= (nip stk) ;( a b -- b)
+  (compose drop swap))
+(:= (tuck stk) ;( a b -- b a b)
+  (compose over swap))
+
 (:= (cat/run) (cat nil))
 
-(cat/run 5 6 cat/+ 7 cat/+ 8 9 cat/+ cat/+ 'end) ;=> 35
+;example
+;(cat/run 5 6 cat/+ 7 cat/+ 8 9 cat/+ cat/+ 'end) ;=> 35
+
+;(cat/run 5 10 (quote- 2 cat/+) dip 'end)
+
