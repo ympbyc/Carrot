@@ -9,6 +9,34 @@ Dec 2012 Minori Yamashita <ympbyc@gmail.com>
 ```
 
 
+Installation
+------------
+
++ Install gauche http://practical-scheme.net/gauche/index.html
++ Clone this repository
+
+REPL
+----
+
+### To run the interim version of nadeko interpreter
+
+```
+./InterimNadeko
+```
+
+### To load examples
+
+```
+./InterimNadeko -l=examples/....nadeko
+```
+
+### To run the VM at the bleeding edge
+
+```
+./Nadeko.scm
+```
+
+
 The language
 ------------
 

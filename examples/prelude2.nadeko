@@ -1,0 +1,66 @@
+;;primitive wrapper
+(:= (eq? a b) (** **eq? a b))
+(:= (= a b)   (** **= a b))
+(:= (< a b)   (** **< a b))
+(:= (> a b)   (** **< b a))
+(:= (<= a b)  (** **<= a b))
+(:= (>= a b)  (** **<= b a))
+(:= (+ a b)   (** **+ a b))
+(:= (- a b)   (** **- a b))
+(:= (* a b)   (** *** a b))
+(:= (/ a b)   (** **/ a b))
+(:= (% a b)   (** **% a b))
+(:= (++ a b)  (** **++ a b))
+(:= (num->str a) (** **num->str a))
+(:= (number? a)  (** **number? a))
+(:= (string? a)  (** **string? a))
+
+;;bool
+(:= (true  t e) t)
+(:= (false t e) e)
+(:= (not bool)
+  (bool false true))
+
+;;function
+(:= (compose f1 f2 a) (f1 (f2 a)))
+(:= (apply f lst)
+  (nil? lst f (apply (f (car lst)) (cdr lst))))
+
+;;list
+(:= (cons head tail f) (f head tail))
+(:= (car lst) (lst (-> (h t) h)))
+(:= (cdr lst) (lst (-> (h t) t)))
+(:= (nil) 'nil)
+(:= (nil?) (eq? nil))
+
+;;tuple
+(:= (2-tuple) cons)
+(:= (fst) car)
+(:= (snd) cdr)
+
+;;Y-combinator
+;;(Y (-> (f) f)) ;now f refers to the function itself
+(:= (Y f) ((-> (x) (f (x x))) (-> (x) (f (x x)))))
+
+;;show
+(:= (show a)
+  (string? a a
+    (number? a (num->str a)
+      (nil? a "nil"
+        (++ (++ (show (car a)) ", ") (show (cdr a)))))))
+
+;;help
+(:= (help) "SYNTAX:\n\
+(:= (name parameter ...) expression) ;(statement) binds a function to a name\n\
+(-> (parameter ...) expression)      ;(expression) lambda expression\n\
+(** primitive-name argument ...)     ;(expression) call a primitive function. Most of them are abstructed so you rarely have to use this syntax\n\
+(function-name argument ...)         ;(expression) apply a function to values
+\"string\"                             ;(expression)\n\
+number                               ;(expression)\n\
+'symbol                              ;(expression)\n\n\
+FEATURE:\n\
+* Default lazy evaluation\n\
+* Automatic currying\n\n\
+REPL:\n\
+^C to exit\n\
+help to see this help")

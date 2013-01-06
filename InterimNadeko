@@ -1,0 +1,116 @@
+#!/usr/local/bin/gosh
+
+;;;; Nadeko -> Scheme ;;;;
+;;; 2012 Minori Yamashita <ympbyc@gmail.com> ;;add your name here
+;;;
+
+
+(use srfi-1)
+(use gauche.parseopt)
+
+;;Helper
+(define (atom? x)
+  (cond
+    [(string?  x) #t]
+    [(number?  x) #t]
+    [(char?    x) #t]
+    [else #f]))
+
+;(-> (x y z) ...) ----> (lambda (x) (lambda (y) (lambda (z) ...)))
+(define (curry params exp)
+  (if (null? params) (compile- exp)
+    `(lambda (,(car params)) ,(curry (cdr params) exp))))
+
+;(f x y z) ----> (((f x) y) z)
+(define (uncurry f args)
+  (if (null? (cdr args)) (list f `(delay ,(compile- (car args))))
+    (uncurry (list f `(delay ,(compile- (car args)))) (cdr args))))
+
+;;; Compiler ;;;
+  
+;;compile :: Nadeko -> Scheme
+(define (compile program)
+  (map compile- program))
+
+(define (compile- exp)
+  (cond
+    [(atom? exp) exp]
+
+    [(symbol? exp)
+     `(thaw-cache ,exp)]
+
+    [(eq? (car exp) 'quote) `(quote ,exp)]
+
+    [(eq? (car exp) '**)
+      ;(** **+ 2 3)
+      (cons (cadr exp) (map compile- (cddr exp)))]
+
+    [(eq? (car exp) ':=)
+      ;(:= (f a b) a)
+      `(define ,(caadr exp) ,(compile- `(-> ,(cdadr exp) ,(caddr exp))))]
+
+    [(eq? (car exp) '->)
+      ;(-> (a b f) (f a b))
+      (curry (cadr exp) (caddr exp))]
+
+    [else
+      ;(f a b c)
+      (uncurry (compile- (car exp)) (cdr exp))]));)
+
+
+;;; environment used for eval ;;;
+(define-module Nadeko
+  (export-all)
+
+  (define-syntax thaw-cache
+    (syntax-rules ()
+      ((_ sym) 
+       (if (promise? sym) (begin (set! sym (force sym)) sym) sym))))
+
+  (define true  (lambda (x) (lambda (y) (thaw-cache x))))
+  (define false (lambda (x) (lambda (y) (thaw-cache y))))
+
+  ;;save reference to original procedures 
+  (define (**eq? x y) (if (equal? x y) true false))
+  (define (**= x y) (if (= x y) true false))
+  (define (**< x y) (if (< x y) true false))
+  (define (**> x y) (if (> x y) true false))
+  (define (**<= x y) (if (<= x y) true false))
+  (define (**>= x y) (if (>= x y) true false))
+  (define **+ +)
+  (define **- -)
+  (define *** *)
+  (define **/ /)
+  (define **% mod)
+  (define **++ string-append)
+  (define **num->str number->string)
+  (define (**number? x) (if (number? x) true false))
+  (define (**string? x) (if (string? x) true false))
+)
+
+
+(define (read-list port)
+  (let ((exp (read port)))
+    (if (eof-object? exp) '()
+      (cons exp (read-list port)))))
+
+(define (pre-load fname)
+  (call-with-input-file fname (lambda (file-port)
+    (eval (cons 'begin (compile (read-list file-port))) (find-module 'Nadeko)))))
+
+(define (REPL module)
+  (display "nadeko> ")
+  (flush)
+  (let ([code (cons 'begin (compile `(,(read))))])
+    (guard (exc
+      [else (print (format "**exception** ~S" exc)) (REPL module)])
+      (print (eval code (find-module module)))
+      (REPL module))))
+
+(define (main args)
+  (let-args (cdr args)
+    ((load-fname "l|load=s"))
+   (print "Nadeko, version 3.0.0(SPINOFF): https://github.com/ympbyc/Nadeko ^C to exit")
+   (pre-load "examples/prelude2.nadeko")
+   (if load-fname (pre-load load-fname))
+   (REPL 'Nadeko)))
