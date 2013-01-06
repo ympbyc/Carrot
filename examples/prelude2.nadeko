@@ -16,8 +16,6 @@
 (:= (string? a)  (** **string? a))
 
 ;;bool
-(:= (true  t e) t)
-(:= (false t e) e)
 (:= (not bool)
   (bool false true))
 

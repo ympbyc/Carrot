@@ -4,8 +4,8 @@
   (nil? xs (cons x nil)
     (f x (xs -remove f) (cons x (xs -remove f)))))
 
+(:= (primes) (inf-int 2 -sieve))
+
 (:= (-sieve p ps)
   (cons p
     (ps -remove (-> (x) (= (% x p) 0)) -sieve)))
-
-(:= (primes) (inf-int 2 -sieve))

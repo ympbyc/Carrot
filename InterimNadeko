@@ -30,7 +30,7 @@
   
 ;;compile :: Nadeko -> Scheme
 (define (compile program)
-  (map compile- program))
+  (print (map compile- program)) (map compile- program))
 
 (define (compile- exp)
   (cond
@@ -47,7 +47,7 @@
 
     [(eq? (car exp) ':=)
       ;(:= (f a b) a)
-      `(define ,(caadr exp) ,(compile- `(-> ,(cdadr exp) ,(caddr exp))))]
+      `(define ,(caadr exp) (delay ,(compile- `(-> ,(cdadr exp) ,(caddr exp)))))]
 
     [(eq? (car exp) '->)
       ;(-> (a b f) (f a b))
@@ -72,11 +72,11 @@
 
   ;;save reference to original procedures 
   (define (**eq? x y) (if (equal? x y) true false))
-  (define (**= x y) (if (= x y) true false))
-  (define (**< x y) (if (< x y) true false))
-  (define (**> x y) (if (> x y) true false))
-  (define (**<= x y) (if (<= x y) true false))
-  (define (**>= x y) (if (>= x y) true false))
+  (define (**= x y)   (if (= x y) true false))
+  (define (**< x y)   (if (< x y) true false))
+  (define (**> x y)   (if (> x y) true false))
+  (define (**<= x y)  (if (<= x y) true false))
+  (define (**>= x y)  (if (>= x y) true false))
   (define **+ +)
   (define **- -)
   (define *** *)
