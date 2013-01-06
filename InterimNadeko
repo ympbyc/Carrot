@@ -30,7 +30,7 @@
   
 ;;compile :: Nadeko -> Scheme
 (define (compile program)
-  (print (map compile- program)) (map compile- program))
+  (map compile- program))
 
 (define (compile- exp)
   (cond
