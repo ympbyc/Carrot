@@ -23,6 +23,9 @@
 (:= (cat/*) (cat/two-arg *))
 (:= (cat//) (cat/two-arg /))
 
+(:= (cat/read stk)  (cons (** read) stk))
+(:= (cat/print stk) (** print (car stk) (cdr stk)))
+
 ;;Stack manipulation words
 (:= (dup stk) ;( a -- a a )
   (cons (car stk) stk))

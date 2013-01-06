@@ -86,6 +86,10 @@
   (define **num->str number->string)
   (define (**number? x) (if (number? x) true false))
   (define (**string? x) (if (string? x) true false))
+  (define **print print)
+  (define (print x y)
+    (**print x)
+    y)
 )
 
 
