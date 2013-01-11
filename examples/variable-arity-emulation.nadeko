@@ -1,0 +1,7 @@
+(:= (List l mes)
+  (eq? mes 'end l
+    (List (cons mes l))))
+
+(:= (cons*) (List nil))
+
+;(show (cons* 1 2 3 4 'end))
