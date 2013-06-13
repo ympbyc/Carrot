@@ -90,9 +90,9 @@ Implementations SHOULD allow every character not used for literals to be used to
 
 Lambda expressions create closures. Closures are objects that when applied to a value return another value. They are basically, functions carrying its own environment with it.
 
-Lambda expressions have the syntactic form  
-(-> ( *identifier ...* ) *expression*)  
-Where *identifier ...* is replaced with an arbitrary number of identifiers, and *expression* is replaced with an actual expression.  
+Lambda expressions have the syntactic form
+(-> ( *identifier ...* ) *expression*)
+Where *identifier ...* is replaced with an arbitrary number of identifiers, and *expression* is replaced with an actual expression.
 *identifier* is a parameter that gets bound to a value(actualy a thunk as we see later) when the closure is applied to arguments.
 
 **code 3** *lambda expressions*
@@ -103,8 +103,8 @@ Where *identifier ...* is replaced with an arbitrary number of identifiers, and 
 (-> (a b c) (* a (+ b c))) ;;B
 ```
 
-The expression A, when applied, computes the squared value of a given number.  
-The expression B, when applied, performs a simple arithmetic operations on three numbers.  
+The expression A, when applied, computes the squared value of a given number.
+The expression B, when applied, performs a simple arithmetic operations on three numbers.
 Note that the expression B is semantically the same as the following expression.
 
 **code 4** *explicit currying*
@@ -113,16 +113,16 @@ Note that the expression B is semantically the same as the following expression.
 (-> (a) (-> (b) (-> (c) (* a (+ b c))))) ;;C
 ```
 
-In fact, Nadeko interprets the code B as C.  
+In fact, Nadeko interprets the code B as C.
 We will discuss the significance of it later.
 
 
 ### Definition (Statement)
 
-The expression  
-(:= ( *name* *[identifier ...]*) *expression*)  
-Binds the *expression* to the *name*.  
-If one or more parameters( *identifier ...* ) are given, they can be used in the *expression* to refer to the values the function is applied to.  
+The expression
+(:= ( *name* *[identifier ...]*) *expression*)
+Binds the *expression* to the *name*.
+If one or more parameters( *identifier ...* ) are given, they can be used in the *expression* to refer to the values the function is applied to.
 (:= ( *name* *identifier ...*) *expression*) is interpreted the same as
 (:= ( *name*) (-> ( *identifier ...*) *expression*)).
 
@@ -130,9 +130,9 @@ If one or more parameters( *identifier ...* ) are given, they can be used in the
 
 ```lisp
 (:= (map lst f)
-    (nil? lst 
-          nil 
-          (cons (f (car lst)) 
+    (nil? lst
+          nil
+          (cons (f (car lst))
                 (map (cdr lst) f))))
 ```
 
@@ -166,7 +166,7 @@ The expression B is a bit more complicated and it introduces some important feat
 > > `take` is a function that take n number of items from a list
 > > so the resulting value of `(take integers 5)` is a list containing 0, 1, 2, 3, and 4
 >
-> 3. `nil?` starts evaluating with the list we obtained in **Step 2** 
+> 3. `nil?` starts evaluating with the list we obtained in **Step 2**
 > > `nil?` is a function to test if the first argument given is `nil`
 > > since our list of integers are not `nil`, `nil?` returns `false`
 >
@@ -183,10 +183,10 @@ The expression B is a bit more complicated and it introduces some important feat
 >
 > 6. evaluation continues
 
-The proccess showed two important evaluation strategy Nadeko uses. Lazy evaluation and Currying.  
+The proccess showed two important evaluation strategy Nadeko uses. Lazy evaluation and Currying.
 
-The evaluation strategy that delays the evaluation of expressions until they are needed is called **lazy evaluation**. We have seen this in **Step 2**.  
-Scheme and most of other dialects of LISP use `call-by-value` strategy. Under such language, both `(take integers 5)` and `(+ 2)` are computed in **Step 1** before it gets applied to `map`.  
+The evaluation strategy that delays the evaluation of expressions until they are needed is called **lazy evaluation**. We have seen this in **Step 2**.
+Scheme and most of other dialects of LISP use `call-by-value` strategy. Under such language, both `(take integers 5)` and `(+ 2)` are computed in **Step 1** before it gets applied to `map`.
 Lazy evaluation allows us to handle infinit data easily as we saw in the example of `(take integers 5)`.
 
 Another important idea we saw is **Currying**. `(+ 2)` inspite of shortage of arguments it did not cause an error. Instead it returned a closure that take an argument and + it to 2. This is made possible thanks to currying. As I mentioned in the **lambda expression** section, a function that take more than one arguments is implicitly turned into a function that "take one argument and returns a function that take another argument". Such function is called a *Curried function*.
@@ -208,7 +208,7 @@ S-expression without paren hell
 
 Nadeko's auto-currying feature togather with lazyness gave us an unexpected gift -- Reducutions of parentheses.
 
-Because the arguments are delayed automaticaly, we can implement booleans as functions. 
+Because the arguments are delayed automaticaly, we can implement booleans as functions.
 
 ```lisp
 (:= (true t e) t)
@@ -231,6 +231,7 @@ Invention of suffix functions is mind-blowingly awesome.
 (integers -take 5 -map (* 2) -fold + 0)
 ```
 
+Note this is not a syntactic feature. All these `-take`, `-map` and `-fold` are ordinary functions.
 See the source of this magic in examples/srfi-1.nadeko.
 
 Influenced by
@@ -242,4 +243,3 @@ Nadeko is influenced by the following languages
 + Scheme       - for syntax and actors
 + Io           - for simplicity
 + Smalltalk-72 - for messaging notation
-
