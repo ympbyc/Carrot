@@ -8,52 +8,91 @@
 ; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ;;;;
 
-;; Constructors
+;;; Constructors ;;;
+
 (:= (cons h t f) (f h t))
 (:= (make-integers-from n) (cons n (make-integers-from (+ n 1))))
 (:= (integers) (make-integers-from 0))
 
-;; Selectors
+
+
+
+;;; Selectors ;;;
+
 (:= (car lst) (lst (-> (h t) h)))
+
+
 (:= (cdr lst) (lst (-> (h t) t)))
+
+
 (:= (list-ref lst i)
   (nil? lst false
     (= i 0 (car lst) (list-ref (cdr lst) (- i 1)))))
+
+
 (:= (take lst n)
   (nil? lst false
     (= n 0 nil
       (cons (car lst) (take (cdr lst) (- n 1))))))
+
+
 (:= (drop lst i)
   (nil? lst false
     (= i 0 lst (drop (cdr lst) (- i 1)))))
+
+
 (:= (take-right lst i)
   (drop lst (- (length lst) i)))
+
+
 (:= (drop-right lst i)
   (take lst (- (length lst) i)))
+
+
 (:= (split-at lst i)
   (2-tuple (take lst i) (drop lst i)))
+
+
 (:= (last lst)
   (nil? (cdr lst) (car lst) (last (cdr lst))))
 
-;; Miscellaneous
+
+
+
+;;; Miscellaneous ;;;
+
 (:= (length lst) (nil? lst 0 (+ 1 (length (cdr lst)))))
+
+
 (:= (append lst1 lst2)
   (nil? lst1 lst2
     (cons (car lst1) (append (cdr lst1) lst2))))
+
+
 (:= (concatenate) (apply append))
+
+
 (:= (reverse lst)
   (fold lst (-> (x ac) (cons x ac)) nil))
+
+
 (:= (zip lst1 lst2)
   (nil? lst1 nil 
     (nil? lst2 nil 
       (cons (2-tuple (car lst1) (car lst2))
         (zip (cdr lst1) (cdr lst2))))))
+
+
 (:= (zipWith lst1 f lst2)
   (nil? lst1 nil 
     (nil? lst2 nil 
       (cons (f (car lst1) (car lst2))
         (zipWith (cdr lst1) f (cdr lst2))))))
+
+
 (:= (unzip lst) (unzip- nil nil (reverse lst)))
+
+
 (:= (unzip- lst1 lst2 zipped)
   (nil? zipped 
     (2-tuple lst1 lst2)
@@ -61,102 +100,163 @@
       (cons (fst (car zipped)) lst1)
       (cons (snd (car zipped)) lst2)
       (cdr zipped))))
+
+
 (:= (count1 lst pred)
   (nil? lst 0
     (pred (car lst) (+ 1 (count1 (cdr lst) pred))
       (count1 (cdr lst) pred))))
+
+
 (:= (count2 lst1 lst2 pred)
   (nil? lst1 0
     (nil? lst2 0
       (pred (car lst1) (car lst2) (+ 1 (count2 (cdr lst1) (cdr lst2) pred))
         (count2 (cdr lst1) (cdr lst2) pred)))))
 
-;; Fold, unfold & map
+
+
+
+;;; Fold, unfold & map ;;;
+
 (:= (fold lst f init)
   (nil? lst init
     (fold (cdr lst) f (f (car lst) init))))
+
+
 (:= (fold-right lst f init) 
   (nil? lst init
     (f (car lst) (fold-right (cdr lst) f init))))
+
+
 (:= (unfold p f g seed)
   (p seed nil
     (cons (f seed) (unfold p f g (g seed)))))
+
+
 ;(:= (unfold-right) ) ;pending
+
+
 (:= (map lst f)
   (nil? lst nil (cons (f (car lst)) (map (cdr lst) f))))
 
-;; Filtering & partitioning
+
+
+
+;;; Filtering & partitioning ;;;
+
 (:= (filter lst f)
   (nil? lst nil
     (f (car lst) (cons (car lst) (filter (cdr lst) f)) (filter (cdr lst) f))))
+
+
 (:= (partition lst) (partition- nil nil (reverse lst)))
+
+
 (:= (partition- acc1 acc2 lst p)
   (nil? lst (2-tuple acc1 acc2)
     (p (car lst)
       (partition- (cons (car lst) acc1) acc2 (cdr lst) p)
       (partition- acc1 (cons (car lst) acc2) (cdr lst) p))))
+
+
 (:= (remove lst f)
   (nil? lst nil
     (f (car lst) (remove (cdr lst) f) (cons (car lst) (remove (cdr lst) f)))))
 
 
-;; Searching
+
+
+;;; Searching ;;;
+
 (:= (find lst pred)
   (nil? lst false
     (pred (car lst) (car lst)
       (find (cdr lst) pred))))
+
+
 (:= (find-tail lst pred)
   (nil? lst false
     (pred (car lst) lst
       (find-tail (cdr lst) pred))))
+
+
 (:= (take-while lst pred)
   (nil? lst nil
     (pred (car lst) (cons (car lst) (take-while (cdr lst) pred)) nil)))
+
+
 (:= (drop-while lst pred)
   (nil? lst nil
     (pred (car lst) (drop-while (cdr lst) pred) lst)))
+
+
 (:= (any? lst pred)
   (nil? lst false
     (pred (car lst) true (any? (cdr lst) pred))))
+
+
 (:= (every? lst pred)
   (nil? lst true
     (pred (car lst) (every? (cdr lst) pred) false)))
+
+
 (:= (list-index lst pred)
   (nil? lst false
     (pred (car lst) 0
       (+ 1 (list-index (cdr lst) pred)))))
+
+
 (:= (member lst x)
   (nil? lst false
     (eq? (car lst) x lst (member (cdr lst) x))))
+
+
 (:= (delete lst x)
   (nil? lst nil
     (eq? (car lst) x 
       (delete (cdr lst) x)
       (cons (car lst) (delete (cdr lst) x)))))
+
+
 (:= (delete-duplicates lst)
   (nil? lst nil
     (cons (car lst) (delete-duplicates (delete lst (car lst))))))
 
-;; Association lists
+
+
+
+;;; Association lists ;;;
+
 (:= (assoc alst key)
   (nil? alst false
     (eq? (fst (car alst)) key (car alst)
       (assoc (cdr alst) key))))
+
+
 (:= (alist-cons key datum alst)
   (cons (2-tuple key datum) alst))
+
+
 (:= (alist-copy alst)
   (nil? alst nil
     (cons (2-tuple (fst (car alst)) (snd (car alst))) 
       (alist-copy (cdr alst)))))
+
+
 (:= (alist-delete alst key)
   (remove alst (compose (eq? key) fst)))
 
 
-;; predicate
+
+
+;;; predicate ;;;
+
 (:= (list-eq? ls1 ls2)
   (nil? ls1 (nil? ls2 true false)
     (eq? (car ls1) (car ls2) (list-eq (cdr ls1) (cdr ls2))
       false)))
+
 
 
 ;;; suffix functions ;;;
