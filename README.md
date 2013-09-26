@@ -5,7 +5,11 @@ Dec 2012 Minori Yamashita <ympbyc@gmail.com>
 
 
 ```lisp
-(Y (-> (f) (cons 1 (zipWith f + (cdr f)) -cons 1)) -take 10 -reverse -fold (compose (compose ++ (++ ",")) show) "")
+(Y (^ f (cons 1 (zipWith f + (cdr f)) -cons 1))
+  -take 10
+  -reverse
+  -fold (compose (compose ++ (++ ",")) show)
+  "")
 ```
 
 
@@ -18,22 +22,10 @@ Installation
 REPL
 ----
 
-### To run the interim version of nadeko interpreter
-
-```
-./InterimNadeko
-```
-
-### To load examples
-
-```
-./InterimNadeko -l=examples/....nadeko
-```
-
 ### To run the VM at the bleeding edge
 
 ```
-./Nadeko.scm
+./Nadeko.scm -l=examples/srfi-1.scm
 ```
 
 
@@ -91,16 +83,16 @@ Implementations SHOULD allow every character not used for literals to be used to
 Lambda expressions create closures. Closures are objects that when applied to a value return another value. They are basically, functions carrying its own environment with it.
 
 Lambda expressions have the syntactic form
-(-> ( *identifier ...* ) *expression*)
+(^ *identifier ...* *expression*)
 Where *identifier ...* is replaced with an arbitrary number of identifiers, and *expression* is replaced with an actual expression.
 *identifier* is a parameter that gets bound to a value(actualy a thunk as we see later) when the closure is applied to arguments.
 
 **code 3** *lambda expressions*
 
 ```lisp
-(-> (x) (* x x)) ;;A
+(^ x (* x x)) ;;A
 
-(-> (a b c) (* a (+ b c))) ;;B
+(^ a b c (* a (+ b c))) ;;B
 ```
 
 The expression A, when applied, computes the squared value of a given number.
@@ -110,7 +102,7 @@ Note that the expression B is semantically the same as the following expression.
 **code 4** *explicit currying*
 
 ```lisp
-(-> (a) (-> (b) (-> (c) (* a (+ b c))))) ;;C
+(^ a (^ b (^ c (* a (+ b c))))) ;;C
 ```
 
 In fact, Nadeko interprets the code B as C.
@@ -120,20 +112,20 @@ We will discuss the significance of it later.
 ### Definition (Statement)
 
 The expression
-(:= ( *name* *[identifier ...]*) *expression*)
+(=  *name* *[identifier ...]* *expression*)
 Binds the *expression* to the *name*.
 If one or more parameters( *identifier ...* ) are given, they can be used in the *expression* to refer to the values the function is applied to.
-(:= ( *name* *identifier ...*) *expression*) is interpreted the same as
-(:= ( *name*) (-> ( *identifier ...*) *expression*)).
+(=  *name* *identifier ...* *expression*) is interpreted the same as
+(= *name* (^ *identifier ...* *expression*)).
 
 **code 5** *defining a `map` function*
 
 ```lisp
-(:= (map lst f)
-    (nil? lst
-          nil
-          (cons (f (car lst))
-                (map (cdr lst) f))))
+(= map lst f
+  (nil? lst
+        nil
+        (cons (f (car lst))
+              (map (cdr lst) f))))
 ```
 
 Implementations SHOULD implement tail call otimization.
@@ -211,8 +203,8 @@ Nadeko's auto-currying feature togather with lazyness gave us an unexpected gift
 Because the arguments are delayed automaticaly, we can implement booleans as functions.
 
 ```lisp
-(:= (true t e) t)
-(:= (false t e) e)
+(= true t e t)
+(= false t e e)
 
 ;scheme
 (if (eq? a b) "equal" "not equal")
@@ -243,3 +235,18 @@ Nadeko is influenced by the following languages
 + Scheme       - for syntax and actors
 + Io           - for simplicity
 + Smalltalk-72 - for messaging notation
+
+
+CHANGELOG
+---------
+
+### 9/26/2013
+
+A huge change in syntax.
+
++ `(:= (fname param ...) expr)` is replaced by `(= fname param ... expr)`
++ `(:= (name) const)` is replaced by `(= name const)`
++ `(-> (param ...) expr)` is replaced by `(^ param ... expr)`
++ `=` for equality check is replaced by `=?`
+
+All the examples and tests are up to date with this change.

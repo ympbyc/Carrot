@@ -21,12 +21,12 @@
     ((load-fname "l|load=s"))
    (print "Nadeko, version 2.0.0: https://github.com/ympbyc/Nadeko ^C to exit")
    (let ([prelude-g (pre-load "examples/prelude.nadeko" '())])
-   (REPL 
+   (REPL
     (if load-fname (pre-load load-fname prelude-g) prelude-g)))))
 
 (define (pre-load fname g-e)
   (call-with-input-file fname (lambda (file-port)
-    (receive (result g-env) 
+    (receive (result g-env)
              (Krivine (compile (read-list file-port)) g-e)
       g-env))))
 
