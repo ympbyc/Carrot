@@ -1,8 +1,0 @@
-;; Writing for example ((-> (age) ...) 5) to introduce local binding
-;; is cumbersome and unreadable
-
-(:= (let x fn)
-  (fn x))
-
-(let "Minori" (-> (name) 
-  (++ "You are " name)))
