@@ -1,11 +1,11 @@
-(:= (inf-int n) (cons n (inf-int (+ n 1))))
+(= inf-int n (cons n (inf-int (+ n 1))))
 
-(:= (-remove x xs f)
+(= -remove x xs f
   (nil? xs (cons x nil)
     (f x (xs -remove f) (cons x (xs -remove f)))))
 
-(:= (primes) (inf-int 2 -sieve))
+(= primes (inf-int 2 -sieve))
 
-(:= (-sieve p ps)
+(= -sieve p ps
   (cons p
-    (ps -remove (-> (x) (= (% x p) 0)) -sieve)))
+    (ps -remove (^ x (=? (% x p) 0)) -sieve)))

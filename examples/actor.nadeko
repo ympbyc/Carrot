@@ -1,11 +1,11 @@
 ;;Actor model in Nadeko
 
-(:= (- k a b) (k (** - a b)))
-(:= (* k a b) (k (** * a b)))
+(= - k a b (k (** - a b)))
+(= * k a b (k (** * a b)))
 
-(:= (actorial c n)
-  (= n 0 
-    (c 1) 
-    (- (actorial (* c n)) n 1 )))
+(= actorial c n
+  (=? n 0
+    (c 1)
+    (- (actorial (* c n)) n 1)))
 
 (actorial show 5)

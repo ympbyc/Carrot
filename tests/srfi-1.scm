@@ -6,7 +6,7 @@
 
 (define (pre-load fname g-e)
   (call-with-input-file fname (lambda (file-port)
-    (receive (result g-env) 
+    (receive (result g-env)
              (Krivine (compile (read-list file-port)) g-e)
       g-env))))
 
@@ -43,16 +43,16 @@
 (test* "length" "0" (run `(length nil)))
 (test* "length" "10" (run `(length (take integers 10))))
 (test* "append" "0, 1, 2, 0, 1, 2, 3, nil" (run `(append (take integers 3) (take integers 4))))
-(test* "concatenate" "0, 1, 2, 0, 1, 2, 3, nil" 
+(test* "concatenate" "0, 1, 2, 0, 1, 2, 3, nil"
   (run `(concatenate (cons (take integers 3) (cons (take integers 4) nil)))))
 (test* "reverse" "5, 4, 3, 2, 1, 0, nil" (run `(reverse (take integers 6))))
 (test* "zip" "0, 2, 1, 1, 2, 0, nil" (run `(zip (take integers 3) (reverse (take integers 3)))))
 (test* "unzip" "0, 1, 2, nil" (run `(fst (unzip (zip (take integers 3) (reverse (take integers 3)))))))
 (test* "unzip" "2, 1, 0, nil" (run `(snd (unzip (zip (take integers 3) (reverse (take integers 3)))))))
 (test* "count1" "3" (run `(count1 (cons 1 (cons 2 (cons 1 (cons 3 (cons 1 nil))))) (eq? 1))))
-(test* "count2" "3" 
+(test* "count2" "3"
   (run `(count2 (cons 1 (cons 2 (cons 1 (cons 3 (cons 1 nil)))))
-                (cons 1 (cons 2 (cons 1 (cons 3 (cons 1 nil))))) (-> (x y) (eq? 2 (+ x y))))))
+                (cons 1 (cons 2 (cons 1 (cons 3 (cons 1 nil))))) (^ x y (eq? 2 (+ x y))))))
 
 (test-section "fold, map")
 (test* "fold" "55" (run `(fold (take integers 11) + 0)))
@@ -60,7 +60,7 @@
 (test* "fold-right" "55" (run `(fold-right (take integers 11) + 0)))
 (test* "fold-right" "0, 1, 2, nil" (run `(fold-right (take integers 3) cons nil)))
 (test* "unfold" "1, 4, 9, 16, 25, 36, 49, 64, 81, 100, nil"
-  (run `(unfold (< 10) (-> (x) (* x x)) (+ 1) 1)))
+       (run `(unfold (< 10) (^ x (* x x)) (+ 1) 1)))
 (test* "map" "0, 2, 4, 6, 8, nil" (run `(map (take integers 5) (* 2))))
 
 (test-section "filtering, partitioning")
@@ -78,18 +78,18 @@
 (test* "find-tail" "6, 7, 8, 9, nil" (run `(find-tail (take integers 10) (< 5))))
 (test* "take-while" "0, 1, 2, 3, nil" (run `(take-while (take integers 8) (> 4))))
 (test* "drop-while" "4, 5, 6, 7, nil" (run `(drop-while (take integers 8) (> 4))))
-(test* "any?" "true" (run `(any? (take integers 5) (= 3) "true" "false")))
-(test* "any?" "false" (run `(any? (take integers 5) (= 100) "true" "false")))
+(test* "any?" "true" (run `(any? (take integers 5) (=? 3) "true" "false")))
+(test* "any?" "false" (run `(any? (take integers 5) (=? 100) "true" "false")))
 (test* "every?" "true" (run `(every? (take integers 5) (> 8) "true" "false")))
 (test* "every?" "false" (run `(every? (take integers 5) (> 3) "true" "false")))
 (test* "list-index" "7" (run `(list-index (take integers 10) (< 6))))
 (test* "member" "3, 4, 5, nil" (run `(member (take integers 6) 3)))
 (test* "delete" "2, 3, nil" (run `(delete (cons 1 (cons 2 (cons 1 (cons 3 nil)))) 1)))
-(test* "delete-duplicates" "1, 2, 3, nil" 
+(test* "delete-duplicates" "1, 2, 3, nil"
   (run `(delete-duplicates (cons 1 (cons 2 (cons 1 (cons 3 (cons 2 nil))))))))
 
 (test-section "association list")
-(test* "assoc" "nazuna, nori" 
+(test* "assoc" "nazuna, nori"
   (run `(assoc (cons (2-tuple "a" 1) (cons (2-tuple "nazuna" "nori") nil)) "nazuna")))
 (test* "alist-cons" "yunocchi, miyako"
   (run `(assoc (alist-cons "yunocchi" "miyako" (cons (2-tuple "a" 1) (cons (2-tuple "nazuna" "nori") nil))) "yunocchi")))

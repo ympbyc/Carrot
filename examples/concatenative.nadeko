@@ -4,48 +4,47 @@
 ;;
 ;; inspired by factjor https://github.com/brandonbloom/factjor
 
-(:= (<o) eq?)
-(:= (cadr) (compose car cdr))
-(:= (cddr) (compose cdr cdr))
-(:= (caddr) (compose car cddr))
-(:= (cdddr) (compose cdr cddr)) 
+(= <o eq?)
+(= cadr  (compose car cdr))
+(= cddr  (compose cdr cdr))
+(= caddr (compose car cddr))
+(= cdddr (compose cdr cddr))
 
-(:= (cat stk =>)
+(= cat stk =>
   (<o 'end => stk
   (number? => (cat (cons => stk))
   (cat (=> stk)))))
 
-(:= (cat/two-arg op stk) ;( a b -- c )
+(= cat/two-arg op stk ;( a b -- c )
   (cons (op (cadr stk) (car stk)) (cddr stk)))
 
-(:= (cat/+) (cat/two-arg +))
-(:= (cat/-) (cat/two-arg -))
-(:= (cat/*) (cat/two-arg *))
-(:= (cat//) (cat/two-arg /))
+(= cat/+ (cat/two-arg +))
+(= cat/- (cat/two-arg -))
+(= cat/* (cat/two-arg *))
+(= cat// (cat/two-arg /))
 
-(:= (cat/read stk)  (cons (** read) stk))
-(:= (cat/print stk) (** print (car stk) (cdr stk)))
+(= cat/read stk  (cons (** read) stk))
+(= cat/print stk (** print (car stk) (cdr stk)))
 
 ;;Stack manipulation words
-(:= (dup stk) ;( a -- a a )
+(= dup stk ;( a -- a a )
   (cons (car stk) stk))
-(:= (drop stk) ;( a -- )
+(= drop stk ;( a -- )
   (cdr stk))
-(:= (swap stk) ;( a b -- b a)
+(= swap stk ;( a b -- b a)
   (cons (cadr stk) (cons (car stk) (cddr stk))))
-(:= (over stk) ;( a b -- a b a)
+(= over stk ;( a b -- a b a)
   (cons (car stk) (cons (cadr stk) (cons (car stk) (cddr stk)))))
-(:= (rot stk) ;( a b c -- b c a)
+(= rot stk ;( a b c -- b c a)
   (cons (cadr stk) (cons (caddr stk) (cons (car stk) (cdddr stk)))))
-(:= (nip stk) ;( a b -- b)
+(= nip stk ;( a b -- b)
   (compose drop swap))
-(:= (tuck stk) ;( a b -- b a b)
+(= tuck stk ;( a b -- b a b)
   (compose over swap))
 
-(:= (cat/run) (cat nil))
+(= cat/run (cat nil))
 
 ;example
 ;(cat/run 5 6 cat/+ 7 cat/+ 8 9 cat/+ cat/+ 'end) ;=> 35
 
 ;(cat/run 5 10 (quote- 2 cat/+) dip 'end)
-
