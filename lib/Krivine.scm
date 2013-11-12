@@ -30,11 +30,16 @@
 
 
   (define (Krivine binding)
-    (print-code "~S" (assoc-ref (ref binding 'main) 'code))
+    ;;(print-code " | ~S" (assoc-ref (ref binding 'main) 'code))
     (guard (exc
             [else (print (string-append "***EXCEPTION*** " (ref exc 'message))) '()])
-           (Krivine- `((,ACCESS main) (,CONTINUE)) '() '() binding)))
+           (let ([res (time (Krivine- `((,ACCESS main) (,CONTINUE)) '() '() binding))])
+             (format #t " | The program took total of ~D steps to compute.\n\n" *step*)
+             (set! *step* 0)
+             res)))
 
+
+  (define *step* 0)
 
   ;;; Krivine's Machine ;;;
   (define (Krivine- code env stack g-env)
@@ -43,10 +48,12 @@
     (print-code "stack: ~S" stack)
     (newline)|#
 
+    (set! *step* (+ *step* 1))
+
     (if (null? code)
         (car stack)
 
-                                        ;inst        inst-arg    next-code  env stack global
+        ;;inst        inst-arg    next-code  env stack global
         ((caar code) (cdar code) (cdr code) env stack g-env)))
 
   ;; refer a value associated with the character from either local-env or global-env
@@ -86,11 +93,14 @@
 
   ;; associate a stack-top value with the character and cons the pair onto the local-env
   (define (GRAB args next-code env stack g-env)
-    (Krivine-
-     next-code
-     (alist-cons (car args) (car stack) env)
-     (cdr stack)
-     g-env))
+    (if (null? stack) ;;function is remaining partially applied
+        (Krivine-
+         '() env (list 'partially-applied-function) g-env)
+        (Krivine-
+         next-code
+         (alist-cons (car args) (car stack) env)
+         (cdr stack)
+         g-env)))
 
   ;; creates a thunk that is a data carrying continuation + environment
   (define (CLOSURE args next-code env stack g-env)
@@ -121,8 +131,8 @@
        env
        (cons (native-procedure f (reverse
                                   (map (fn [x]
-                                           (Krivine- `((,CONTINUE)) env (drop stack x) g-env)) ;;Cheatish
-                                       (iota arg-n)))
+                                           (Krivine- `((,CONTINUE)) env (list x) g-env)) ;;Cheatish
+                                       (take stack arg-n)))
                                env)
              (drop stack arg-n))
        g-env)))

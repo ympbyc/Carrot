@@ -209,12 +209,12 @@
 
 (= member lst x
   (nil? lst false
-    (eq? (car lst) x lst (member (cdr lst) x))))
+    (=? (car lst) x lst (member (cdr lst) x))))
 
 
 (= delete lst x
   (nil? lst nil
-    (eq? (car lst) x
+    (=? (car lst) x
       (delete (cdr lst) x)
       (cons (car lst) (delete (cdr lst) x)))))
 
@@ -230,7 +230,7 @@
 
 (= assoc alst key
   (nil? alst false
-    (eq? (fst (car alst)) key (car alst)
+    (=? (fst (car alst)) key (car alst)
       (assoc (cdr alst) key))))
 
 
@@ -245,7 +245,7 @@
 
 
 (= alist-delete alst key
-  (remove alst (compose (eq? key) fst)))
+  (remove alst (compose (=? key) fst)))
 
 
 
@@ -254,7 +254,7 @@
 
 (= list-eq? ls1 ls2
   (nil? ls1 (nil? ls2 true false)
-    (eq? (car ls1) (car ls2) (list-eq (cdr ls1) (cdr ls2))
+    (=? (car ls1) (car ls2) (list-eq (cdr ls1) (cdr ls2))
       false)))
 
 

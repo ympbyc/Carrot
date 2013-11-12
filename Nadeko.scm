@@ -22,7 +22,7 @@
 (define (main args)
   (let-args (cdr args)
     ((load-fname "l|load=s"))
-    (print "Nadeko, version 2.0.0: https://github.com/ympbyc/Nadeko ^C to exit")
+    (print "Nadeko, version 2.1.0: https://github.com/ympbyc/Nadeko ^C to exit")
     (load "standard-macros.scm")
     (let ([prelude-g (pre-load "examples/prelude.nadeko" (make-hash-table 'eq?))])
       (REPL
