@@ -17,7 +17,7 @@
 (= car lst (lst (^ h t h)))
 (= cdr lst (lst (^ h t t)))
 (= nil 'nil)
-(= nil? (eq? nil))
+(= nil? (=? nil))
 
 ;;tuple
 (= 2-tuple cons)
@@ -36,8 +36,7 @@
         (++ (++ (show (car a)) ", ") (show (cdr a)))))))
 
 ;;primitive wrapper
-(= eq? a b (** equal a b))
-(= =?  a b (** equal a b))
+(= =?  a b (** =? a b))
 (= <   a b (** < a b))
 (= >   a b (** < b a))
 (= <=  a b (** <= a b))
@@ -51,8 +50,8 @@
 (= num->str a (** num->str a))
 (= number?  a (** number? a))
 (= string?  a (** string? a))
-(= print str time (** print str time))
-(= read (** read))
+(= print time str (** print time str))
+(= read time (** read time))
 
 ;;help
 (= help "SYNTAX:\n\

@@ -5,23 +5,12 @@
 (add-load-path "../lib/" :relative)
 
 (define-module K-Compiler
-  (extend nadeko-primitive)
+  (extend Krivine)
   (export compile)
   (use srfi-1)
+  (use Util)
 
   ;;Helper
-  (define (atom? x)
-    (or (string? x)
-        (number? x)
-        (boolean? x)
-        (char? x)
-        (keyword? x)))
-
-  (define-syntax fn
-    (syntax-rules ()
-      ((_ (arg ...) exp ...)
-       (lambda (arg ...) exp ...))))
-
   (define (constant-instruction? x)
     (eq? (car x) CONSTANT))
 
@@ -31,47 +20,60 @@
   (define (lambda-expr? exp)
     (eq? (car exp) '^))
 
+  (define (native-expr? exp)
+    (eq? (car exp) '**))
+
   ;;; Compiler ;;;
 
   ;;compile :: [expr] -> {'name => instruction}
   (define (compile program)
     (alist->hash-table
      (fold (fn [def binding]
-               (if (eq? (car def) '=)
+               (if (and (pair? def) (eq? (car def) '=))
                    (let* ([name   (cadr def)]
                           [params (drop-right (cddr def) 1)]
                           [expr   (last def)]
                           [body   `(^ ,@params ,expr)])
-                     (alist-cons name (car (compile-expr body)) binding))
-                   (raise "Only definitions are allowed at the top level")))
+                     (alist-cons name
+                                 (nadeko-closure (append (compile-expr body) `((,CONTINUE))) '())
+                                 binding))
+                   (alist-cons 'main
+                               (nadeko-closure (append (compile-expr `(^ ,def)) `((,CONTINUE))) '())
+                               binding)))
            '()
            program)))
 
   (define (compile-expr exp)
     (cond
-     [(atom? exp)
-      `((,CONSTANT ,exp))]
-
      [(symbol? exp)
       `((,ACCESS ,exp))]
+
+     [(atom? exp)
+      `((,CONSTANT ,exp))]
 
      [(quote-expr? exp)
       `((,CONSTANT ,exp))]
 
      [(lambda-expr? exp)
       ;;(^ a b f (f a b))
-      `((,CLOSURE ,(append (map (fn [x] `(,GRAB ,x)) (drop-right (cdr exp) 1))
-                          (compile-expr (last exp)))))]
+      (append (map (fn [x] `(,GRAB ,x)) (drop-right (cdr exp) 1))
+              (compile-expr (last exp)))]
+
+     [(native-expr? exp)
+      (let ([f (cadr exp)]
+            [args (cddr exp)])
+        (append (flatmap compile-expr args)
+                `((,NATIVE ,f ,(length args)))))]
 
      [else
       ;;(f a b c)
-      (append
-       (map (fn [arg]
-                (let ([inst (car (compile-expr arg))])
-                  (if (constant-instruction? inst)
-                      inst
-                      `(,CLOSURE (,inst)))))
-            (reverse (cdr exp)))
-       (compile-expr (car exp))
-       `((,CONTINUE))
-       '())])))
+      (let ([exp (macroexpand exp)])
+        (append
+         (map (fn [arg]
+                  (let ([insts (append (compile-expr arg))])
+                    (if (and (= 1 (length insts))
+                             (constant-instruction? (car insts)))
+                       (car insts) ;;dont close const
+                       `(,CLOSURE ,(append insts `((,CONTINUE)))))))
+              (reverse (cdr exp)))
+         (compile-expr (car exp))))])))
