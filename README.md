@@ -8,8 +8,7 @@ Dec 2012 Minori Yamashita <ympbyc@gmail.com>
 (Y (^ f (cons 1 (zipWith f + (cdr f)) -cons 1))
   -take 10
   -reverse
-  -fold (compose (compose ++ (++ ",")) show)
-  "")
+  -fold (compose (compose ++ (++ ",")) show) "")
 ```
 
 

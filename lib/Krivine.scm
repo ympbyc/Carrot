@@ -6,7 +6,7 @@
 ;;;   http://pop-art.inrialpes.fr/~fradet/PDFs/HOSC07.pdf
 
 ;;; Notes ;;;
-;; CLOSURE creates thunks that packs the continuation and environment together. 
+;; CLOSURE creates thunks that packs the continuation and environment together.
 ;; To create closures(function objects), CLOSURE the GRAB and expression followed by CONTINUE.
 ;;
 
@@ -14,9 +14,6 @@
   (export-all)
   (use srfi-1)
 
-  ;;; global environment ;;;
-  (define *global-env*
-    (make-hash-table))
 
   ;;; Helpers ;;;
 
@@ -24,35 +21,35 @@
   (define (assoc-ref env key)
     (let ((binding (assq key env)))
       (if binding (cdr binding) 'lookup-fail)))
-  
-  (define (Krivine code g-env)
-    (if (hash-table? g-env) (set! *global-env* g-env)) ;side effect
+
+  (define (Krivine binding)
+    (print (regexp-replace-all #/#<closure\s(.+?)>/ (format "~S" (hash-table->alist binding)) "\\1"))
     (guard (exc
-      [else (print (format "**exception**: ~S at: ~S" exc code)) (values '() *global-env*)])
+            [else (print (string-append "***EXCEPTION*** "(ref exc 'message))) (values '() *global-env*)])
       (Krivine- code '() '() '())))
 
   ;;; Krivine's Machine ;;;
-  (define (Krivine- code env stack c-stack) 
+  (define (Krivine- code env stack c-stack)
     ;(print (format "code : ~S" code))
     ;(print (format "env  : ~S" env))
     ;(print (format "stack: ~S" stack))
     ;(print (format "c-stack: ~S" c-stack))
     ;(newline)
-  
+
     ;inst        inst-arg    code-rest  env stack global
     ((caar code) (cdar code) (cdr code) env stack c-stack))
-  
+
   ;; refer a value associated with the character from either local-env or global-env
   (define (ACCESS args code env stack c-stack)
     (let ([val (assoc-ref env (car args))])
       (Krivine-
         code
         env
-        (if (eq? val 'lookup-fail) 
+        (if (eq? val 'lookup-fail)
           (cons (hash-table-get *global-env* (car args) 'lookup-fail) stack)
           (cons val stack))
         c-stack)))
-  
+
   ;; retrieves a thunk from the stack and replace the state with its.
   ;; thunks carry all the continuation therefore no need to worry about the "frame" or "return"
   (define (CONTINUE args code env stack c-stack)
@@ -64,7 +61,7 @@
       cl-env
       (cdr stack)
       c-stack)))
-  
+
   ;; associate a stack-top value with the character and cons the pair onto the local-env
   (define (GRAB args code env stack c-stack)
     (Krivine-
@@ -72,7 +69,7 @@
       (cons `(,(car args) . ,(car stack)) env)
       (cdr stack)
       c-stack))
-  
+
   ;; creates a thunk that is a data carrying continuation + environment
   (define (CLOSURE args code env stack c-stack)
     (Krivine-
@@ -80,14 +77,14 @@
       env
       (cons `((code . ,(car args)) (env . ,env)) stack)
       c-stack))
-  
-  
+
+
   ;;;; Extension for nadeko ;;;;
-  
+
   ;; returns what's on the top of the constant stack
   (define (STOP args code env stack c-stack)
     (values (if (null? c-stack) '() (car c-stack)) *global-env*))
-  
+
   ;; cons a self-evaluating value on to the stack
   (define (CONSTANT args code env stack c-stack)
     (Krivine-
@@ -95,7 +92,7 @@
       env
       stack
       (cons (car args) c-stack)))
-  
+
   ;; creates a global binding
   (define (DEFINE args code env stack c-stack)
     (hash-table-put! *global-env* (car args) (car stack)) ;side effect
@@ -105,4 +102,3 @@
       env
       (cdr stack)
       c-stack)))
-

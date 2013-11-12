@@ -11,62 +11,67 @@
 
   ;;Helper
   (define (atom? x)
-    (cond
-      [(string?  x) #t]
-      [(number?  x) #t]
-      [(boolean? x) #t]
-      [(char?    x) #t]
-      [else #f]))
+    (or (string? x)
+        (number? x)
+        (boolean? x)
+        (char? x)
+        (keyword? x)))
 
   (define-syntax fn
     (syntax-rules ()
       ((_ (arg ...) exp ...)
-      (lambda (arg ...) exp ...))))
+       (lambda (arg ...) exp ...))))
+
+  (define (constant-instruction? x)
+    (eq? (car x) CONSTANT))
+
+  (define (quote-expr? x)
+    (eq? (car x) 'quote))
+
+  (define (lambda-expr? exp)
+    (eq? (car exp) '^))
 
   ;;; Compiler ;;;
 
-  ;;compile :: Nadeko -> Krivine
+  ;;compile :: [expr] -> {'name => instruction}
   (define (compile program)
-    (let ([code (cons `(,CLOSURE ((,STOP))) (concatenate (map (fn (x) (compile- `(,x))) program)))])
-      (print code)
-      (append code `((,CONTINUE)))))
+    (alist->hash-table
+     (fold (fn [def binding]
+               (if (eq? (car def) '=)
+                   (let* ([name   (cadr def)]
+                          [params (drop-right (cddr def) 1)]
+                          [expr   (last def)]
+                          [body   `(^ ,@params ,expr)])
+                     (alist-cons name (car (compile-expr body)) binding))
+                   (raise "Only definitions are allowed at the top level")))
+           '()
+           program)))
 
-  (define (compile- program)
-    (if (null? program) '()
-      (let ([exp (car program)] [code-r (cdr program)])
+  (define (compile-expr exp)
+    (cond
+     [(atom? exp)
+      `((,CONSTANT ,exp))]
 
-        (cond
-          [(atom? exp)
-           (cons `(,CONSTANT ,exp) (compile- code-r))]
+     [(symbol? exp)
+      `((,ACCESS ,exp))]
 
-          [(symbol? exp)
-           (cons `(,ACCESS ,exp) (compile- code-r))]
+     [(quote-expr? exp)
+      `((,CONSTANT ,exp))]
 
-          [(eq? (car exp) 'quote)
-           (cons `(,CONSTANT ,exp) (compile- code-r))]
+     [(lambda-expr? exp)
+      ;;(^ a b f (f a b))
+      `((,CLOSURE ,(append (map (fn [x] `(,GRAB ,x)) (drop-right (cdr exp) 1))
+                          (compile-expr (last exp)))))]
 
-          [(eq? (car exp) '**)
-           ;(** + 2 3)
-           (append `((,PMARK) (,CLOSURE ((,PRIMITIVE ,(cadr exp)) (,CONTINUE))))
-                   (compile- (reverse (cddr exp))))]
-
-          [(eq? (car exp) '=)
-           ;(= f a b a)
-           (append
-            (cons `(,CLOSURE ,(append (compile- `((^ ,@(drop-right (cddr exp) 1) ,(last exp))))
-                                      `((,CONTINUE))))
-                   `((,DEFINE ,(cadr exp))))
-             (compile- code-r))]
-
-          [(eq? (car exp) '^)
-           ;;(^ a b f (f a b))
-           (append (map (fn (x) `(,GRAB ,x)) (drop-right (cdr exp) 1))
-                   (compile- (list (last exp))))]
-          ;;doesn't have to take care of the rest because lambdas always end with CONTINUE
-
-          [else
-           ;(f a b c)
-           (append
-            (map (fn (x) `(,CLOSURE ,(append (compile- `(,x)) `((,CONTINUE)))))
-                 (reverse (cdr exp)))
-              (compile- `(,(car exp))))])))))
+     [else
+      ;;(f a b c)
+      (append
+       (map (fn [arg]
+                (let ([inst (car (compile-expr arg))])
+                  (if (constant-instruction? inst)
+                      inst
+                      `(,CLOSURE (,inst)))))
+            (reverse (cdr exp)))
+       (compile-expr (car exp))
+       `((,CONTINUE))
+       '())])))

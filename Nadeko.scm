@@ -8,13 +8,21 @@
 (use K-Compiler)
 (use gauche.parseopt)
 
+;;h1 > h2
+(define (hash-table-union! h1 h2)
+  (hash-table-for-each h2 (lambda [k v]
+                            (hash-table-put! h1 k v)))
+  h1)
+
 ;;; REPL ;;;
 (define (REPL g-env)
   (display "nadeko> ")
   (flush)
-  (receive (result bindings) (Krivine (compile `(,(read))) g-env)
+  (let* ([new-env (compile `(,(read)))]
+         [new-env (hash-table-union! g-env new-env)]
+         [result  (Krivine new-env)])
     (print result)
-    (REPL bindings))) ;loop with new global-environment
+    (REPL new-env)))  ;loop with new global-environment
 
 (define (main args)
   (let-args (cdr args)

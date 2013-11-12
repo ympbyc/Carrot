@@ -1,3 +1,5 @@
+(= id x x)
+
 ;;bool
 (= true  t e t)
 (= false t e e)
@@ -49,6 +51,8 @@
 (= num->str a (** num->str a))
 (= number?  a (** number? a))
 (= string?  a (** string? a))
+(= print str time (** print str time))
+(= read (** read))
 
 ;;help
 (= help "SYNTAX:\n\
