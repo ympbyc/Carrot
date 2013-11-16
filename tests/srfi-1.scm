@@ -2,7 +2,7 @@
 
 (use gauche.test)
 (test-start "srfi-1")
-(use K-Compiler)
+(use Krivine)
 (use Util)
 
 (define (pre-load fname g-e)

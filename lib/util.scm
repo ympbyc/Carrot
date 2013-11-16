@@ -19,7 +19,8 @@
         (number? x)
         (char? x)
         (keyword? x)
-        (symbol? x)))
+        (symbol? x)
+        (undefined? x)))
 
 
   (define-syntax fn
@@ -31,10 +32,28 @@
 
   (define (p x) (print x) x)
 
-  (define (nadeko-closure code env)
-    `([code . ,code]
+  (define (nadeko-closure expr env)
+    `([expr . ,expr]
       [env . ,env]
       [type . closure]))
+
+  (define (clos-expr closure)
+    (assoc-ref closure 'expr))
+
+  (define (clos-env closure)
+    (assoc-ref closure 'env))
+
+
+  (define (lambda-expr? exp)
+    (eq? (car exp) '^))
+
+  (define (quote-expr? x)
+    (eq? (car x) 'quote))
+
+
+  (define (native-expr? exp)
+    (eq? (car exp) '**))
+
 
   (define (flatmap f x)
     (apply append (map f x)))

@@ -9,13 +9,15 @@
 ;; CLOSURE creates thunks that packs the continuation and environment together.
 ;; To create closures(function objects), CLOSURE the GRAB and expression followed by CONTINUE.
 ;; CONSTANT does not create thunks (for efficiency sake)
-;; Stack may only contain CONSTANT inclusive-or CLOSURE
+;; Stack may only contain Constant(WHNF), or Marker that points to CLOSURE in the heap
 
 
 (define-module Krivine
   (export-all)
   (use srfi-1)
+  (use util.match)
   (use Util)
+  (extend K-Compiler)
 
   ;;; Helpers ;;;
 
@@ -28,12 +30,25 @@
      (pair? x)
      (eq? (assoc-ref x 'type) 'closure)))
 
+  (define (marker loc)
+    `((type . marker)
+      (location . ,loc)))
+
+  (define (marker? x)
+    (and
+     (pair? x)
+     (eq? (assoc-ref x 'type) 'marker)))
+
+
+  (define *global-env* (make-hash-table 'eq?))
+
 
   (define (Krivine binding)
-    ;;(print-code " | ~S" (assoc-ref (ref binding 'main) 'code))
+    (print-code " | ~S" (clos-expr (ref binding 'main)))
+    (set! *global-env* binding)
     (guard (exc
             [else (print (string-append "***EXCEPTION*** " (ref exc 'message))) '()])
-           (let ([res (time (Krivine- `((,ACCESS main) (,CONTINUE)) '() '() binding))])
+           (let ([res (time (Krivine- (ref binding 'main) '()))])
              (format #t " | The program took total of ~D steps to compute.\n\n" *step*)
              (set! *step* 0)
              res)))
@@ -42,137 +57,58 @@
   (define *step* 0)
 
   ;;; Krivine's Machine ;;;
-  (define (Krivine- code env stack g-env)
-    #|(print-code "code : ~S" code)
-    (print-code "env  : ~S" env)
-    (print-code "stack: ~S" stack)
-    (newline)|#
+  (define (Krivine- closure stack)
 
     (set! *step* (+ *step* 1))
 
-    (if (null? code)
-        (car stack)
+    (let ([expr (clos-expr closure)]
+          [env  (clos-env  closure)])
+      ;;(print-code "expr: ~S" expr)
+      ;;(print-code "stak: ~S" stack)
+      ;;(newline)
+      (cond
+       [(symbol? expr)
+        (let* ([val (assoc-ref env expr)]
+               [val (if (lookup-fail? val)
+                        (hash-table-get *global-env* expr 'lookup-fail) val)])
+          (Krivine- val stack))]
 
-        ;;inst        inst-arg    next-code  env stack global
-        ((caar code) (cdar code) (cdr code) env stack g-env)))
+       [(or (atom? expr) (quote-expr? expr)) expr]
 
-  ;; refer a value associated with the character from either local-env or global-env
-  (define (ACCESS args next-code env stack g-env)
-    (let* ([sym (car args)]
-           [val (assoc-ref env sym)]
-           [val (if (lookup-fail? val) (hash-table-get g-env sym 'lookup-fail) val)])
-      (if (lookup-fail? val)
-          (raise-error/message (format "The symbol ~S is unbound" sym))
-          (Krivine-
-           next-code
-           env
-           (cons val stack)
-           g-env))))
+       [(lambda-expr? expr)
+        (let ([param (cadr expr)]
+              [body  (caddr expr)])
+          (if (null? stack)
+              '**partially-applied-function**
+              (Krivine- (nadeko-closure body (acons param (car stack) env))
+                        (cdr stack))))]
 
-  ;; retrieves a thunk from the stack and replace the state with its.
-  ;; thunks carry all the continuation therefore no need to worry about the "frame" or "return"
-  ;; continue indicates that there are no following instruction
-  (define (CONTINUE args _ env stack g-env)
-    (cond [(nadeko-closure? (car stack))
-           (let* ([closure  (car stack)]
-                  [cl-code  (assoc-ref closure 'code)]
-                  [cl-env   (assoc-ref closure 'env)])
-             (Krivine-
-              cl-code
-              cl-env
-              (cdr stack)
-              g-env))]
-          [#t
-           (Krivine-
-            '()
-            env
-            stack
-            g-env)]
-          [else
-           (raise-error/message (format "Can't enter ~S" (car stack)))]))
+       [(native-expr? expr)
+        (let ([res  (apply (eval (cadr expr) (interaction-environment))
+                           (map (^x (Krivine- (nadeko-closure x env) '())) (cddr expr)))])
+          (cond [(boolean? res)
+                 (Krivine- (nadeko-closure (if res 'true 'false) env) stack)]
+                [(pair? res)
+                 (Krivine- (nadeko-closure (expand-expr (consify res)) env) stack)]
+                [else res]))]
 
-  ;; associate a stack-top value with the character and cons the pair onto the local-env
-  (define (GRAB args next-code env stack g-env)
-    (if (null? stack) ;;function is remaining partially applied
-        (Krivine-
-         '() env (list 'partially-applied-function) g-env)
-        (Krivine-
-         next-code
-         (alist-cons (car args) (car stack) env)
-         (cdr stack)
-         g-env)))
+       [(pair? expr)
+        (let ([f (car expr)]
+              [arg (cadr expr)])
+          (Krivine- (nadeko-closure f env)
+                    (cons (nadeko-closure arg env) stack)))])))
 
-  ;; creates a thunk that is a data carrying continuation + environment
-  (define (CLOSURE args next-code env stack g-env)
-    (Krivine-
-     next-code
-     env
-     (cons (nadeko-closure (car args) env)
-           stack)
-     g-env))
+  (define (consify xs) (if (null? xs) 'nil `(cons ,(car xs) ,(consify (cdr xs))))))
 
+(define (timed f)
+  (let ([cache (make-hash-table 'eq?)])
+    (lambda [time . args]
+      (let ([v (hash-table-get cache time #f)])
+        (if v v
+            (let ([v (apply f args)])
+              (hash-table-put! cache time v)
+              (list (+ time 1) v)))))))
 
-  ;;;; Extension for nadeko ;;;;
+(define timed-print (timed print))
 
-  ;; cons a self-evaluating value on to the stack
-  (define (CONSTANT args next-code env stack g-env)
-    (Krivine-
-     next-code
-     env
-     (cons (car args) stack)
-     g-env))
-
-
-  (define (NATIVE args next-code env stack g-env)
-    (let ([f (car args)]
-          [arg-n (cadr args)])
-      (Krivine-
-       next-code
-       env
-       (cons (native-procedure f (reverse
-                                  (map (fn [x]
-                                           (Krivine- `((,CONTINUE)) env (list x) g-env)) ;;Cheatish
-                                       (take stack arg-n)))
-                               env)
-             (drop stack arg-n))
-       g-env)))
-
-
-  (define (timed f)
-    (let ([cache (make-hash-table 'eq?)])
-      (lambda args
-        (let* ([time (car args)]
-               [cached (hash-table-get cache time #f)])
-          (if cached
-              cached
-              (let ([res (apply f args)])
-                (hash-table-put! cache time res)
-                res))))))
-
-
-  (define procedures
-    (alist->hash-table
-     (list
-      (cons 'string?  string?)
-      (cons 'number?  number?)
-      (cons 'num->str number->string)
-      (cons 'print (timed (fn [time str] (print str) (flush) (+ time 1))))
-      (cons 'read  (timed (fn [time] (read))))
-      (cons '+  +)
-      (cons '-  -)
-      (cons '*  *)
-      (cons '/  /)
-      (cons '%  mod)
-      (cons '++ string-append)
-      (cons '=? equal?)
-      (cons '<  <)
-      (cons '<= <=))))
-
-  (define (native-procedure f args env)
-    (let* ([res   (apply (ref procedures f) args)])
-      (cond [(boolean? res)
-             (if res
-                 (nadeko-closure `((,ACCESS true)  (,CONTINUE)) env)
-                 (nadeko-closure `((,ACCESS false)  (,CONTINUE)) env))]
-            [(null? res) 'nil]
-            [else res]))))
+(define timed-read (timed read))

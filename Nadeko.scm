@@ -7,6 +7,7 @@
 
 (use Util)
 (use K-Compiler)
+(use Krivine)
 (use gauche.parseopt)
 
 ;;; REPL ;;;

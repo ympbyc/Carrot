@@ -36,22 +36,22 @@
         (++ (++ (show (car a)) ", ") (show (cdr a)))))))
 
 ;;primitive wrapper
-(= =?  a b (** =? a b))
+(= =?  a b (** equal? a b))
 (= <   a b (** < a b))
 (= >   a b (** < b a))
 (= <=  a b (** <= a b))
-(= >=  a b (** <= b a))
+(= >=  a b (** >= b a))
 (= +   a b (** + a b))
 (= -   a b (** - a b))
 (= *   a b (** * a b))
 (= /   a b (** / a b))
-(= %   a b (** % a b))
-(= ++  a b (** ++ a b))
-(= num->str a (** num->str a))
+(= %   a b (** mod a b))
+(= ++  a b (** string-append a b))
+(= num->str a (** number->string a))
 (= number?  a (** number? a))
 (= string?  a (** string? a))
-(= print time str (** print time str))
-(= read time (** read time))
+(= print time str (** timed-print time str))
+(= read time (** timed-read time))
 
 ;;help
 (= help "SYNTAX:\n\

@@ -31,7 +31,7 @@
 
 
 (= take lst n
-  (nil? lst false
+  (nil? lst nil
     (=? n 0 nil
       (cons (car lst) (take (cdr lst) (- n 1))))))
 
