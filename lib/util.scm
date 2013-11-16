@@ -19,7 +19,6 @@
         (number? x)
         (char? x)
         (keyword? x)
-        (symbol? x)
         (undefined? x)))
 
 
@@ -42,6 +41,9 @@
 
   (define (clos-env closure)
     (assoc-ref closure 'env))
+
+  (define (clos-is-value? closure)
+    (atom? (clos-expr closure)))
 
 
   (define (lambda-expr? exp)
