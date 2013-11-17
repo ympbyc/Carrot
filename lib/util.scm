@@ -66,4 +66,8 @@
 
   (define (print-code fmt code)
     (print
-     (regexp-replace-all #/#<closure\s(.+?)>/ (format fmt code) "\\1"))))
+     (regexp-replace-all #/#<closure\s(.+?)>/ (format fmt code) "\\1")))
+
+  (define (hash-table-put-! ht k v)
+    (hash-table-put! ht k v)
+    ht))

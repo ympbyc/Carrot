@@ -54,7 +54,7 @@
     (set! *global-env* binding)
     (guard (exc
             [else (print (string-append "***EXCEPTION*** " (ref exc 'message))) (raise exc)])
-           (let ([res (time (Krivine- (ref binding 'main) '() '()))])
+           (let ([res (time (Krivine- (ref binding 'main) '() (make-hash-table 'eq?)))])
              (format #t " | The program took total of ~D steps to compute.\n\n" *step*)
              (set! *step* 0)
              res)))
@@ -72,7 +72,7 @@
               [env  (clos-env  closure)])
           #|(print-code "expr: ~S" closure)
           (print-code "stak: ~S" stack)
-          (print-code "heap: ~S" heap)
+          (print-code "heap: ~S" (hash-table->alist heap))
           (newline)|#
           (cond
            ;;VAR
@@ -80,7 +80,7 @@
             (let* ([mark (assoc-ref env expr)]
                    [clos (if (lookup-fail? mark)
                              (hash-table-get *global-env* expr 'lookup-fail)
-                             (assoc-ref heap (marker-loc mark)))])
+                             (ref heap (marker-loc mark)))])
               (cond
                [(lookup-fail? mark)
                 (Krivine- clos stack heap)]
@@ -90,7 +90,7 @@
 
            ;;UPDATE
            [(and (pair? stack) (marker? (car stack)))
-            (Krivine- closure (cdr stack) (acons (marker-loc (car stack)) expr heap))]
+            (Krivine- closure (cdr stack) (hash-table-put-! heap (marker-loc (car stack)) closure))]
 
            ;;CALL
            [(lambda-expr? expr)
@@ -102,7 +102,7 @@
                        [mark  (marker loc)])
                   (Krivine- (nadeko-closure body (acons param mark env))
                             (cdr stack)
-                            (acons loc (car stack) heap))))]
+                            (hash-table-put-! heap loc (car stack)))))]
 
            [(native-expr? expr)
             (let ([res  (apply (eval (cadr expr) (interaction-environment))
