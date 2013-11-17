@@ -12,7 +12,6 @@
 ;; CONSTANT does not create thunks (for efficiency sake)
 ;; Stack may only contain Constant(WHNF), or Marker that points to CLOSURE in the heap
 
-;;todo: make heap a hash-table
 ;;      GC heap
 
 (define-module Krivine
@@ -21,7 +20,6 @@
   (use srfi-9)
   (use util.match)
   (use Util)
-  (extend K-Compiler)
 
   ;;; Helpers ;;;
 
@@ -29,10 +27,25 @@
     (eq? x 'lookup-fail))
 
 
+  (define (clos-is-value? closure)
+    (eq? (car (clos-expr closure)) ATOM))
+
+
   (define-record-type mark
     (marker loc)
     marker?
     (loc marker-loc))
+
+  (define (replace-marker-representation)
+    (define (marker loc)
+      `(marker ,loc))
+    (define (marker? x)
+      (and (pair? x)
+           (eq? (car x) 'marker)))
+    (define marker-loc cadr))
+
+  (replace-closure-representation)
+  (replace-marker-representation)
 
 
   (define *global-env* (make-hash-table 'eq?))
@@ -42,7 +55,9 @@
     (print-code " | ~S" (clos-expr (ref binding 'main)))
     (set! *global-env* binding)
     (guard (exc
-            [else (print (string-append "***EXCEPTION*** " (ref exc 'message))) (raise exc)])
+            [else (print (string-append "***EXCEPTION*** " (ref exc 'message)))
+                  (set! *step* 0)
+                  (raise exc)])
            (let ([res (time (Krivine- (ref binding 'main) '() (make-hash-table 'eq?)))])
              (format #t " | The program took total of ~D steps to compute.\n\n" *step*)
              (set! *step* 0)
@@ -56,78 +71,63 @@
 
     (set! *step* (+ *step* 1))
 
-    (let ([expr (clos-expr closure)]
-          [env  (clos-env  closure)])
+    (let* ([expr (clos-expr closure)]
+           [env  (clos-env  closure)]
+           [inst (car expr)]
+           [args  (cdr expr)])
       #|(print-code "expr: ~S" expr)
       (print-code "stak: ~S" stack)
       (print-code "heap: ~S" (hash-table->alist heap))
       (newline)|#
-      (cond
-       ;;VAR
-       [(symbol? expr)
-        (let* ([mark (assoc-ref env expr)]
-               [clos (if (lookup-fail? mark)
-                         (hash-table-get *global-env* expr 'lookup-fail)
-                         (ref heap (marker-loc mark)))])
-          (cond
-           [(lookup-fail? mark)
-            (Krivine- clos stack heap)]
-           [(clos-is-value? clos)
-            (Krivine- clos stack heap)] ;;VAR1 -- clos(atom) don't need env
-           [else (Krivine- clos (cons mark stack) heap)]))] ;;VAR2
 
-       [(or (not (pair? expr)) (quote-expr? expr)) ;;weak head normal
-        (begin
-          (if (pair? stack)
-              (hash-table-put! heap (marker-loc (car stack)) closure))
-          expr)]
+      (inst closure args env stack heap)))
 
-       ;;UPDATE
-       [(and (pair? stack) (marker? (car stack)))
-        (Krivine- closure (cdr stack) (hash-table-put-! heap (marker-loc (car stack)) closure))]
 
-       ;;CALL
-       [(lambda-expr? expr)
-        (if (null? stack)
-            :**partially-applied-function
-            (let* ([param (cadr expr)]
-                   [body  (caddr expr)]
-                   [loc   (gensym)]
-                   [mark  (marker loc)])
-              (Krivine- (ndk-closure body (acons param mark env))
-                        (cdr stack)
-                        (hash-table-put-! heap loc (car stack)))))]
+  (define (REF closure args env stack heap)
+    (let* ([mark (assoc-ref env (car args))]
+           [clos (if (lookup-fail? mark)
+                     (hash-table-get *global-env* (car args) 'lookup-fail)
+                     (ref heap (marker-loc mark)))])
+      (if (or (lookup-fail? mark) (clos-is-value? clos))
+          ;;VAR1
+          (Krivine- clos stack heap)
+          ;;VAR2 + UPDATE done at the same time
+          (Krivine- clos stack (hash-table-put-! heap (marker-loc mark) clos)))))
 
-       [(native-expr? expr)
-        (let ([res  (apply (eval (cadr expr) (interaction-environment))
-                           (map (^x (Krivine- (ndk-closure x env) '() heap))
-                                (cddr expr)))])
-          (cond [(boolean? res)
-                 (Krivine- (ndk-closure (if res 'true 'false) env) stack heap)]
-                [(pair? res)
-                 (Krivine- (ndk-closure (expand-expr (consify res)) env) stack heap)]
-                [else
-                 (Krivine- (ndk-closure res env) stack heap)]))]
+  ;; if it were just var2 then  (Krivine- clos (cons mark stack) heap)
 
-       ;;APP
-       [(pair? expr)
-        (let ([f (car expr)]
-              [arg (cadr expr)])
-          (Krivine- (ndk-closure f env)
-                    (cons (ndk-closure arg env) stack)
-                    heap))])))
 
-  (define (consify xs) (if (null? xs) 'nil `(cons ,(car xs) ,(consify (cdr xs))))))
+  (define (FN closure args env stack heap)
+    (if (null? stack)
+        :**partially-applied-function
+        (let* ([param (car args)]
+               [body  (cadr args)]
+               [loc   (gensym)]
+               [mark  (marker loc)])
+          (Krivine- (ndk-closure body (acons param mark env))
+                    (cdr stack)
+                    (hash-table-put-! heap loc (car stack))))))
 
-(define (timed f)
-  (let ([cache (make-hash-table 'eq?)])
-    (lambda [time . args]
-      (let ([v (hash-table-get cache time #f)])
-        (if v v
-            (let ([v (apply f args)])
-              (hash-table-put! cache time v)
-              (list (+ time 1) v)))))))
 
-(define timed-print (timed print))
+  (define (ATOM closure args env stack heap)
+    (if (pair? stack)
+        (hash-table-put! heap (marker-loc (car stack)) closure))
+    (car args))
 
-(define timed-read (timed read))
+
+  (define (PRIM closure args env stack heap)
+    (let ([res  (apply (eval (car args) (interaction-environment))
+                       (map (^x (Krivine- (ndk-closure x env) '() heap))
+                            (cdr args)))])
+      (cond [(boolean? res)
+             (Krivine- (ndk-closure (list REF (if res 'true 'false)) env) stack heap)]
+            [else
+             (Krivine- (ndk-closure (list ATOM res) '()) stack heap)])))
+
+
+  (define (APP closure args env stack heap)
+    (let ([f (car args)]
+          [v (cadr args)])
+      (Krivine- (ndk-closure f env)
+                (cons (ndk-closure v env) stack)
+                heap))))

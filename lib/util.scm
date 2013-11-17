@@ -38,6 +38,16 @@
     (expr clos-expr)
     (env  clos-env))
 
+  (define (replace-closure-representation)
+    (define (ndk-closure expr env)
+      `(closure ,expr ,env))
+    (define (ndk-closure? x)
+      (and (pair? expr)
+           (eq? (car x) 'closure)))
+    (define clos-expr cadr)
+    (define clos-env  caddr))
+
+
   (define (clos-is-value? closure)
     (atom? (clos-expr closure)))
 
