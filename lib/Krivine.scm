@@ -18,6 +18,7 @@
 (define-module Krivine
   (export-all)
   (use srfi-1)
+  (use srfi-9)
   (use util.match)
   (use Util)
   (extend K-Compiler)
@@ -28,22 +29,10 @@
     (eq? x 'lookup-fail))
 
 
-  (define (nadeko-closure? x)
-    (and
-     (pair? x)
-     (eq? (assoc-ref x 'type) 'closure)))
-
-  (define (marker loc)
-    `((type . marker)
-      (location . ,loc)))
-
-  (define (marker-loc mark)
-    (assoc-ref mark 'location))
-
-  (define (marker? x)
-    (and
-     (pair? x)
-     (eq? (assoc-ref x 'type) 'marker)))
+  (define-record-type mark
+    (marker loc)
+    marker?
+    (loc marker-loc))
 
 
   (define *global-env* (make-hash-table 'eq?))
@@ -67,61 +56,66 @@
 
     (set! *step* (+ *step* 1))
 
-    (if (not (pair? closure)) closure      ;;weak head normal
-        (let ([expr (clos-expr closure)]
-              [env  (clos-env  closure)])
-          #|(print-code "expr: ~S" closure)
-          (print-code "stak: ~S" stack)
-          (print-code "heap: ~S" (hash-table->alist heap))
-          (newline)|#
+    (let ([expr (clos-expr closure)]
+          [env  (clos-env  closure)])
+      #|(print-code "expr: ~S" expr)
+      (print-code "stak: ~S" stack)
+      (print-code "heap: ~S" (hash-table->alist heap))
+      (newline)|#
+      (cond
+       ;;VAR
+       [(symbol? expr)
+        (let* ([mark (assoc-ref env expr)]
+               [clos (if (lookup-fail? mark)
+                         (hash-table-get *global-env* expr 'lookup-fail)
+                         (ref heap (marker-loc mark)))])
           (cond
-           ;;VAR
-           [(symbol? expr)
-            (let* ([mark (assoc-ref env expr)]
-                   [clos (if (lookup-fail? mark)
-                             (hash-table-get *global-env* expr 'lookup-fail)
-                             (ref heap (marker-loc mark)))])
-              (cond
-               [(lookup-fail? mark)
-                (Krivine- clos stack heap)]
-               [(clos-is-value? clos)
-                (Krivine- (clos-expr clos) stack heap)] ;;VAR1 -- clos(atom) don't need env
-               [else (Krivine- clos (cons mark stack) heap)]))] ;;VAR2
+           [(lookup-fail? mark)
+            (Krivine- clos stack heap)]
+           [(clos-is-value? clos)
+            (Krivine- clos stack heap)] ;;VAR1 -- clos(atom) don't need env
+           [else (Krivine- clos (cons mark stack) heap)]))] ;;VAR2
 
-           ;;UPDATE
-           [(and (pair? stack) (marker? (car stack)))
-            (Krivine- closure (cdr stack) (hash-table-put-! heap (marker-loc (car stack)) closure))]
+       [(or (not (pair? expr)) (quote-expr? expr)) ;;weak head normal
+        (begin
+          (if (pair? stack)
+              (hash-table-put! heap (marker-loc (car stack)) closure))
+          expr)]
 
-           ;;CALL
-           [(lambda-expr? expr)
-            (if (null? stack)
-                :**partially-applied-function
-                (let* ([param (cadr expr)]
-                       [body  (caddr expr)]
-                       [loc   (gensym)]
-                       [mark  (marker loc)])
-                  (Krivine- (nadeko-closure body (acons param mark env))
-                            (cdr stack)
-                            (hash-table-put-! heap loc (car stack)))))]
+       ;;UPDATE
+       [(and (pair? stack) (marker? (car stack)))
+        (Krivine- closure (cdr stack) (hash-table-put-! heap (marker-loc (car stack)) closure))]
 
-           [(native-expr? expr)
-            (let ([res  (apply (eval (cadr expr) (interaction-environment))
-                               (map (^x (Krivine- (nadeko-closure x env) '() heap))
-                                    (cddr expr)))])
-              (cond [(boolean? res)
-                     (Krivine- (nadeko-closure (if res 'true 'false) env) stack heap)]
-                    [(pair? res)
-                     (Krivine- (nadeko-closure (expand-expr (consify res)) env) stack heap)]
-                    [else
-                     (Krivine- res stack heap)]))]
+       ;;CALL
+       [(lambda-expr? expr)
+        (if (null? stack)
+            :**partially-applied-function
+            (let* ([param (cadr expr)]
+                   [body  (caddr expr)]
+                   [loc   (gensym)]
+                   [mark  (marker loc)])
+              (Krivine- (ndk-closure body (acons param mark env))
+                        (cdr stack)
+                        (hash-table-put-! heap loc (car stack)))))]
 
-           ;;APP
-           [(pair? expr)
-            (let ([f (car expr)]
-                  [arg (cadr expr)])
-              (Krivine- (nadeko-closure f env)
-                        (cons (nadeko-closure arg env) stack)
-                        heap))]))))
+       [(native-expr? expr)
+        (let ([res  (apply (eval (cadr expr) (interaction-environment))
+                           (map (^x (Krivine- (ndk-closure x env) '() heap))
+                                (cddr expr)))])
+          (cond [(boolean? res)
+                 (Krivine- (ndk-closure (if res 'true 'false) env) stack heap)]
+                [(pair? res)
+                 (Krivine- (ndk-closure (expand-expr (consify res)) env) stack heap)]
+                [else
+                 (Krivine- (ndk-closure res env) stack heap)]))]
+
+       ;;APP
+       [(pair? expr)
+        (let ([f (car expr)]
+              [arg (cadr expr)])
+          (Krivine- (ndk-closure f env)
+                    (cons (ndk-closure arg env) stack)
+                    heap))])))
 
   (define (consify xs) (if (null? xs) 'nil `(cons ,(car xs) ,(consify (cdr xs))))))
 

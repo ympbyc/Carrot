@@ -25,10 +25,10 @@
                           [expr   (last def)]
                           [body   `(^ ,@params ,expr)])
                      (alist-cons name
-                                 (nadeko-closure (expand-expr body) '())
+                                 (ndk-closure (expand-expr body) '())
                                  binding))
                    (alist-cons 'main
-                               (nadeko-closure (p (expand-expr `(^ ,def))) '())
+                               (ndk-closure (p (expand-expr `(^ ,def))) '())
                                binding)))
            '()
            program)))

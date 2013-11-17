@@ -1,6 +1,7 @@
 (define-module Util
   (export-all)
   (use srfi-1)
+  (use srfi-9)
 
   ;;h1 > h2
   (define (hash-table-union! h1 h2)
@@ -31,16 +32,11 @@
 
   (define (p x) (print x) x)
 
-  (define (nadeko-closure expr env)
-    `([expr . ,expr]
-      [env . ,env]
-      [type . closure]))
-
-  (define (clos-expr closure)
-    (assoc-ref closure 'expr))
-
-  (define (clos-env closure)
-    (assoc-ref closure 'env))
+  (define-record-type nadeko-closure
+    (ndk-closure expr env)
+    ndk-closure?
+    (expr clos-expr)
+    (env  clos-env))
 
   (define (clos-is-value? closure)
     (atom? (clos-expr closure)))
