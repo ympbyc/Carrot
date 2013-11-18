@@ -8,13 +8,18 @@
 (= if bool bool) ;point-free
 
 ;;function
-(= compose f1 f2 a (f1 (f2 a)))
+(= comp f g x (f (g x)))
+(= compose comp)
 (= apply f lst
    (nil? lst f (apply (f (car lst)) (cdr lst))))
 (= flip f x y (f y x))
 (= /> x f (f x))
-(= -> x f g (g (f x)))
-;;e.g. (-> 2 (+ 1) -> (+ 4) -> (+ 3) id)
+(= -> x f g (f (g x)))
+;;e.g. (-> 2 -> (+ 1) -> (+ 4) -> (+ 3) id (+ 6))
+(= pipe xs
+   (nil? xs id
+         (comp (pipe (cdr xs)) (car xs))))
+
 
 ;;list
 (= cons head tail f (f head tail))

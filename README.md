@@ -6,9 +6,12 @@ Dec 2012 Minori Yamashita <ympbyc@gmail.com>
 
 ```lisp
 (Y (^ f (cons 1(cons 1 (zipWith f + (cdr f)))))
-  -take 10
+  -take 8
   -reverse
-  -fold (compose (compose ++ (++ ",")) num->str) "")
+  -fold (^ x y (-> x
+                -> num->str
+                -> (flip ++ ",")
+                id (flip ++ y))) "")
 ```
 
 
@@ -191,17 +194,19 @@ Note this is not a syntactic feature. All these `-take`, `-map` and `-fold` are 
 See the source of this magic in examples/srfi-1.nadeko.
 
 
-Pipeline operator in F#, and Synthread in Clojure are useful tool to avoid nesting of function calls. In Nadeko, a function named `->` is declared in its prelude library.
+Pipeline operator in F#, and Synthread in Clojure are useful tool to avoid nesting of function calls. In Nadeko, `pipe` can be used to compose functions right to left so it reads similarly to the synthread. Or you could use `->` which might take some time getting used to.
 
 ```lisp
-(= -> x f g (g (f x)))
+(/> 1 (pipe (lizt (+ 2)
+                  (* 3)
+                  num->str
+                  (flip ++ " = nine"))))
 
 (-> 1
-    (+ 2)
+ -> (+ 2)
  -> (* 3)
  -> num->str
- -> (flip ++ " = nine")
-    (print 0))
+ id (flip ++ " = nine"))
 
 ;;equivalent to
 (print 0 (++ (num->str (* (+ 1 2) 3)) " = nine"))
@@ -216,11 +221,11 @@ I/O
 
 ```lisp
 (-> "What's your name?"
-    (print 0)
+ -> (print 0)
  -> read
-    (^ xs (-> (cdr xs)
-              (++ "Hello, ")
-              (print (car xs)))))
+ id (^ xs (-> (cdr xs)
+           -> (++ "Hello, ")
+           id (print (car xs)))))
 ```
 
 Macros

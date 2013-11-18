@@ -72,7 +72,7 @@
     (guard (exc
             [else (print (string-append "***EXCEPTION*** " (ref exc 'message)))
                   (set! *step* 0)
-                  (raise exc)])
+                  '()])
            (let ([res (Krivine- (ref binding 'main) '() (make-hash-table 'eq?))])
              ;;(format #t "ref-counts: ~D" (length (hash-table->alist *ref-counts*)))
              (format #t " | The program took total of ~D steps to compute.\n\n" *step*)
