@@ -38,18 +38,15 @@
     (expr clos-expr)
     (env  clos-env))
 
-  (define (replace-closure-representation)
-    (define (ndk-closure expr env)
-      `(closure ,expr ,env))
-    (define (ndk-closure? x)
-      (and (pair? expr)
-           (eq? (car x) 'closure)))
-    (define clos-expr cadr)
-    (define clos-env  caddr))
 
+  #|(define (ndk-closure expr env)
+    `(closure ,expr ,env))
+  (define (ndk-closure? x)
+    (and (pair? expr)
+         (eq? (car x) 'closure)))
+  (define clos-expr cadr)
+  (define clos-env  caddr)|#
 
-  (define (clos-is-value? closure)
-    (atom? (clos-expr closure)))
 
 
   (define (lambda-expr? exp)
@@ -73,6 +70,8 @@
   (define (print-code fmt code)
     (print
      (regexp-replace-all #/#<closure\s(.+?)>/ (format fmt code) "\\1")))
+
+
 
   (define (hash-table-put-! ht k v)
     (hash-table-put! ht k v)

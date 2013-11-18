@@ -10,7 +10,11 @@
 ;;function
 (= compose f1 f2 a (f1 (f2 a)))
 (= apply f lst
-  (nil? lst f (apply (f (car lst)) (cdr lst))))
+   (nil? lst f (apply (f (car lst)) (cdr lst))))
+(= flip f x y (f y x))
+(= /> x f (f x))
+(= -> x f g (g (f x)))
+;;e.g. (-> 2 (+ 1) -> (+ 4) -> (+ 3) id)
 
 ;;list
 (= cons head tail f (f head tail))
@@ -51,7 +55,7 @@
 (= number?  a (** number? a))
 (= string?  a (** string? a))
 (= print time str (** timed-print time str))
-(= read time (** timed-read time))
+(= read  time (cons (+ time 1) (** read)))
 
 ;;help
 (= help "SYNTAX:\n\

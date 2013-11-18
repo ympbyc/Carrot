@@ -41,8 +41,9 @@
   (define (expand-app f args)
     (if (null? args)
         f
-        (expand-app (list APP f (expand-expr (car args)))
-                    (cdr args))))
+        (let ([ag (expand-expr (car args))])
+          (expand-app (list (if (eq? (car ag) REF) APPVAR APP) f ag)
+                      (cdr args)))))
 
   (define (expand-expr exp)
     (cond
