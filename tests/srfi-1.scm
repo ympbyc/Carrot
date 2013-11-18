@@ -3,12 +3,12 @@
 (use gauche.test)
 (test-start "srfi-1")
 (use K-Compiler)
+(use Util)
 
 (define (pre-load fname g-e)
-  (call-with-input-file fname (lambda (file-port)
-    (receive (result g-env)
-             (Krivine (compile (read-list file-port)) g-e)
-      g-env))))
+  (call-with-input-file fname
+    (lambda (file-port)
+      (hash-table-union! g-e (compile (read-list file-port))))))
 
 (define (read-list port)
   (let ((exp (read port)))
@@ -16,11 +16,10 @@
       (cons exp (read-list port)))))
 
 (define g-env
-  (pre-load "examples/prelude.nadeko" (pre-load "examples/srfi-1.nadeko" '())))
+  (pre-load "examples/prelude.nadeko" (pre-load "examples/srfi-1.nadeko" (make-hash-table 'eq?))))
 
 (define (run code)
-  (receive (result bindings) (Krivine (compile `((show ,code))) g-env)
-    result))
+  (Krivine (hash-table-union! g-env (compile `((show ,code))))))
 
 (test-section "constructors")
 (test* "cons" "1, 2, 3, nil" (run `(cons 1 (cons 2 (cons 3 nil)))))
@@ -49,10 +48,10 @@
 (test* "zip" "0, 2, 1, 1, 2, 0, nil" (run `(zip (take integers 3) (reverse (take integers 3)))))
 (test* "unzip" "0, 1, 2, nil" (run `(fst (unzip (zip (take integers 3) (reverse (take integers 3)))))))
 (test* "unzip" "2, 1, 0, nil" (run `(snd (unzip (zip (take integers 3) (reverse (take integers 3)))))))
-(test* "count1" "3" (run `(count1 (cons 1 (cons 2 (cons 1 (cons 3 (cons 1 nil))))) (eq? 1))))
+(test* "count1" "3" (run `(count1 (cons 1 (cons 2 (cons 1 (cons 3 (cons 1 nil))))) (=? 1))))
 (test* "count2" "3"
   (run `(count2 (cons 1 (cons 2 (cons 1 (cons 3 (cons 1 nil)))))
-                (cons 1 (cons 2 (cons 1 (cons 3 (cons 1 nil))))) (^ x y (eq? 2 (+ x y))))))
+                (cons 1 (cons 2 (cons 1 (cons 3 (cons 1 nil))))) (^ x y (=? 2 (+ x y))))))
 
 (test-section "fold, map")
 (test* "fold" "55" (run `(fold (take integers 11) + 0)))

@@ -1,3 +1,5 @@
+(= id x x)
+
 ;;bool
 (= true  t e t)
 (= false t e e)
@@ -8,14 +10,18 @@
 ;;function
 (= compose f1 f2 a (f1 (f2 a)))
 (= apply f lst
-  (nil? lst f (apply (f (car lst)) (cdr lst))))
+   (nil? lst f (apply (f (car lst)) (cdr lst))))
+(= flip f x y (f y x))
+(= /> x f (f x))
+(= -> x f g (g (f x)))
+;;e.g. (-> 2 (+ 1) -> (+ 4) -> (+ 3) id)
 
 ;;list
 (= cons head tail f (f head tail))
 (= car lst (lst (^ h t h)))
 (= cdr lst (lst (^ h t t)))
 (= nil 'nil)
-(= nil? (eq? nil))
+(= nil? (=? nil))
 
 ;;tuple
 (= 2-tuple cons)
@@ -34,21 +40,22 @@
         (++ (++ (show (car a)) ", ") (show (cdr a)))))))
 
 ;;primitive wrapper
-(= eq? a b (** equal a b))
-(= =?  a b (** equal a b))
+(= =?  a b (** equal? a b))
 (= <   a b (** < a b))
 (= >   a b (** < b a))
 (= <=  a b (** <= a b))
-(= >=  a b (** <= b a))
+(= >=  a b (** >= b a))
 (= +   a b (** + a b))
 (= -   a b (** - a b))
 (= *   a b (** * a b))
 (= /   a b (** / a b))
-(= %   a b (** % a b))
-(= ++  a b (** ++ a b))
-(= num->str a (** num->str a))
+(= %   a b (** mod a b))
+(= ++  a b (** string-append a b))
+(= num->str a (** number->string a))
 (= number?  a (** number? a))
 (= string?  a (** string? a))
+(= print time str (** timed-print time str))
+(= read  time (cons (+ time 1) (** read)))
 
 ;;help
 (= help "SYNTAX:\n\

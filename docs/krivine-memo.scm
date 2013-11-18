@@ -18,19 +18,19 @@
 
 ;((-> (a b (** + a b))) 5 6)
 (
-  (,CLOSURE ((,STOP))) 
+  (,CLOSURE ((,STOP)))
   (,CLOSURE (
-    (,GRAB a) 
-    (,GRAB b) 
+    (,GRAB a)
+    (,GRAB b)
     (,PMARK)
-    (,CLOSURE ((,PRIMITIVE +) (,CONTINUE))) 
-    (,ACCESS a) 
+    (,CLOSURE ((,PRIMITIVE +) (,CONTINUE)))
+    (,ACCESS a)
     (,ACCESS b)
-    (,CONTINUE))) 
-  (,DEFINE +) 
-  (,CLOSURE ((,CONSTANT 5) (,CONTINUE))) 
-  (,CLOSURE ((,CONSTANT 6) (,CONTINUE))) 
-  (,ACCESS +) 
+    (,CONTINUE)))
+  (,DEFINE +)
+  (,CLOSURE ((,CONSTANT 5) (,CONTINUE)))
+  (,CLOSURE ((,CONSTANT 6) (,CONTINUE)))
+  (,ACCESS +)
   (,CONTINUE)
 )
 
@@ -41,20 +41,55 @@
 ;  (+ x 6)
 ;)
 (
-  (,CLOSURE ((,STOP))) 
+  (,CLOSURE ((,STOP)))
   (,CLOSURE (
-    (,GRAB a) 
-    (,GRAB b) 
+    (,GRAB a)
+    (,GRAB b)
     (,PMARK)
-    (,CLOSURE ((,PRIMITIVE +) (,CONTINUE))) 
-    (,ACCESS a) 
-    (,ACCESS b) 
-    (,CONTINUE))) 
-  (,DEFINE +) 
-  (,CLOSURE ((,CONSTANT 7) (,CONTINUE))) 
-  (,DEFINE x) 
-  (,CLOSURE ((,ACCESS x) (,CONTINUE))) 
-  (,CLOSURE ((,CONSTANT 6) (,CONTINUE))) 
-  (,ACCESS +) 
+    (,CLOSURE ((,PRIMITIVE +) (,CONTINUE)))
+    (,ACCESS a)
+    (,ACCESS b)
+    (,CONTINUE)))
+  (,DEFINE +)
+  (,CLOSURE ((,CONSTANT 7) (,CONTINUE)))
+  (,DEFINE x)
+  (,CLOSURE ((,ACCESS x) (,CONTINUE)))
+  (,CLOSURE ((,CONSTANT 6) (,CONTINUE)))
+  (,ACCESS +)
   (,CONTINUE)
-)
+  )
+
+
+
+
+
+
+
+x, y, z ∈ Var
+M, N ∈ Exp
+Exp := x | (M N) | λx.M
+
+
+Krivine: State -> State
+State = Clos * Stack
+Env = Var -> Clos
+Clos = Exp * Env
+Stack = [Clos]
+
+
+VAR Rule
+--------
+
+(defliteral (Clos x y)
+  {x y})
+
+(define (Krivine closure stack)
+  (case (closure stack)
+    [({x Env}, Stack)
+     (Krivine (get Env x) Stack)]
+
+    [({(M N) Env}, Stack)
+     (Krivine {M Env} (cons {N Env} Stack))]
+
+    [({(^ x M) Env} (c . Stack))
+     (Krivine {M (cons (x . c) Env)} Stack)]))
