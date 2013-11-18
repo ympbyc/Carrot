@@ -5,7 +5,7 @@ Dec 2012 Minori Yamashita <ympbyc@gmail.com>
 
 
 ```lisp
-(Y (^ f (cons 1 (zipWith f + (cdr f)) -cons 1))
+(Y (^ f (cons 1(cons 1 (zipWith f + (cdr f)))))
   -take 10
   -reverse
   -fold (compose (compose ++ (++ ",")) num->str) "")
@@ -65,7 +65,7 @@ Implementations must provide at least the following primitives:
 ### Identifiers **(Expression)**
 
 Identifiers are symbols that are or to be bound to another value. They are used to name functions, and as parameters of functions.
-An identifier consists of one or more non-whitespace charactors. Some combinations are reserved as they are syntactic forms.
+An identifier is consist of one or more non-whitespace charactors. Some combinations are reserved as they are syntactic forms.
 
 **code 2** *examples of identifiers*
 
@@ -144,43 +144,8 @@ Functions(closures) can be applied to arguments. The application begins with an 
 In the expression A, the `map` function defined in **code 5** is applied to two arguments; listX and functionX assuming they are defined elsewhere.
 This fills the parameter slots of the `map` function meaning that `listX` gets bound to `lst` and `functionX` gets bound to `f`. The expression inside `map` is then evaluated using both `listX` and `functionX`. Eventually the evaluation completes; producing a value(in this case a new list).
 
-The expression B is a bit more complicated and it introduces some important features. Lets look into it in detail.
-
-**text 1** *reduction proccess*
-
-> 1. First, the expression `(take integers 5)` is passed to the `map` along with the other expression `(+ 2)`.
-> > Now the `lst` parameter of `map` is bound to `(take integers 5)`
-> > and the `f` parameter of `map` is bound to `(+ 2)`
->
-> 2. Next, `lst` is passed to the function `nil?`. `nil?` before evaluating itself, evaluates the expression bound to `lst` that is `(take integers 5)`.
-> > `integers` is a infinite list of integers.
-> > `take` is a function that take n number of items from a list
-> > so the resulting value of `(take integers 5)` is a list containing 0, 1, 2, 3, and 4
->
-> 3. `nil?` starts evaluating with the list we obtained in **Step 2**
-> > `nil?` is a function to test if the first argument given is `nil`
-> > since our list of integers are not `nil`, `nil?` returns `false`
->
-> 4. `false` is applied to `nil` and `(cons (f ...`
-> > `false` is a function that take two arguments, ignoring the first argument and return the second argument.
-> > So we get `(cons (f ...`
->
-> 5. `cons` gets two arguments; `(f (car lst))` and `(map (cdr ...`. `cons`, in order to produce the value of itself, first have to evaluate the expression `f` which is bound to `(+ 2)`
-> > `+` is a function that take **two** arguments and returns the addition of those two values.
-> > However `+` is applied to only **one** argument which is **2**.
-> > The expression `(+ 2)` returns a function that  take **one** argument and add it to **2**.
-> > That function is applied to `(car lst)`. `(car lst)` gets evaluated and produces 0 --- from **Step 2**
-> > `(+ 2 0)` gets evaluated and produces `2`
->
-> 6. evaluation continues
-
-The proccess showed two important evaluation strategy Nadeko uses. Lazy evaluation and Currying.
-
-The evaluation strategy that delays the evaluation of expressions until they are needed is called **lazy evaluation**. We have seen this in **Step 2**.
-Scheme and most of other dialects of LISP use `call-by-value` strategy. Under such language, both `(take integers 5)` and `(+ 2)` are computed in **Step 1** before it gets applied to `map`.
-Lazy evaluation allows us to handle infinit data easily as we saw in the example of `(take integers 5)`.
-
-Another important idea we saw is **Currying**. `(+ 2)` inspite of shortage of arguments it did not cause an error. Instead it returned a closure that take an argument and + it to 2. This is made possible thanks to currying. As I mentioned in the **lambda expression** section, a function that take more than one arguments is implicitly turned into a function that "take one argument and returns a function that take another argument". Such function is called a *Curried function*.
++ Nadeko uses call-by-need evaluation strategy (although the implementation is incomplete).
++ Every function is curried.
 
 Implementations SHOLD implement "call-by-need" instead of "call-by-name".
 
@@ -191,8 +156,6 @@ Almost everything is a closure
 Nadeko implementations does not have to provide lists as primitive data type because they can easily be simulated with closures.
 
 Similarly, booleans are closures and `if` can be implemented as a function.
-
-This does not necessarily mean inconvinience. We will see why in the next chapter.
 
 S-expression without paren hell
 -------------------------------
@@ -209,21 +172,64 @@ Because the arguments are delayed automaticaly, we can implement booleans as fun
 (if (eq? a b) "equal" "not equal")
 
 ;nadeko
-(eq? a b "equal" "not equal")
+(=? a b "equal" "not equal")
 ```
 
-Invention of suffix functions is mind-blowingly awesome.
+We can take the full advantage of the fact that lists are implemented as functions, by applying lists to functions.
 
 ```lisp
 ;scheme
 (fold + 0 (map (lambda (x) (* x 2)) (take (iota 100) 5)))
 
 ;nadeko
-(integers -take 5 -map (* 2) -fold + 0)
+(integers -take 5
+          -map  (* 2)
+          -fold + 0)
 ```
 
 Note this is not a syntactic feature. All these `-take`, `-map` and `-fold` are ordinary functions.
 See the source of this magic in examples/srfi-1.nadeko.
+
+
+Pipeline operator in F#, and Synthread in Clojure are useful tool to avoid nesting of function calls. In Nadeko, a function named `->` is declared in its prelude library.
+
+```lisp
+(= -> x f g (g (f x)))
+
+(-> 1
+    (+ 2)
+ -> (* 3)
+ -> num->str
+ -> (flip ++ " = nine")
+    (print 0))
+
+;;equivalent to
+(print 0 (++ (num->str (* (+ 1 2) 3)) " = nine"))
+```
+
+I/O
+---
+
+ I/O in lazy languages are hard because the order of evaluation is not lexical, and if the return value of an I/O operation does not affect the overall result, the operation itself gets ommited. To go around this problem, Haskell uses whta's called an IO Monad. IO Monad is a way to comstruct a computation and sideeffects don't happen while the program is executing.
+ Nadeko takes a saner approach than this. We use what we call a timed-io. Every sideeffectful function F takes an additional argument `time` X  and F includes a time Y  in its return value. By giving Y to another sideeffectful function G, a clear relation between F and G is formed so Nadeko can figure out the evaluation order.
+ Every sideeffectful function caches its result based on the time so it works fine even with call-by-name strategy.
+
+```lisp
+(-> "What's your name?"
+    (print 0)
+ -> read
+ -> (^ xs (-> (cdr xs)
+              (++ "Hello, ")
+              (print (car xs)))
+    id)
+```
+
+Macros
+------
+
+ There is no macro mechanism built in to Nadeko at this stage partly because there's no need for it.  However, in case you want them you can write macros in Scheme and put it to lib/standard-macros.scm.
+ There is one built in macro `lizt`. Which expands `(lizt 1 2 3)` into `(cons 1 (cons 2 (cons 3 nil)))`.
+
 
 Influenced by
 --------------
@@ -234,10 +240,15 @@ Nadeko is influenced by the following languages
 + Scheme       - for syntax and actors
 + Io           - for simplicity
 + Smalltalk-72 - for messaging notation
++ Clojure
 
 
 CHANGELOG
 ---------
+
+### 11/17/2013
+
+Krivine VM is replaced by S Machine described in http://www.cs.indiana.edu/cgi-bin/techreports/TRNNN.cgi?trnum=TR581
 
 ### 9/26/2013
 
