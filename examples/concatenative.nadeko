@@ -4,7 +4,7 @@
 ;;
 ;; inspired by factjor https://github.com/brandonbloom/factjor
 
-(= <o eq?)
+(= <o =?)
 (= cadr  (compose car cdr))
 (= cddr  (compose cdr cdr))
 (= caddr (compose car cddr))
@@ -45,6 +45,6 @@
 (= cat/run (cat nil))
 
 ;example
-;(cat/run 5 6 cat/+ 7 cat/+ 8 9 cat/+ cat/+ 'end) ;=> 35
+;(car (cat/run 5 6 cat/+ 7 cat/+ 8 9 cat/+ cat/+ 'end)) ;=> 35
 
 ;(cat/run 5 10 (quote- 2 cat/+) dip 'end)

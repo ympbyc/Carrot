@@ -1,4 +1,4 @@
-(= <o eq?)
+(= <o =?)
 
 (= animal name voice
   (Y (^ SELF =>

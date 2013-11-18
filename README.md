@@ -210,25 +210,27 @@ Pipeline operator in F#, and Synthread in Clojure are useful tool to avoid nesti
 I/O
 ---
 
- I/O in lazy languages are hard because the order of evaluation is not lexical, and if the return value of an I/O operation does not affect the overall result, the operation itself gets ommited. To go around this problem, Haskell uses whta's called an IO Monad. IO Monad is a way to comstruct a computation and sideeffects don't happen while the program is executing.
- Nadeko takes a saner approach than this. We use what we call a timed-io. Every sideeffectful function F takes an additional argument `time` X  and F includes a time Y  in its return value. By giving Y to another sideeffectful function G, a clear relation between F and G is formed so Nadeko can figure out the evaluation order.
+ I/O in lazy languages are hard because the order of evaluation is not lexical, and if the return value of an I/O operation does not affect the overall result, the operation itself gets ommited. To go around this problem, Haskell uses whta's called an IO Monad. IO Monad is a way to construct a computation, and sideeffects don't happen while the program is executing.
+ Nadeko takes a saner approach than this. We use what we call a timed-io. Every sideeffectful function F takes an additional argument time X  and F includes a time Y  in its return value. By giving Y to another sideeffectful function G, a clear relation between F and G is formed so Nadeko can figure out the evaluation order.
  Every sideeffectful function caches its result based on the time so it works fine even with call-by-name strategy.
 
 ```lisp
 (-> "What's your name?"
     (print 0)
  -> read
- -> (^ xs (-> (cdr xs)
+    (^ xs (-> (cdr xs)
               (++ "Hello, ")
-              (print (car xs)))
-    id)
+              (print (car xs)))))
 ```
 
 Macros
 ------
 
  There is no macro mechanism built in to Nadeko at this stage partly because there's no need for it.  However, in case you want them you can write macros in Scheme and put it to lib/standard-macros.scm.
- There is one built in macro `lizt`. Which expands `(lizt 1 2 3)` into `(cons 1 (cons 2 (cons 3 nil)))`.
+ There is two built in macros:
+
+ + `lizt` expands `(lizt 1 2 3)` into `(cons 1 (cons 2 (cons 3 nil)))`.
+ + `bind` expands `(bind [x 2 y 3] (* x y))` into `((^ x y (* x y)) 2 3)`
 
 
 Influenced by
