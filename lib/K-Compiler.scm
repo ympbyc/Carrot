@@ -25,7 +25,7 @@
                       [expr   (last def)]
                       [body   `(^ ,@params ,expr)])
                  (alist-cons name
-                             (ndk-closure (expand-expr body) '())
+                             (ndk-closure (expand-expr body '()) '())
                              binding)))
            '()
            program)))
@@ -37,18 +37,27 @@
         `(,FN ,(car params) ,(curry-lambda (cdr params) expr))))
 
 
+  (define (appv? ag env)
+    (and (eq? (car ag) REF)
+         (member (cadr ag) env)))
+
+
   ;; (f x y z) -> (((f x) y) z)
-  (define (expand-app f args)
+  (define (expand-app f args env)
     (if (null? args)
         f
-        (let ([ag (expand-expr (car args))])
-          (expand-app (list (if (eq? (car ag) REF) APPVAR APP) f ag)
-                      (cdr args)))))
+        (let ([ag (expand-expr (car args) env)])
+          (expand-app (list (if (appv? ag env) APPVAR APP) f ag)
+                      (cdr args)
+                      env))))
 
-  (define (expand-expr exp)
+  (define (expand-expr exp env)
     (cond
-     [(symbol? exp)
+     [(and (symbol? exp) (member exp env))
       `(,REF ,exp)]
+
+     [(symbol? exp)
+      `(,REFG ,exp)]
 
      [(atom? exp)
       `(,ATOM ,exp)]
@@ -58,13 +67,14 @@
 
      ;;(^ x M)
      [(lambda-expr? exp)
-      (curry-lambda (drop-right (cdr exp) 1) (expand-expr (last exp)))]
+      (let ([params (drop-right (cdr exp) 1)])
+        (curry-lambda params (expand-expr (last exp) (append env params))))]
 
      ;;(** + M L)
      [(native-expr? exp)
-      `(,PRIM ,(cadr exp) ,@(map expand-expr (cddr exp)))]
+      `(,PRIM ,(cadr exp) ,@(map (^x (expand-expr x env)) (cddr exp)))]
 
      [else
       ;;(f a b c)
       (let ([exp (macroexpand exp)])
-        (expand-app (expand-expr (car exp)) (cdr exp)))])))
+        (expand-app (expand-expr (car exp) env) (cdr exp) env))])))

@@ -26,8 +26,11 @@
     (eq? x 'lookup-fail))
 
 
+  ;;weak head normal form?
   (define (clos-is-value? closure)
-    (eq? (car (clos-expr closure)) ATOM))
+    (let ([inst (car (clos-expr closure))])
+      (or (eq? inst ATOM)
+          (eq? inst FN))))
 
 
   (define (ignore f) #f)
@@ -74,7 +77,7 @@
                   (set! *step* 0)
                   '()])
            (let ([res (Krivine- (ref binding 'main) '() (make-hash-table 'eq?))])
-             ;;(format #t "ref-counts: ~D" (length (hash-table->alist *ref-counts*)))
+             (format #t " |ref-counts: ~D\n" (length (hash-table->alist *ref-counts*)))
              (format #t " | The program took total of ~D steps to compute.\n\n" *step*)
              (set! *step* 0)
              res)))
@@ -104,24 +107,26 @@
 
   (define (REF closure args env stack heap)
     (let* ([mark (assoc-ref env (car args))]
-           [clos (if (lookup-fail? mark)
-                     (hash-table-get *global-env* (car args) 'lookup-fail)
-                     (ref heap (marker-loc mark)))])
-      (if (or (lookup-fail? mark) (not (clos-is-value? clos)))
-          ;;VAR1
-          (Krivine- clos stack heap)
+           [clos (ref heap (marker-loc mark))])
+      ;;(dec-ref-count! *ref-counts* heap mark)
+      (if (clos-is-value? clos)
           ;;VAR2 + UPDATE done at the same time
-          (begin (dec-ref-count! *ref-counts* heap mark)
-                 ;;(format #t "~S to ~S\n" (marker-loc mark) clos)
-                 (Krivine- clos stack (hash-table-put-! heap (marker-loc mark) clos))))))
+          (Krivine- clos stack (hash-table-put-! heap (marker-loc mark) clos))
+          ;;VAR1
+          (Krivine- clos stack heap))))
 
   ;; if it were just var2 then  (Krivine- clos (cons mark stack) heap)
+
+
+  (define (REFG closure args env stack heap)
+    (let ([clos (hash-table-get *global-env* (car args))])
+      (Krivine- clos stack heap)))
 
 
   ;;CALL
   (define (FN closure args env stack heap)
     (if (null? stack)
-        :**partially-applied-function
+        closure
         (let* ([param (car args)]
                [body  (cadr args)]
                [mark  (car stack)])
@@ -133,7 +138,7 @@
 
   ;;Weak Head Normal
   (define (ATOM closure args env stack heap)
-    (if (pair? stack)
+    (unless (null? stack)
         (hash-table-put! heap (marker-loc (car stack)) closure))
     (car args))
 
@@ -143,7 +148,7 @@
                        (map (^x (Krivine- (ndk-closure x env) '() heap))
                             (cdr args)))])
       (cond [(boolean? res)
-             (Krivine- (ndk-closure (list REF (if res 'true 'false)) env) stack heap)]
+             (Krivine- (ndk-closure (list REFG (if res 'true 'false)) env) stack heap)]
             [else
              (Krivine- (ndk-closure (list ATOM res) '()) stack heap)])))
 
@@ -163,17 +168,7 @@
     (let* ([M    (car args)]
            [x    (cadadr args)]
            [mark (assoc-ref env x)])
-      (if (not (lookup-fail? mark))
-          (Krivine- (ndk-closure M env) (cons mark stack) heap)
-
-          ;;only above is the essence of this instruction
-          ;;deref from global env in case the symbol is not in the env
-          ;;FIX THIS PART SOOOOON
-          (let* ([mark (marker x)]
-                 [clos (hash-table-get *global-env* x)])
-            (Krivine- (ndk-closure M env)
-                      (cons mark stack)
-                      (hash-table-put-! heap x clos)))))))
+      (Krivine- (ndk-closure M env) (cons mark stack) heap))))
 
 
 (define (timed-print time x)

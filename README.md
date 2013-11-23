@@ -212,6 +212,15 @@ Pipeline operator in F#, and Synthread in Clojure are useful tool to avoid nesti
 (print 0 (++ (num->str (* (+ 1 2) 3)) " = nine"))
 ```
 
+```lisp
+(-> nil
+ -> (cons (cons :x 1))
+ -> (cons (cons :y 2))
+ -> (cons (cons :z 3))
+ -> (^ xs (assoc xs :y))
+ id cdr)
+```
+
 I/O
 ---
 

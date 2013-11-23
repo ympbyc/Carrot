@@ -13,9 +13,11 @@
 (= apply f lst
    (nil? lst f (apply (f (car lst)) (cdr lst))))
 (= flip f x y (f y x))
+
 (= /> x f (f x))
 (= -> x f g (f (g x)))
 ;;e.g. (-> 2 -> (+ 1) -> (+ 4) -> (+ 3) id (+ 6))
+
 (= pipe xs
    (nil? xs id
          (comp (pipe (cdr xs)) (car xs))))
@@ -27,6 +29,7 @@
 (= cdr lst (lst (^ h t t)))
 (= nil 'nil)
 (= nil? (=? nil))
+(= o- x f y (cons x (f y)))
 
 ;;tuple
 (= 2-tuple cons)
