@@ -168,7 +168,7 @@
   (define (collect-garbage env)
     (print "Running GC...")
     (hash-table-put! *heap* 'tmp (ndk-closure '() env)) ;;hack
-    (print-code "HEAP SIZE BEFORE:: ~S" (hash-table-num-entries *heap*))
+    ;;(print-code "HEAP SIZE BEFORE:: ~S" (hash-table-num-entries *heap*))
     (let ([new-heap
            (hash-table-fold
             *heap*
@@ -183,9 +183,8 @@
                   acc))
             (make-hash-table 'eq?))])
       (set! *heap* new-heap)
-      (newline)
-      (print-code "HEAP SIZE AFTER: ~S" (hash-table-num-entries *heap*))
-      (newline))))
+      ;;(print-code "HEAP SIZE AFTER: ~S" (hash-table-num-entries *heap*))
+      )))
 
 
 (define (timed-print time x)
