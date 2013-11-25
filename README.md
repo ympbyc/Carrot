@@ -6,7 +6,7 @@ Dec 2012 Minori Yamashita <ympbyc@gmail.com>
 
 ```lisp
 (Y (^ f (cons 1(cons 1 (zipWith f + (cdr f)))))
-  -take 8
+  -take 10
   -reverse
   -fold (^ x y (-> x
                 -> num->str
@@ -217,7 +217,7 @@ Pipeline operator in F#, and Synthread in Clojure are useful tool to avoid nesti
  -> (cons (cons :x 1))
  -> (cons (cons :y 2))
  -> (cons (cons :z 3))
- -> (^ xs (assoc xs :y))
+ -> (flip assoc :y)
  id cdr)
 ```
 
