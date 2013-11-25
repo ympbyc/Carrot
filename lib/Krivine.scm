@@ -52,20 +52,15 @@
 
 
   (define *global-env* (make-hash-table 'eq?))
-  (define *heap* (make-hash-table 'eq?))
-
-  (define *depth* 0)
-
 
   (define (Krivine binding)
     ;;(print-code " | ~S" (clos-expr (ref binding 'main)))
     (set! *global-env* binding)
-    (set! *heap* (make-hash-table 'eq?))
     (guard (exc
             [else (print (string-append "***EXCEPTION*** " (ref exc 'message)))
                   (set! *step* 0)
                   '()])
-           (let ([res (Krivine- (ref binding 'main) '())])
+           (let ([res (Krivine- (ref binding 'main) '() (make-hash-table 'eq?))])
              (format #t " | The program took total of ~D steps to compute.\n\n" *step*)
              (set! *step* 0)
              res)))
@@ -74,7 +69,7 @@
   (define *step* 0)
 
   ;;; Krivine's Machine ;;;
-  (define (Krivine- closure stack)
+  (define (Krivine- closure stack heap)
 
     (set! *step* (+ *step* 1))
 
@@ -87,104 +82,101 @@
       ;;(print-code "expr: ~S" expr)
       ;;(print-code "env : ~S" env)
       ;;(print-code "stak: ~S" (map (^x (if (marker? x) (marker-loc x) x)) stack))
-      ;;(print-code "*heap*: ~S" (hash-table->alist *heap*))
+      ;;(print-code "heap: ~S" (hash-table->alist heap))
       ;;(newline)
 
-      (inst closure args env stack)))
+      (inst closure args env stack heap)))
 
 
-  (define (REF closure args env stack)
+  (define (REF closure args env stack heap)
     (let* ([mark (assoc-ref env (car args))]
-           [clos (ref *heap* (marker-loc mark))])
+           [clos (ref heap (marker-loc mark))])
       (if (clos-is-value? clos)
           ;;VAR2 + UPDATE done at the same time
-          (begin (hash-table-put-! *heap* (marker-loc mark) clos)
-                 (Krivine- clos stack))
+          (Krivine- clos stack (hash-table-put-! heap (marker-loc mark) clos))
           ;;VAR1
-          (Krivine- clos stack))))
+          (Krivine- clos stack heap))))
 
   ;; if it were just var2 then  (Krivine- clos (cons mark stack))
 
 
-  (define (REFG closure args env stack)
+  (define (REFG closure args env stack heap)
     (let ([clos (hash-table-get *global-env* (car args))])
-      (Krivine- clos stack)))
+      (Krivine- clos stack heap)))
 
 
   ;;CALL
-  (define (FN closure args env stack)
+  (define (FN closure args env stack heap)
     (if (null? stack)
         closure                                   ;;whnf
         (let* ([param (car args)]
                [body  (cadr args)]
                [mark  (car stack)])
           (Krivine- (ndk-closure body (acons param mark env))
-                    (cdr stack)))))
+                    (cdr stack)
+                    heap))))
 
 
   ;;Weak Head Normal
-  (define (ATOM closure args env stack)
+  (define (ATOM closure args env stack heap)
     (unless (null? stack)
-        (hash-table-put! *heap* (marker-loc (car stack)) closure)) ;;update
+        (hash-table-put! heap (marker-loc (car stack)) closure)) ;;update
     (car args))
 
 
-  (define (PRIM closure args env stack)
-    (inc! *depth*)
-    (let ([res  (apply (eval (car args) (interaction-environment))
-                       (map (^x (Krivine- (ndk-closure x env) '()))
-                            (cdr args)))])
-      (dec! *depth*)
-      (when (= 0 *depth*)
-            (collect-garbage (fold (fn [x env] (if (marker? x) (acons (gensym "tmp") x env) env))
-                                   env stack)))
+  (define (PRIM closure args env stack heap)
+    (let* ([thread-heap (collect-garbage heap env)]
+           [native-proc (eval (car args) (interaction-environment))]
+           [res  (apply native-proc
+                       (map (^x (Krivine- (ndk-closure x env) '() thread-heap))
+                            (cdr args)))]
+           [heap (collect-garbage
+                  heap
+                  (fold (fn [x env] (if (marker? x) (acons (gensym "tmp") x env) env))
+                        env stack))])
       (cond [(boolean? res)
-             (Krivine- (ndk-closure (list REFG (if res 'true 'false)) env) stack)]
+             (Krivine- (ndk-closure (list REFG (if res 'true 'false)) env) stack heap)]
             [else
-             (Krivine- (ndk-closure (list ATOM res) '()) stack)])))
+             (Krivine- (ndk-closure (list ATOM res) '()) stack heap)])))
 
 
-  (define (APP closure args env stack)
+  (define (APP closure args env stack heap)
     (let* ([M (car args)]
            [N (cadr args)]
            [loc (gensym)]
            [mark (marker loc)])
-      (hash-table-put-! *heap* loc (ndk-closure N env))
       (Krivine- (ndk-closure M env)
-                (cons mark stack))))
+                (cons mark stack)
+                (hash-table-put-! heap loc (ndk-closure N env)))))
 
 
   ;;(APPVAR M (REF x))
-  (define (APPVAR closure args env stack)
+  (define (APPVAR closure args env stack heap)
     (let* ([M    (car args)]
            [x    (cadadr args)]
            [mark (assoc-ref env x)])
-      (Krivine- (ndk-closure M env) (cons mark stack))))
+      (Krivine- (ndk-closure M env) (cons mark stack) heap)))
 
 
 
   ;;GC
   ;; heap :: {sym (CLOS expr ((sym . mark)))}
-  (define (collect-garbage env)
-    (print "Running GC...")
-    (hash-table-put! *heap* 'tmp (ndk-closure '() env)) ;;hack
-    ;;(print-code "HEAP SIZE BEFORE:: ~S" (hash-table-num-entries *heap*))
-    (let ([new-heap
-           (hash-table-fold
-            *heap*
-            (fn [k clos acc]
-                (let ([env (clos-env clos)])
-                  (for-each
-                   (fn [x]
-                       (let ([loc (marker-loc (cdr x))])
-                         ;;(format #t "~S " loc)
-                         (hash-table-put! acc loc (hash-table-get *heap* loc))))
-                   env)
-                  acc))
-            (make-hash-table 'eq?))])
-      (set! *heap* new-heap)
-      ;;(print-code "HEAP SIZE AFTER: ~S" (hash-table-num-entries *heap*))
-      )))
+  (define (collect-garbage heap env)
+    (format #t ".") (flush)
+    (hash-table-put! heap 'tmp (ndk-closure '() env)) ;;hack
+    ;;(print-code "HEAP SIZE BEFORE:: ~S" (hash-table-num-entries heap))
+    (hash-table-fold
+     heap
+     (fn [k clos acc]
+         (let ([env (clos-env clos)])
+           (for-each
+            (fn [x]
+                (let ([loc (marker-loc (cdr x))])
+                  ;;(format #t "~S " loc)
+                  (hash-table-put! acc loc (hash-table-get heap loc))))
+            env)
+           acc))
+     (make-hash-table 'eq?))))
 
 
 (define (timed-print time x)
