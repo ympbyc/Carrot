@@ -72,7 +72,7 @@
 
      ;;(** + M L)
      [(native-expr? exp)
-      `(,PRIM ,(cadr exp) ,@(map (^x (expand-expr x env)) (cddr exp)))]
+      (expand-app `(,NATIVE ,(cadr exp)) (cddr exp) env)]
 
      [else
       ;;(f a b c)
