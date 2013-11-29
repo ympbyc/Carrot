@@ -46,11 +46,13 @@
   (define marker-loc cadr)|#
 
 
+  (define heap-size-default 200)
+  (define *heap-size-limit* heap-size-default)
 
   (define *global-env* (make-hash-table 'eq?))
 
   (define (Krivine binding)
-    (print-code " | ~S" (clos-expr (ref binding 'main)))
+    ;;(print-code " | ~S" (clos-expr (ref binding 'main)))
     (set! *global-env* binding)
     (guard (exc
             [else (print (string-append "***EXCEPTION*** " (ref exc 'message)))
@@ -73,7 +75,6 @@
            [env  (clos-env  closure)]
            [inst (car expr)]
            [args  (cdr expr)])
-
 
       ;;(print-code "expr: ~S" expr)
       ;;(print-code "env : ~S" env)
@@ -120,7 +121,9 @@
   ;;Weak Head Normal
   (define (ATOM closure args env stack heap nprocs)
     (if (null? nprocs)
-        (car args)
+        (begin
+          (format #t " | Heap Size: ~D/~D\n" (hash-table-num-entries heap) *heap-size-limit*)
+          (car args))
 
         ;;TODO: break this down
 
@@ -158,7 +161,10 @@
            [proc (eval (car args) (find-module 'nadeko-sandbox))])
       (Krivine- (ref heap (marker-loc m))
                 '()
-                heap
+                (collect-garbage heap
+                                 (append env (map (^m (cons (gensym "tmp") m))
+                                                  (append stack
+                                                          (apply append (map cdr nprocs))))))
                 (cons (cons proc stack) nprocs))))
 
 
@@ -186,17 +192,22 @@
   ;; heap :: {sym (CLOS expr ((sym . mark)))}
   (define (collect-garbage heap env)
     ;;(format #t ".") (flush)
-    (hash-table-put! heap 'tmp (ndk-closure '() env)) ;;hack
-    (hash-table-fold
-     heap
-     (fn [k clos acc]
-         (for-each
-          (fn [x]
-              (let ([loc (marker-loc (cdr x))])
-                (hash-table-put! acc loc (hash-table-get heap loc))))
-          (clos-env clos))
-         acc)
-     (make-hash-table 'eq?))))
+    (if (> (hash-table-num-entries heap) *heap-size-limit*)
+        (begin
+          (hash-table-put! heap 'tmp (ndk-closure '() env)) ;;hack
+          (let ([h (hash-table-fold
+                    heap
+                    (fn [k clos acc]
+                        (for-each
+                         (fn [x]
+                             (let ([loc (marker-loc (cdr x))])
+                               (hash-table-put! acc loc (hash-table-get heap loc))))
+                         (clos-env clos))
+                        acc)
+                    (make-hash-table 'eq?))])
+            (set! *heap-size-limit* (max heap-size-default (+ 50 (hash-table-num-entries h))))
+            h))
+        heap)))
 
 
 (define-module nadeko-sandbox
