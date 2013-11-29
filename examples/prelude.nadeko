@@ -43,25 +43,25 @@
 ;;show
 (= show a
   (string? a a
-    (number? a (num->str a)
-      (nil? a "nil"
-        (++ (++ (show (car a)) ", ") (show (cdr a)))))))
+  (number? a (num->str a)
+  (nil? a "nil"
+  (++ (++ (show (car a)) ", ") (show (cdr a)))))))
 
 ;;primitive wrapper
-(= =?  a b (** equal? a b))
-(= <   a b (** < a b))
-(= >   a b (** < b a))
-(= <=  a b (** <= a b))
-(= >=  a b (** >= b a))
-(= +   a b (** + a b))
-(= -   a b (** - a b))
-(= *   a b (** * a b))
-(= /   a b (** / a b))
-(= %   a b (** mod a b))
-(= ++  a b (** string-append a b))
-(= num->str a (** number->string a))
-(= number?  a (** number? a))
-(= string?  a (** string? a))
+(= =?  a b (** =? a b))
+(= <   a b (** lt? a b))
+(= >   a b (** gt? a b))
+(= <=  a b (** lte? a b))
+(= >=  a b (** gte? a b))
+(= +   a b (** add a b))
+(= -   a b (** sub a b))
+(= *   a b (** mul a b))
+(= /   a b (** div a b))
+(= %   a b (** mo a b))
+(= ++  a b (** ++ a b))
+(= num->str a (** num->str a))
+(= number?  a (** num? a))
+(= string?  a (** str? a))
 (= print time str (** timed-print time str))
 (= read  time (cons (+ time 1) (** read)))
 
