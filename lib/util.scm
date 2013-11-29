@@ -32,20 +32,20 @@
 
   (define (p x) (print x) x)
 
-  #|(define-record-type nadeko-closure
+  (define-record-type nadeko-closure
     (ndk-closure expr env)
     ndk-closure?
     (expr clos-expr)
-    (env  clos-env))|#
+    (env  clos-env))
 
 
-  (define (ndk-closure expr env)
+  #|(define (ndk-closure expr env)
     `(closure ,expr ,env))
   (define (ndk-closure? x)
     (and (pair? expr)
          (eq? (car x) 'closure)))
   (define clos-expr cadr)
-  (define clos-env  caddr)
+  (define clos-env  caddr)|#
 
 
 
