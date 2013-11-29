@@ -50,9 +50,9 @@
 ;;primitive wrapper
 (= =?  a b (** =? a b))
 (= <   a b (** lt? a b))
-(= >   a b (** gt? b a))
+(= >   a b (** gt? a b))
 (= <=  a b (** lte? a b))
-(= >=  a b (** gte? b a))
+(= >=  a b (** gte? a b))
 (= +   a b (** add a b))
 (= -   a b (** sub a b))
 (= *   a b (** mul a b))
