@@ -1,4 +1,4 @@
-;;;; Nadeko -> Krivine's Machine instruction ;;;;
+;;;; Carrot -> S Machine instruction ;;;;
 ;;; 2012 Minori Yamashita <ympbyc@gmail.com> ;;add your name here
 ;;;
 

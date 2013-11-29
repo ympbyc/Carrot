@@ -1,11 +1,11 @@
-Nadeko
+Carrot
 ======
 
 Dec 2012 Minori Yamashita <ympbyc@gmail.com>
 
 
 ```lisp
-(Y (^ f (cons 1(cons 1 (zipWith f + (cdr f)))))
+(Y (^ f (cons 1 (cons 1 (zipWith f + (cdr f)))))
   -take 10
   -reverse
   -fold (^ x y (-> x
@@ -27,15 +27,15 @@ REPL
 ### To run the VM at the bleeding edge
 
 ```
-./Nadeko.scm -l=examples/srfi-1.scm
+./Carrot.scm -l=examples/srfi-1.scm
 ```
 
 
 The language
 ------------
 
-This section specifies the language Nadeko.
-Nadeko is a powerful functional programming language designed to be extremely simple and portable.
+This section specifies the language Carrot.
+Carrot is a powerful functional programming language designed to be extremely simple and portable.
 
 ### Comments
 
@@ -107,7 +107,7 @@ Note that the expression B is semantically the same as the following expression.
 (^ a (^ b (^ c (* a (+ b c))))) ;;C
 ```
 
-In fact, Nadeko interprets the code B as C.
+In fact, Carrot interprets the code B as C.
 We will discuss the significance of it later.
 
 
@@ -147,7 +147,7 @@ Functions(closures) can be applied to arguments. The application begins with an 
 In the expression A, the `map` function defined in **code 5** is applied to two arguments; listX and functionX assuming they are defined elsewhere.
 This fills the parameter slots of the `map` function meaning that `listX` gets bound to `lst` and `functionX` gets bound to `f`. The expression inside `map` is then evaluated using both `listX` and `functionX`. Eventually the evaluation completes; producing a value(in this case a new list).
 
-+ Nadeko uses call-by-need evaluation strategy (although the implementation is incomplete).
++ Carrot uses call-by-need evaluation strategy (although the implementation is incomplete).
 + Every function is curried.
 
 Implementations SHOLD implement "call-by-need" instead of "call-by-name".
@@ -156,14 +156,14 @@ Implementations SHOLD implement "call-by-need" instead of "call-by-name".
 Almost everything is a closure
 -------------------------------
 
-Nadeko implementations does not have to provide lists as primitive data type because they can easily be simulated with closures.
+Carrot implementations does not have to provide lists as primitive data type because they can easily be simulated with closures.
 
 Similarly, booleans are closures and `if` can be implemented as a function.
 
 S-expression without paren hell
 -------------------------------
 
-Nadeko's auto-currying feature togather with lazyness gave us an unexpected gift -- Reducutions of parentheses.
+Carrot's auto-currying feature togather with lazyness gave us an unexpected gift -- Reducutions of parentheses.
 
 Because the arguments are delayed automaticaly, we can implement booleans as functions.
 
@@ -194,7 +194,7 @@ Note this is not a syntactic feature. All these `-take`, `-map` and `-fold` are 
 See the source of this magic in examples/srfi-1.nadeko.
 
 
-Pipeline operator in F#, and Synthread in Clojure are useful tool to avoid nesting of function calls. In Nadeko, `pipe` can be used to compose functions right to left so it reads similarly to the synthread. Or you could use `->` which might take some time getting used to.
+Pipeline operator in F#, and Synthread in Clojure are useful tool to avoid nesting of function calls. In Carrot, `pipe` can be used to compose functions right to left so it reads similarly to the synthread. Or you could use `->` which might take some time getting used to.
 
 ```lisp
 (/> 1 (pipe (lizt (+ 2)
@@ -225,7 +225,7 @@ I/O
 ---
 
  I/O in lazy languages are hard because the order of evaluation is not lexical, and if the return value of an I/O operation does not affect the overall result, the operation itself gets ommited. To go around this problem, Haskell uses whta's called an IO Monad. IO Monad is a way to construct a computation, and sideeffects don't happen while the program is executing.
- Nadeko takes a saner approach than this. We use what we call a timed-io. Every sideeffectful function F takes an additional argument time X  and F includes a time Y  in its return value. By giving Y to another sideeffectful function G, a clear relation between F and G is formed so Nadeko can figure out the evaluation order.
+ Carrot takes a saner approach than this. We use what we call a timed-io. Every sideeffectful function F takes an additional argument time X  and F includes a time Y  in its return value. By giving Y to another sideeffectful function G, a clear relation between F and G is formed so Carrot can figure out the evaluation order.
  Every sideeffectful function caches its result based on the time so it works fine even with call-by-name strategy.
 
 ```lisp
@@ -240,7 +240,7 @@ I/O
 Macros
 ------
 
- There is no macro mechanism built in to Nadeko at this stage partly because there's no need for it.  However, in case you want them you can write macros in Scheme and put it to lib/standard-macros.scm.
+ There is no macro mechanism built in to Carrot at this stage partly because there's no need for it.  However, in case you want them you can write macros in Scheme and put it to lib/standard-macros.scm.
  There is two built in macros:
 
  + `lizt` expands `(lizt 1 2 3)` into `(cons 1 (cons 2 (cons 3 nil)))`.
@@ -250,7 +250,7 @@ Macros
 Influenced by
 --------------
 
-Nadeko is influenced by the following languages
+Carrot is influenced by the following languages
 
 + Haskell      - for lazyness and currying
 + Scheme       - for syntax and actors

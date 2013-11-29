@@ -1,4 +1,4 @@
-;;Actor model in Nadeko
+;;Actor model in Carrot
 
 (= - k a b (k (** - a b)))
 (= * k a b (k (** * a b)))
