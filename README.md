@@ -14,7 +14,7 @@ Dec 2012 Minori Yamashita <ympbyc@gmail.com>
                 id (flip ++ y))) "")
 ```
 
-![carrot logo](https://rawgithub.com/ympbyc/Carrot/master/docs/carrot.png)
+<img src="https://rawgithub.com/ympbyc/Carrot/master/docs/carrot.png" width="300px" />
 
 
 Installation
