@@ -15,12 +15,16 @@
       (if binding (cdr binding) 'lookup-fail)))
 
 
+  (define (cons-anyway x xs)
+    (if xs
+        (cons x xs)
+        (list x)))
+
   (define (atom? x)
     (or (string? x)
         (number? x)
         (char? x)
-        (keyword? x)
-        (undefined? x)))
+        (keyword? x)))
 
 
   (define-syntax fn
@@ -32,11 +36,13 @@
 
   (define (p x) (print x) x)
 
+
   (define-record-type nadeko-closure
-    (ndk-closure expr env)
+    (ndk-closure expr env sign)
     ndk-closure?
     (expr clos-expr)
-    (env  clos-env))
+    (env  clos-env)
+    (sign clos-sign))
 
 
   #|(define (ndk-closure expr env)

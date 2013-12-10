@@ -14,7 +14,7 @@ Dec 2012 Minori Yamashita <ympbyc@gmail.com>
                 id (flip ++ y))) "")
 ```
 
-<img src="https://rawgithub.com/ympbyc/Carrot/master/docs/carrot.png" width="300px" />
+<img src="https://rawgithub.com/ympbyc/Carrot/master/docs/carrot.png" width="360px" />
 
 
 Installation
@@ -29,7 +29,7 @@ REPL
 ### To run the VM at the bleeding edge
 
 ```
-./Carrot.scm -l=examples/srfi-1.scm
+./Carrot.scm examples/srfi-1.scm
 ```
 
 

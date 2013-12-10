@@ -8,9 +8,7 @@
 
 ;;; Notes ;;;
 ;; CLOSURE creates thunks that packs the continuation and environment together.
-;; To create closures(function objects), CLOSURE the GRAB and expression followed by CONTINUE.
-;; CONSTANT does not create thunks (for efficiency sake)
-;; Stack may only contain Constant(WHNF), or Marker that points to CLOSURE in the heap
+;; To create closures(function objects), CLOSURE the GRAB and expression followed by CONTINUE
 
 
 (define-module Krivine
@@ -58,7 +56,7 @@
             [else (print (string-append "***EXCEPTION*** " (ref exc 'message)))
                   (set! *step* 0)
                   '()])
-           (let ([res (Krivine- (ref binding 'main) '() (make-hash-table 'eq?) '())])
+           (let ([res (time (Krivine- (ref binding 'main) '() (make-hash-table 'eq?) '()))])
              (format #t " | The program took total of ~D steps to compute.\n\n" *step*)
              (set! *step* 0)
              res)))
