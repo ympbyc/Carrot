@@ -13,6 +13,16 @@
     (sig sig-sig)
     (expr sig-expr))
 
+  (define-record-type signature-list
+    (sigs xs)
+    signature-list?
+    (xs get-sigs))
+
+  (define (unwrap-sigs sigs)
+    (if (signature-list? sigs)
+        (caar (get-sigs sigs))
+        sigs))
+
   ;;[expr] -> {'name => [signature]}
   ;;e.g. (= (car (List a) a) xs (xs true))
   (define (type-check program binding)
@@ -50,8 +60,7 @@
            [rett (cadar fn)] ;;a
            [env  (cdr fn)]
            [expt (type-of expr env types)]) ;;[(xs (List a))]
-      ;;(format #t "Unifying main: ")
-      (call/cc (unify rett expt))))
+      (call/cc (unify rett (unwrap-sigs expt)))))
 
   (define (type-of expr env types)
     (cond
@@ -61,10 +70,10 @@
      [(keyword? expr) 'Keyword]
      [(symbol?  expr)
       (let1 x (assoc expr env)
-            (if x x (map sig-sig (ref types expr))))]
-     [(eq? (car expr) 'quote) 'Symbol]
-     [(eq? (car expr) '^)
-      `((Fn ,(gensym) ,(gensym)))]
+            (if x x (sigs (map sig-sig (ref types expr)))))]
+     [(quote-expr? expr) 'Symbol]
+     [(lambda-expr? expr)
+      `(Fn ,(gensym) ,(gensym))]
      [(pair?    expr)
       (let1 xs (check-app (expand-app (car expr) (cdr expr)) env types)
             (if (null? xs) (raise-error/message "No implementation") xs))]))
@@ -87,17 +96,17 @@
 
   ;;((cons 1) 2)
   (define (check-app expr env types)
-    (let ([fs (type-of (car expr) env types)] ;;[signature]
-          [ag (type-of (cadr expr) env types)])
-      (filter-map (fn [sig]
-                      (let1 binding (call/cc (unify (car sig) ag))
-                            (and binding
-                                 (let1 sig (fold (fn [b sig]
-                                                     (replace-type-var sig (car b) (cdr b)))
-                                                 (cdr sig)
-                                                 binding)
-                                       (if (= (length sig) 1) (car sig) sig)))))
-                  fs)))
+    (let* ([fs (type-of (car expr) env types)]       ;;[signature]
+          [ag (type-of (cadr expr) env types)]
+          [ag (unwrap-sigs ag)]) ;;type | [signature]
+      (sigs (filter-map (fn [sig]
+                       (let1 binding (call/cc (unify (car sig) ag))
+                             (and binding
+                                  (fold (fn [b sig]
+                                            (replace-type-var sig (car b) (cdr b)))
+                                        (cdr sig)
+                                        binding))))
+                   (get-sigs fs)))))
 
   ;;a Number -> ((a Number))
   (define (unify t1 t2)
@@ -107,11 +116,11 @@
         (cond
          [(and (primitive? t1) (primitive? t2))
           (if (eq? t1 t2) '() (cont #f))]
-         [(and (datatype? t1) (datatype? (car t2)))
-          (if (eq? (car t1) (caar t2))
-              (apply append (map (fn [x y] ((unify x y) cont)) (cdr t1) (cdar t2))))]
+         [(and (datatype? t1) (datatype? t2))
+          (if (eq? (car t1) (car t2))
+              (apply append (map (fn [x y] ((unify x y) cont)) (cdr t1) (cdr t2))))]
          [(type-var? t1) (list (cons t1 t2))]
          [(type-var? t2) (list (cons t2 t1))]
-         [(pair? t2) ((unify t1 (car t2)) cont)]
-         [(pair? t1) ((unify (car t1) t2) cont)]
+         ;;[(pair? t2) ((unify t1 (car t2)) cont)]
+         ;;[(pair? t1) ((unify (car t1) t2) cont)]
          [else (cont #f)]))))

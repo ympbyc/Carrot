@@ -16,23 +16,22 @@
     (and (pair? def) (eq? (car def) '=)))
 
 
-  ;;compile :: [expr] -> {'name => [closure]}
-  ;; (= (<name> <T> ...) <expr>)
+  ;;compile :: [expr] -> {'name => instruction}
+  ;; (= (<name> <T> <T>) <expr>)
   (define (compile program)
-    (fold (fn [def binding]
-              (let* (;;[def    (if (proper-def? def) def `(= main ,def))]
-                     [name   (caadr def)]
-                     [sign   (cdadr def)]
-                     [params (drop-right (cddr def) 1)]
-                     [expr   (last def)]
-                     [body   `(^ ,@params ,expr)])
-                (hash-table-put! binding name
-                                 (cons-anyway
-                                  (ndk-closure (expand-expr body '()) '() sign)
-                                  (ref binding name)))
-                binding))
-          (make-hash-table 'eq?)
-          program))
+    (alist->hash-table
+     (fold (fn [def binding]
+               (let* (;;[def    (if (proper-def? def) def `(= (main a) ,def))]
+                      [name   (caadr def)]
+                      [sign   (cdadr def)]
+                      [params (drop-right (cddr def) 1)]
+                      [expr   (last def)]
+                      [body   `(^ ,@params ,expr)])
+                 (alist-cons name
+                             (ndk-closure (expand-expr body '()) '())
+                             binding)))
+           '()
+           program)))
 
   ;; (^ x y z exp) -> (^ x (^ y (^ z exp)))
   (define (curry-lambda params expr)

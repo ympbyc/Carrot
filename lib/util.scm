@@ -38,11 +38,10 @@
 
 
   (define-record-type nadeko-closure
-    (ndk-closure expr env sign)
+    (ndk-closure expr env)
     ndk-closure?
     (expr clos-expr)
-    (env  clos-env)
-    (sign clos-sign))
+    (env  clos-env))
 
 
   #|(define (ndk-closure expr env)
