@@ -21,7 +21,7 @@
   (define (compile program)
     (alist->hash-table
      (fold (fn [def binding]
-               (let* (;;[def    (if (proper-def? def) def `(= (main a) ,def))]
+               (let* ([def    (if (proper-def? def) def `(= (main a) ,def))]
                       [name   (caadr def)]
                       [sign   (cdadr def)]
                       [params (drop-right (cddr def) 1)]

@@ -23,11 +23,15 @@
         (caar (get-sigs sigs))
         sigs))
 
+  (define (proper-def? def)
+    (and (pair? def) (eq? (car def) '=)))
+
   ;;[expr] -> {'name => [signature]}
   ;;e.g. (= (car (List a) a) xs (xs true))
   (define (type-check program binding)
     (let* ([types (fold (fn [def binding]
-                            (let* ([name   (caadr def)]
+                            (let* ([def    (if (proper-def? def) def `(= (main a) ,def))]
+                                   [name   (caadr def)]
                                    [sig    (cdadr def)]
                                    [params (zip  (drop-right (cddr def) 1) sig)] ;;[(xs (List a))]
                                    [expr   (list (last def) (last sig))])        ;;((xs true) a)

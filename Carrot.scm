@@ -30,7 +30,8 @@
 (define banner
 "             ----------------------
              |    CARROT 2.1.2    |
-             ----------------------     https://github.com/ympbyc/Carrot\n")
+             ----------------------
+         https://github.com/ympbyc/Carrot\n")
 
 (define (main args)
   (print banner)
