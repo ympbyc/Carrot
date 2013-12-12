@@ -15,10 +15,22 @@
       (if binding (cdr binding) 'lookup-fail)))
 
 
-  (define (cons-anyway x xs)
+  (define (filter-map-indexed f xs)
+    (filter-map-indexed- f xs 0))
+
+  (define (filter-map-indexed- f xs i)
+    (cond [(null? xs) '()]
+          [(f (car xs))
+           (cons (cons i (f (car xs)))
+                 (filter-map-indexed- f (cdr xs) (+ i 1)))]
+
+          [else (filter-map-indexed- f (cdr xs) (+ i 1))]))
+
+
+  (define (cons-anyway/index f xs)
     (if xs
-        (cons x xs)
-        (list x)))
+        (cons (f (length xs)) xs)
+        (list (f 0))))
 
   (define (atom? x)
     (or (string? x)

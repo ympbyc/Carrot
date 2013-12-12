@@ -38,7 +38,7 @@
 
 ;;Y-combinator
 ;;(= (Y (Fn a a) a) x (x (Y x)))
-;;(Y (^ (f) f)) ;now f refers to the function itself
+;;(Y (^ f f)) ;now f refers to the function itself
 (= (Y (Fn a a) a)
    f ((^ x (f (x x))) (^ x (f (x x)))))
 
