@@ -8,22 +8,24 @@
   (use util.match)
 
   (define-record-type signature
-    (sign sig expr idx)
+    (sign typ expr idx)
     signature?
-    (sig sig-sig)
+    (typ  sig-type)
     (expr sig-expr)
-    (idx index))
+    (idx  sig-idx))
 
-  (define-record-type signature-list
-    (sigs xs)
-    signature-list?
-    (xs get-sigs))
+  (define-record-type generics
+    (generic-signatures xs)
+    generic-signatures?
+    (xs get-signatures))
 
-  ;;ugly
-  (define (show-sigs sigs . x)
-    (if (signature-list? sigs)
-        (get-sigs sigs)
-        sigs))
+
+  (define (generics-cons/index f gen)
+    (if gen
+        (let1 xs (get-signatures gen)
+              (generic-signatures (cons (f (length xs)) xs)))
+        (generic-signatures (list (f 0)))))
+
 
   (define (proper-def? def)
     (and (pair? def) (eq? (car def) '=)))
@@ -39,7 +41,7 @@
                              [params (zip  (drop-right (cddr def) 1) sig)] ;;[(xs (List a))]
                              [expr   (list (last def) (last sig))])        ;;((xs true) a)
                         (hash-table-put! binding name
-                                         (cons-anyway/index
+                                         (generics-cons/index
                                           (cut sign (cons 'Fn sig) (cons expr params) <>)
                                           (hash-table-get binding name #f)))
                         binding))
@@ -47,7 +49,8 @@
                   program)]
            [main (hash-table-get types 'main #f)])
       (if main
-          (if (format #t "FIN: ~S\n" (check-fn (sig-expr (car main)) types)) types)
+          (if (format #t "FIN: ~S\n"
+                      (check-fn (sig-expr (car (get-signatures main))) types)) types)
           types)))
 
 
@@ -70,10 +73,10 @@
               [(keyword? expr) 'Keyword]
               [(symbol?  expr)
                (let1 x (assoc expr env)
-                     (if x x (sigs (map sig-sig (ref types expr)))))]
+                     (if x x (ref types expr)))]
               [(quote-expr? expr) 'Symbol]
               [(lambda-expr? expr)
-               `(Fn ,(gensym) ,(gensym))]
+               (generic-signatures (list (sign `(Fn ,(gensym) ,(gensym)) '() 0)))]
               [(pair?    expr)
                (call/cc (unify (type-of (car expr) env types)
                                (map (^x (type-of x env types)) (cdr expr))))])])
@@ -103,48 +106,56 @@
 
 
   (define (unify-app t1 t2)
-    (let* ([signs (get-sigs t1)]
+    (let* ([gensigs (get-signatures t1)]
            [retts
             (filter-map
              (fn [sig]
-                 (let1 binding (call/cc (unify (car sig) (car t2)))
-                       (and binding
-                            (let1 rest-sig
-                                  (fold (fn [b sig]
-                                            (replace-type-var sig (car b) (cdr b)))
-                                        (cdr sig) binding)
+                 (let* ([idx (sig-idx sig)]
+                        [ftype (cdr (sig-type sig))] ;;cdr to remove 'Fn
+                        [binding (call/cc (unify (car ftype) (car t2)))])
+                   (and binding
+                        (let1 rest-ftype
+                              (fold (fn [b ftype]
+                                        (replace-type-var ftype (car b) (cdr b)))
+                                    (cdr ftype) binding)
 
-                                  (cond [(null? rest-sig)
-                                         (cons 'done (last sig))] ;;too many args - do first
-                                        [(= 1 (length rest-sig))
-                                         (cons 'done (last rest-sig))] ;;return-type
-                                        ;;too few args
-                                        [(null? (cdr t2))
-                                         (cons 'thunk (cons 'Fn rest-sig))]
-                                        [else
-                                         (cons 'done
-                                               (call/cc (unify (sigs `(,(cons 'Fn rest-sig))) (cdr t2))))])))))
-             ;;remove 'Fn
-             (map cdr signs))])
+                              (cond [(null? rest-ftype)
+                                     (cons 'done (last ftype))] ;;too many args - do first
+                                    [(= 1 (length rest-ftype))
+                                     (cons 'done (last rest-ftype))] ;;return-type
+                                    ;;too few args
+                                    [(null? (cdr t2))
+                                     (cons 'thunk (sign (cons 'Fn rest-ftype) '() idx))]
+                                    [else
+                                     (cons 'done
+                                           (call/cc (unify (generic-signatures `(,(sign (cons 'Fn rest-ftype) '() idx))) (cdr t2))))])))))
+             gensigs)])
       (p retts)
       (cond
        [(null? retts) (raise-error/message "no impl")]
        [(find (^s (eq? (car s) 'done)) retts) => cdr]
-       [else (sigs (map cdr retts))])))
+       [else (generic-signatures (map cdr retts))])))
 
+
+  (define (show-generics x)
+    (if (generic-signatures? x)
+        (map sig-type (get-signatures x))
+        x))
 
   ;;a Number -> ((a Number))
   (define (unify t1 t2)
     (fn [cont]
-        (format #t "~14S ≡? ~S\n" (show-sigs t1) (show-sigs t2))
+        (format #t "~14S ≡? ~S\n" (show-generics t1) (show-generics t2))
         (cond
          [(and (primitive? t1) (primitive? t2))
           (if (eq? t1 t2) '() (cont #f))]
+         [(and (f-type? t1) (generic-signatures? t2)) ;;match fn type as datatype
+          (call/cc (unify t1 (sig-type (car (get-signatures t2)))))]
          [(and (datatype? t1) (datatype? t2))
           (if (eq? (car t1) (car t2))
               (apply append (map (fn [tx ty] ((unify tx ty) cont)) (cdr t1) (cdr t2))))]
          [(type-var? t1) (list (cons t1 t2))]
          [(type-var? t2) (list (cons t2 t1))]
-         [(and (signature-list? t1) (pair? t2))
+         [(and (generic-signatures? t1) (pair? t2))
           (unify-app t1 t2)]
          [else (cont #f)]))))
