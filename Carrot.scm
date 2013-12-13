@@ -16,7 +16,7 @@
   (format #t "carrot ~S> " ctr)
   (flush)
   (let* ([expr    (read)]
-         [types-  (type-check (list expr) types)]
+         [types-  (type-program (list expr) types)]
          [types   (if types- types- types)])
     (if types-
         (let* ([new-binding (compile (list expr))]
@@ -50,7 +50,7 @@
 (define (t-check fname types)
   (call-with-input-file fname
     (fn [file-port]
-        (type-check (read-list file-port) types))))
+        (type-program (read-list file-port) types))))
 
 
 (define (pre-load fname)
