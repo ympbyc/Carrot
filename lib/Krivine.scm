@@ -49,19 +49,19 @@
 
   (define *global-env* (make-hash-table 'eq?))
 
-  (define (Krivine binding)
-    ;;(print-code " | ~S" (clos-expr (ref binding 'main)))
-    (set! *global-env* binding)
-    (if (hash-table-get binding 'main #f)
-        (guard (exc
-                [else (print (string-append "***EXCEPTION*** " (ref exc 'message)))
-                      (set! *step* 0)
-                      '()])
-               (let ([res (Krivine- (ref binding 'main) '() (make-hash-table 'eq?) '())])
-                 (format #t " | The program took total of ~D steps to compute.\n\n" *step*)
-                 (set! *step* 0)
-                 res))
-        '()))
+  (define (Krivine clos)
+    (print-code "instruction: ~S" (clos-expr clos))
+    (set! *global-env* '())
+    (Krivine- clos '() (make-hash-table 'eq?) '())
+    #|(guard (exc
+            [else (print (string-append "***EXCEPTION*** " (ref exc 'message)))
+                  (set! *step* 0)
+                  '()])
+           (let ([res ])
+             (format #t " | The program took total of ~D steps to compute.\n\n" *step*)
+             (set! *step* 0)
+             res))|#
+    )
 
 
   (define *step* 0)
@@ -122,7 +122,7 @@
   (define (ATOM closure args env stack heap nprocs)
     (if (null? nprocs)
         (begin
-          (format #t " | Heap Size: ~D/~D\n" (hash-table-num-entries heap) *heap-size-limit*)
+          (format #t "heap size: ~D/~D\n" (hash-table-num-entries heap) *heap-size-limit*)
           (car args))
 
         ;;TODO: break this down

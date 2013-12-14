@@ -7,18 +7,6 @@
   (use Util)
   (use util.match)
 
-  (define-record-type signature
-    (sign typ expr)
-    signature?
-    (typ  sig-type)
-    (expr sig-expr))
-
-  (define (generics-cons/index f gen)
-    (if gen
-        (let1 xs (get-signatures gen)
-              (generic-signatures (cons (f (length xs)) xs)))
-        (generic-signatures (list (f 0)))))
-
 
   (define (proper-def? def)
     (and (pair? def) (eq? (car def) '=)))
@@ -28,38 +16,33 @@
   ;;       [([cons . ( (List a) (List a))]
   ;;         [1 . Number]
   ;;         [([nil . (a (List a))] [0 . Number]) . (List Number)]) . (List Number)]) . Number]
+  ;;expr -> ({types} . typed-expr)
   (define (type-program program types)
     (let* ([types
             (fold (fn [def types]
                       (let* ([def    (if (proper-def? def) def `(= (main a) ,def))]
                              [name   (caadr def)]
                              [sig    (cdadr def)]
-                             [params (zip  (drop-right (cddr def) 1) sig)] ;;[(xs (List a))]
-                             [expr   (list (last def) (last sig))] ;;((xs true) a)
+                             [params (drop-right (cddr def) 1)]
+                             [expr   (last def)] ;;((xs true) a)
                              [generic-cell (or (hash-table-get types name #f) '())])
                         (hash-table-put! types name
-                                         (cons (sign (cons 'Fn sig) (cons expr params))
+                                         (cons (typed-expr `(^ ,@params ,expr) (cons 'Fn sig))
                                                generic-cell))
                         types))
                   types
                   program)]
            [main (hash-table-get types 'main #f)])
-      (if main
-          (begin (format #t "FIN: ~S\n" (check-fn (sig-expr (car main)) types))
-                 types)
-          types)))
+      (cons types (if main
+                      (let* ([fn (tx-expr (car main))]
+                             [typ (tx-type (car main))]
+                             [params (zip  (drop-right (cdr fn) 1) typ)]
+                             [expr (list (last fn) (last typ))]
+                             [t-expr (check-fn (cons expr params) types)])
+                        (format #t "typed: ~S\n" (show-typed-expr t-expr))
+                        t-expr)
+                      (typed-expr 0 'Number)))))
 
-  (define-record-type typed-expression
-    (typed-expr e t)
-    typed-expr?
-    (e tx-expr)
-    (t tx-type))
-
-  (define (show-typed-expr x)
-    (cond [(typed-expr? x) (cons (show-typed-expr (tx-expr x)) (show-signature (tx-type x)))]
-          [(null? x) '()]
-          [(pair? x) (cons (show-typed-expr (car x)) (show-typed-expr (cdr x)))]
-          [else x]))
 
 
   ;; atom    -> 'Name
@@ -69,8 +52,10 @@
   (define (check-fn fn types)
     (let* ([expr (caar fn)] ;;(xs true)
            ;;[rett (typed-expr expr (cadar fn))] ;;a
-           [env  (cdr fn)])
-      (show-typed-expr (type expr env types))))
+           [env  (cdr fn)]
+           [tx (type expr env types)])
+      (show-typed-expr tx)
+      tx))
 
 
   (define (expand-app f args)
@@ -88,10 +73,11 @@
      [(keyword? expr) (typed-expr expr 'Keyword)]
      [(symbol?  expr)
       (let1 x (assoc expr env)
-            (typed-expr expr (if x x (ref types expr))))]
+            (if x (typed-expr x x)
+                (ref types expr)))]
      [(quote-expr? expr) (typed-expr expr 'Symbol)]
      [(lambda-expr? expr)
-      (typed-expr expr (sign `(Fn ,(gensym) ,(gensym)) '()))]
+      (list (typed-expr expr  `(Fn ,(gensym) ,(gensym))))]
      [(pair?    expr)
       (type-generic-app expr env types)]))
 
@@ -101,24 +87,18 @@
   ;;e.g. (+ 2 3) -> [([+ . (Number Number Number)] [2 . Number] [2 . Number]) . Number]
   (define (type-generic-app expr env types)
     (let* ([expr (expand-app (car expr) (cdr expr))]
-           [fx   (type (car expr) env types)]
-           [agx  (type (cadr expr) env types)]
-           [fts  (wrap-list (tx-type fx))]
-           [agts (wrap-list (tx-type agx))]
-           [retts (filter-map (fn [ft]
-                                  (find-map (^a (unify-app ft a))
-                                            agts))
-                              fts)]) ;; redundent
-      (cond [(find (^x (not (signature? x))) retts)
-             => (fn [rett]
-                    ;;redundent
-                    (let* ([ft  (find (fn [ft]
-                                         (find (^a (call/cc (unify ft a))) agts)) fts)]
-                           [agt (find-map (fn [ft]
-                                             (find (^a (call/cc (unify ft a))) agts)) fts)])
-                      (typed-expr (list (typed-expr (tx-expr fx) ft)
-                                        (typed-expr (tx-expr agx) agt)) rett)))]
-            [else (p "noooo") (typed-expr expr retts)])))
+           [fxs  (type (car expr) env types)]
+           [agxs (wrap-list (type (cadr expr) env types))]
+           [fx   (find (fn [fx]
+                           (find (^a (unify-app (tx-type fx) (tx-type a)))
+                                 agxs))
+                       fxs)] [_ (show-typed-expr fx)]
+           [ag   (find-map (fn [fx] (find (^a (unify-app (tx-type fx) (tx-type a))) agxs))
+                           fxs)]
+           [fxt (cdr (tx-type fx))]) ;;cdr to remove 'Fn
+      (if (= 2 (length fxt))
+          (typed-expr (list fx ag) (cadr fxt))
+          (list (typed-expr (list fx ag) (cons 'Fn (cdr fxt)))))))
 
   (define (primitive? t)
     (case t
@@ -143,7 +123,7 @@
 
 
   (define (unify-app t1 t2)
-    (let* ([sigt (cdr (sig-type t1))] ;;cdr to remove 'Fn
+    (let* ([sigt (cdr t1)] ;;cdr to remove 'Fn
            [binding (call/cc (unify (car sigt) t2))])
       (and binding
            (let1 rest-sigt
@@ -152,26 +132,24 @@
                        (cdr sigt) binding)
                  (cond [(null? rest-sigt) (last sigt)] ;;too many args
                        [(= 1 (length rest-sigt)) (last rest-sigt)] ;;fully applie
-                       [else (p rest-sigt) (sign (cons 'Fn rest-sigt) '())]))))) ;;too few args
+                       [else (list (typed-expr '() (cons 'Fn rest-sigt)))]))))) ;;too few args
 
 
-  (define (show-signature s)
-    (if (signature? s) `(sig . ,(sig-type s)) s))
 
   ;;a Number -> ((a Number))
   (define (unify t1 t2)
     (fn [cont]
-        (format #t "~14S ≡? ~S\n" (show-signature t1) (show-signature t2))
+        ;;(format #t "~14S ≡? ~S\n" (show-typed-expr t1) (show-typed-expr t2))
         (cond
          [(and (primitive? t1) (primitive? t2))
           (if (eq? t1 t2) (list (cons t1 t2)) (cont #f))]
-         [(and (f-type? t1) (signature? t2)) ;;match fn type as datatype
-          (call/cc (unify t1 (sig-type t2)))]
+         [(and (f-type? t1) (typed-expr? t2)) ;;match fn type as datatype
+          (call/cc (unify t1 (tx-type t2)))]
          [(and (datatype? t1) (datatype? t2))
           (if (eq? (car t1) (car t2))
               (apply append (map (fn [tx ty] ((unify tx ty) cont)) (cdr t1) (cdr t2))))]
          [(type-var? t1) (list (cons t1 t2))]
          [(type-var? t2) (list (cons t2 t1))]
-         [(and (signature? t1) t2)
+         [(and (typed-expr? t1) t2)
           (unify-app t1 t2)]
          [else (cont #f)]))))
