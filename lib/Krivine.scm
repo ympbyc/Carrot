@@ -8,9 +8,7 @@
 
 ;;; Notes ;;;
 ;; CLOSURE creates thunks that packs the continuation and environment together.
-;; To create closures(function objects), CLOSURE the GRAB and expression followed by CONTINUE.
-;; CONSTANT does not create thunks (for efficiency sake)
-;; Stack may only contain Constant(WHNF), or Marker that points to CLOSURE in the heap
+;; To create closures(function objects), CLOSURE the GRAB and expression followed by CONTINUE
 
 
 (define-module Krivine
@@ -51,17 +49,19 @@
 
   (define *global-env* (make-hash-table 'eq?))
 
-  (define (Krivine binding)
-    ;;(print-code " | ~S" (clos-expr (ref binding 'main)))
-    (set! *global-env* binding)
-    (guard (exc
+  (define (Krivine clos)
+    (print-code "instruction: ~S" (clos-expr clos))
+    (set! *global-env* '())
+    (Krivine- clos '() (make-hash-table 'eq?) '())
+    #|(guard (exc
             [else (print (string-append "***EXCEPTION*** " (ref exc 'message)))
                   (set! *step* 0)
                   '()])
-           (let ([res (Krivine- (ref binding 'main) '() (make-hash-table 'eq?) '())])
+           (let ([res ])
              (format #t " | The program took total of ~D steps to compute.\n\n" *step*)
              (set! *step* 0)
-             res)))
+             res))|#
+    )
 
 
   (define *step* 0)
@@ -122,7 +122,7 @@
   (define (ATOM closure args env stack heap nprocs)
     (if (null? nprocs)
         (begin
-          (format #t " | Heap Size: ~D/~D\n" (hash-table-num-entries heap) *heap-size-limit*)
+          (format #t "heap size: ~D/~D\n" (hash-table-num-entries heap) *heap-size-limit*)
           (car args))
 
         ;;TODO: break this down

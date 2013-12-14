@@ -14,7 +14,7 @@ Dec 2012 Minori Yamashita <ympbyc@gmail.com>
                 id (flip ++ y))) "")
 ```
 
-<img src="https://rawgithub.com/ympbyc/Carrot/master/docs/carrot.png" width="300px" />
+<img src="https://rawgithub.com/ympbyc/Carrot/master/docs/carrot.png" width="360px" />
 
 
 Installation
@@ -29,7 +29,7 @@ REPL
 ### To run the VM at the bleeding edge
 
 ```
-./Carrot.scm -l=examples/srfi-1.scm
+./Carrot.scm examples/srfi-1.scm
 ```
 
 
@@ -196,14 +196,9 @@ Note this is not a syntactic feature. All these `-take`, `-map` and `-fold` are 
 See the source of this magic in examples/srfi-1.nadeko.
 
 
-Pipeline operator in F#, and Synthread in Clojure are useful tool to avoid nesting of function calls. In Carrot, `pipe` can be used to compose functions right to left so it reads similarly to the synthread. Or you could use `->` which might take some time getting used to.
+Pipeline operator in F#, and Synthread in Clojure are useful tool to avoid nesting of function calls. In Carrot, `->` can be used to compose functions right to left so it reads similarly to the synthread.
 
 ```lisp
-(/> 1 (pipe (lizt (+ 2)
-                  (* 3)
-                  num->str
-                  (flip ++ " = nine"))))
-
 (-> 1
  -> (+ 2)
  -> (* 3)

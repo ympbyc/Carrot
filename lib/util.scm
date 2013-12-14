@@ -15,12 +15,16 @@
       (if binding (cdr binding) 'lookup-fail)))
 
 
+  (define (find-map f xs)
+    (cond [(null? xs) #f]
+          [(f (car xs)) => identity]
+          [else (find-map f (cdr xs))]))
+
   (define (atom? x)
     (or (string? x)
         (number? x)
         (char? x)
-        (keyword? x)
-        (undefined? x)))
+        (keyword? x)))
 
 
   (define-syntax fn
@@ -31,6 +35,20 @@
        (lambda arg exp ...))))
 
   (define (p x) (print x) x)
+
+
+  (define-record-type typed-expression
+    (typed-expr e t)
+    typed-expr?
+    (e tx-expr)
+    (t tx-type))
+
+  (define (show-typed-expr x)
+    (cond [(typed-expr? x) (cons (show-typed-expr (tx-expr x)) (show-typed-expr (tx-type x)))]
+          [(null? x) '()]
+          [(pair? x) (cons (show-typed-expr (car x)) (show-typed-expr (cdr x)))]
+          [else x]))
+
 
   (define-record-type nadeko-closure
     (ndk-closure expr env)
@@ -46,7 +64,6 @@
          (eq? (car x) 'closure)))
   (define clos-expr cadr)
   (define clos-env  caddr)|#
-
 
 
   (define (lambda-expr? exp)

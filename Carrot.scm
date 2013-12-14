@@ -8,31 +8,46 @@
 (use Util)
 (use K-Compiler)
 (use Krivine)
+(use Check)
 (use gauche.parseopt)
 
 ;;; REPL ;;;
-(define (REPL g-env)
-  (display "nadeko> ")
+(define (REPL types ctr)
+  (format #t "carrot ~S> " ctr)
   (flush)
-  (let* ([new-env (compile `(,(read)))]
-         [new-env (hash-table-union! g-env new-env)]
-         [result  (Krivine new-env)])
+  (let* ([expr  (read)]
+         [res   (type-program (list expr) types)]
+         [types (car res)]
+         [expr  (cdr res)]
+         [result  (Krivine (compile expr types))])
     (print result)
-    (REPL new-env)))  ;loop with new global-environment
+    (REPL types (+ ctr 1))))  ;loop with new global-environment
+
+(define banner
+"             ----------------------
+             |    CARROT 2.1.2    |
+             ----------------------
+         https://github.com/ympbyc/Carrot\n")
 
 (define (main args)
-  (let-args (cdr args)
-    ((load-fname "l|load=s"))
-    (print "Carrot, version 2.1.1: https://github.com/ympbyc/Carrot type `help` for assistance")
-    (load "standard-macros.scm")
-    (let ([prelude-g (pre-load "examples/prelude.nadeko" (make-hash-table 'eq?))])
-      (REPL
-       (if load-fname (pre-load load-fname prelude-g) prelude-g)))))
+  (print banner)
+  (format #t "Loading ~S ... done\n" (cdr args))
+  (print "type `help` to get started")
+  (load "standard-macros.scm")
+  (let ([fnames (cons "examples/prelude.nadeko" (cdr args))])
+    (REPL (fold (fn [fname types]
+                    (let* ([res (load-file fname types)])
+                      (hash-table-union! types (car res))))
+                (make-hash-table 'eq?)
+                fnames)
+          0)))
 
-(define (pre-load fname g-e)
+;;string * {types} -> ({types} . typed-expr)
+(define (load-file fname types)
   (call-with-input-file fname
-    (lambda (file-port)
-      (hash-table-union! g-e (compile (read-list file-port))))))
+    (fn [file-port]
+        (let1 res (type-program (read-list file-port) types)
+              (cons (car res) (compile (cdr res) (car res)))))))
 
 (define (read-list port)
   (let ((exp (read port)))

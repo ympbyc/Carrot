@@ -1,72 +1,95 @@
-(= id x x)
+(= (id a a) x x)
 
 ;;bool
-(= true  t e t)
-(= false t e e)
-(= not bool
-  (bool false true))
-(= if bool bool) ;point-free
+(= (true Bool)  t e t)
+(= (false Bool) t e e)
+(= (not Bool Bool)
+   bool (bool false true))
+(= (if Bool a a a) bool bool) ;point-free
 
 ;;function
-(= comp f g x (f (g x)))
-(= compose comp)
-(= apply f lst
-   (nil? lst f (apply (f (car lst)) (cdr lst))))
-(= flip f x y (f y x))
+(= (comp (Fn b c) (Fn a b) a c)
+   f g x (f (g x)))
+(= (compose (Fn b c) (Fn a b) a c) comp)
+(= (flip (Fn a b c) b a c)
+   f x y (f y x))
 
-(= /> x f (f x))
-(= -> x f g (f (g x)))
+(= (/> a (Fn a b) b)
+   x f (f x))
+(= (-> a (Fn b c) (Fn a b) c)
+   x f g (f (g x)))
 ;;e.g. (-> 2 -> (+ 1) -> (+ 4) -> (+ 3) id (+ 6))
-
-(= pipe xs
-   (nil? xs id
-         (comp (pipe (cdr xs)) (car xs))))
 
 
 ;;list
-(= cons head tail f (f head tail))
-(= car lst (lst (^ h t h)))
-(= cdr lst (lst (^ h t t)))
-(= nil 'nil)
-(= nil? (=? nil))
-(= o- x f y (cons x (f y)))
+(= (cons a (List a) (List a))
+   head tail f (f head tail))
+(= (car (List a) a)
+   xs (xs true))
+(= (cdr (List a) (List a))
+   xs (xs false))
+(= (nil a (List a)) 'nil)
+(= (nil? a Bool) (=? nil))
 
 ;;tuple
-(= 2-tuple cons)
-(= fst car)
-(= snd cdr)
+(= (2-tuple a b (Tuple a b)) cons)
+(= (fst (Tuple a b) a) car)
+(= (snd (Tuple a b) b) cdr)
 
 ;;Y-combinator
-;;(Y (^ (f) f)) ;now f refers to the function itself
-(= Y f ((^ x (f (x x))) (^ x (f (x x)))))
+;;(= (Y (Fn a a) a) x (x (Y x)))
+;;(Y (^ f f)) ;now f refers to the function itself
+(= (Y (Fn a a) a)
+   f ((^ x (f (x x))) (^ x (f (x x)))))
 
 ;;show
-(= show a
-  (string? a a
-  (number? a (num->str a)
-  (nil? a "nil"
-  (++ (++ (show (car a)) ", ") (show (cdr a)))))))
+(= (show String String)
+   x x)
+(= (show Number String)
+   x (num->str x))
+(= (show (List a) String)
+   xs
+   (nil? xs "nil"
+         (++ (show (car xs)) (++ "," (show (cdr xs))))))
+
 
 ;;primitive wrapper
-(= =?  a b (** =? a b))
-(= <   a b (** lt? a b))
-(= >   a b (** gt? a b))
-(= <=  a b (** lte? a b))
-(= >=  a b (** gte? a b))
-(= +   a b (** add a b))
-(= -   a b (** sub a b))
-(= *   a b (** mul a b))
-(= /   a b (** div a b))
-(= %   a b (** mo a b))
-(= ++  a b (** ++ a b))
-(= num->str a (** num->str a))
-(= number?  a (** num? a))
-(= string?  a (** str? a))
-(= print time str (** timed-print time str))
-(= read  time (cons (+ time 1) (** read)))
+(= (=? a b Bool)
+   a b (** =? a b))
+(= (< Number Number Bool)
+   a b (** lt? a b))
+(= (> Number Number Bool)
+   a b (** gt? a b))
+(= (<= Number Number Bool)
+   a b (** lte? a b))
+(= (>= Number Number Bool)
+   a b (** gte? a b))
+(= (+ Number Number Number)
+   a b (** add a b))
+(= (- Number Number Number)
+   a b (** sub a b))
+(= (* Number Number Number)
+   a b (** mul a b))
+(= (/ Number Number Number)
+   a b (** div a b))
+(= (% Number Number Number)
+   a b (** mo a b))
+(= (++ String String String)
+   a b (** ++ a b))
+(= (num->str Number String)
+   a (** num->str a))
+(= (number? a Bool)
+   a (** num? a))
+(= (string? a Bool)
+   a (** str? a))
+(= (print Time String Time)
+   time str (** timed-print time str))
+(= (read Time (Tuple Time String))
+   time (cons (+ time 1) (** read)))
 
 ;;help
-(= help "SYNTAX:\n\
+(= (help String)
+"SYNTAX:\n\
 (= name parameter ... expression) ;(statement) binds a function to a name\n\
 (^ parameter ... expression)      ;(expression) lambda expression\n\
 (** primitive-name argument ...)     ;(expression) call a primitive function. Most of them are abstructed so you rarely have to use this syntax\n\
