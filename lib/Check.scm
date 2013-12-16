@@ -25,19 +25,22 @@
                              [sig    (cdadr def)]
                              [params (drop-right (cddr def) 1)]
                              [expr   (last def)] ;;((xs true) a)
-                             [generic-cell (or (hash-table-get types name #f) '())])
+                             [generic-cell (or (hash-table-get types name #f) '())]
+                             [lam (if (null? params) expr `(^ ,@params ,expr))]
+                             [typ (if (null? params) (last sig) (cons 'Fn sig))])
+                        (show-typed-expr (typed-expr lam typ))
                         (hash-table-put! types name
-                                         (cons (typed-expr `(^ ,@params ,expr) (cons 'Fn sig))
+                                         (cons (typed-expr lam typ)
                                                generic-cell))
                         types))
                   types
                   program)]
            [main (hash-table-get types 'main #f)])
       (cons types (if main
-                      (let* ([fn (tx-expr (car main))]
+                      (let* ([fn  (tx-expr (car main))]
                              [typ (tx-type (car main))]
-                             [params (zip  (drop-right (cdr fn) 1) typ)]
-                             [expr (list (last fn) (last typ))]
+                             [params '()] ;; (zip  (drop-right (cdr fn) 1) typ)
+                             [expr (list fn typ)]
                              [t-expr (check-fn (cons expr params) types)])
                         (format #t "typed: ~S\n" (show-typed-expr t-expr))
                         t-expr)
@@ -77,7 +80,9 @@
                 (ref types expr)))]
      [(quote-expr? expr) (typed-expr expr 'Symbol)]
      [(lambda-expr? expr)
-      (list (typed-expr expr  `(Fn ,(gensym) ,(gensym))))]
+      (if (= 1 (length (drop-right (cdr expr) 1)))
+          (typed-expr expr (gensym))
+          (list (typed-expr expr  `(Fn ,(gensym) ,(gensym)))))]
      [(pair?    expr)
       (type-generic-app expr env types)]))
 
@@ -92,12 +97,13 @@
            [fx   (find (fn [fx]
                            (find (^a (unify-app (tx-type fx) (tx-type a)))
                                  agxs))
-                       fxs)] [_ (show-typed-expr fx)]
+                       fxs)]
            [ag   (find-map (fn [fx] (find (^a (unify-app (tx-type fx) (tx-type a))) agxs))
                            fxs)]
-           [fxt (cdr (tx-type fx))]) ;;cdr to remove 'Fn
-      (if (= 2 (length fxt))
-          (typed-expr (list fx ag) (cadr fxt))
+           [fxt (tx-type fx)]
+           [fxt (if (f-type? fxt) (cdr fxt) (list fxt))]) ;;cdr to remove 'Fn
+      (if (<= (length fxt) 2)
+          (list (typed-expr (list fx ag) (last fxt)))
           (list (typed-expr (list fx ag) (cons 'Fn (cdr fxt)))))))
 
   (define (primitive? t)
@@ -122,18 +128,19 @@
     (and (pair? x) (eq? (car x) 'Fn)))
 
 
-  (define (unify-app t1 t2)
-    (let* ([sigt (cdr t1)] ;;cdr to remove 'Fn
-           [binding (call/cc (unify (car sigt) t2))])
-      (and binding
-           (let1 rest-sigt
-                 (fold (fn [b sigt]
-                           (replace-type-var sigt (car b) (cdr b)))
-                       (cdr sigt) binding)
-                 (cond [(null? rest-sigt) (last sigt)] ;;too many args
-                       [(= 1 (length rest-sigt)) (last rest-sigt)] ;;fully applie
-                       [else (list (typed-expr '() (cons 'Fn rest-sigt)))]))))) ;;too few args
-
+  (define (unify-app ft agt)
+    (let1 ft (if (f-type? ft) ;;which it should be
+                 (cdr ft)     ;;cdr to remove 'Fn
+                 (list ft))   ;;workaround datatype problem
+          (if (= 1 (length ft))
+              (last ft) ;;fully applied
+              (let1 binding (call/cc (unify (car ft) agt))
+                    (and binding
+                         (let1 rest-ft
+                               (fold (fn [b ft]
+                                         (replace-type-var ft (car b) (cdr b)))
+                                     (cdr ft) binding)
+                               (list (typed-expr '() (cons 'Fn rest-ft)))))))))
 
 
   ;;a Number -> ((a Number))

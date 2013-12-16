@@ -144,8 +144,8 @@
                         (hash-table-put-! heap (marker-loc m) v-clos)
                         (cdr nprocs))
               (let* ([-expr (cond
-                             [(boolean? res) (list REFG (if res 'true 'false))]
-                             [else           (list ATOM res)])]
+                             [(boolean? res) `(,FN x (,FN y (,REF ,(if res 'x 'y))))]
+                             [else            (list ATOM res)])]
                      [clos (ndk-closure -expr '())])
                 (Krivine- clos
                           (append stk stack)

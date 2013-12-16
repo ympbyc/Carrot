@@ -4,22 +4,33 @@
 (test-start "srfi-1")
 (use K-Compiler)
 (use Util)
+(use Check)
 
-(define (pre-load fname g-e)
+(define (load-file fname types)
   (call-with-input-file fname
     (lambda (file-port)
-      (hash-table-union! g-e (compile (read-list file-port))))))
+      (let1 res (type-program (read-list file-port) types)
+            (cons (car res) (compile (cdr res) (car res)))))))
 
 (define (read-list port)
   (let ((exp (read port)))
     (if (eof-object? exp) '()
       (cons exp (read-list port)))))
 
-(define g-env
-  (pre-load "examples/prelude.nadeko" (pre-load "examples/srfi-1.nadeko" (make-hash-table 'eq?))))
+(define *types*
+  (fold (fn [fname types]
+            (let* ([res (load-file fname types)])
+              (hash-table-union! types (car res))))
+        (make-hash-table 'eq?)
+        '("examples/prelude.nadeko" "examples/srfi-1.nadeko")))
 
 (define (run code)
-  (Krivine (hash-table-union! g-env (compile `((show ,code))))))
+  (let* ([res   (type-program `((show ,code)) *types*)]
+         [types (car res)]
+         [expr  (cdr res)]
+         [whnf  (Krivine (compile expr types))])
+    (set! *types* types)
+    whnf))
 
 (test-section "constructors")
 (test* "cons" "1, 2, 3, nil" (run `(cons 1 (cons 2 (cons 3 nil)))))
@@ -46,8 +57,8 @@
   (run `(concatenate (cons (take integers 3) (cons (take integers 4) nil)))))
 (test* "reverse" "5, 4, 3, 2, 1, 0, nil" (run `(reverse (take integers 6))))
 (test* "zip" "0, 2, 1, 1, 2, 0, nil" (run `(zip (take integers 3) (reverse (take integers 3)))))
-(test* "unzip" "0, 1, 2, nil" (run `(fst (unzip (zip (take integers 3) (reverse (take integers 3)))))))
-(test* "unzip" "2, 1, 0, nil" (run `(snd (unzip (zip (take integers 3) (reverse (take integers 3)))))))
+;(test* "unzip" "0, 1, 2, nil" (run `(fst (unzip (zip (take integers 3) (reverse (take integers 3)))))))
+;(test* "unzip" "2, 1, 0, nil" (run `(snd (unzip (zip (take integers 3) (reverse (take integers 3)))))))
 (test* "count1" "3" (run `(count1 (cons 1 (cons 2 (cons 1 (cons 3 (cons 1 nil))))) (=? 1))))
 (test* "count2" "3"
   (run `(count2 (cons 1 (cons 2 (cons 1 (cons 3 (cons 1 nil)))))
@@ -65,12 +76,12 @@
 (test-section "filtering, partitioning")
 (test* "filter" "1, 3, 2, nil"
   (run `(filter (cons 1 (cons 9 (cons 3 (cons 12 (cons 2 nil))))) (> 5))))
-(test* "partition" "1, 3, nil"
-  (run `(fst (partition (cons 1 (cons "2" (cons 3 (cons "4" nil)))) number?))))
-(test* "partition" "2, 4, nil"
-  (run `(snd (partition (cons 1 (cons "2" (cons 3 (cons "4" nil)))) number?))))
+;(test* "partition" "1, 3, nil"
+;       (run `(fst (partition (cons 1 (cons "2" (cons 3 (cons "4" nil)))) number?))))
+;(test* "partition" "2, 4, nil"
+;       (run `(snd (partition (cons 1 (cons "2" (cons 3 (cons "4" nil)))) number?))))
 (test* "remove" "5, 6, 7, nil"
-  (run `(remove (take integers 8) (> 5))))
+       (run `(remove (take integers 8) (> 5))))
 
 (test-section "searching")
 (test* "find" "6" (run `(find (take integers 10) (< 5))))

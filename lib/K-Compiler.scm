@@ -56,7 +56,7 @@
             (expand-expr (car (ref types expr)) env types)
             (tx-expr (expand-expr (find
                                    (fn [fx] (equal? expr-type (tx-type fx)))
-                                   (ref types expr))) env types))]
+                                   (ref types expr)) env types)))]
 
        [(atom? expr)
         `(,ATOM ,expr)]

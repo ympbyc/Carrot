@@ -4,14 +4,12 @@ Carrot
 Dec 2012 Minori Yamashita <ympbyc@gmail.com>
 
 
+Status:
+programs in examples/ do not work except for prelude.nadeko
+
+
 ```lisp
-(Y (^ f (cons 1 (cons 1 (zipWith f + (cdr f)))))
-  -take 10
-  -reverse
-  -fold (^ x y (-> x
-                -> num->str
-                -> (flip ++ ",")
-                id (flip ++ y))) "")
+
 ```
 
 <img src="https://rawgithub.com/ympbyc/Carrot/master/docs/carrot.png" width="360px" />
@@ -116,20 +114,20 @@ We will discuss the significance of it later.
 ### Definition (Statement)
 
 The expression
-(=  *name* *[identifier ...]* *expression*)
+(=  (*name* *type* ...)  *[identifier ...]* *expression*)
 Binds the *expression* to the *name*.
 If one or more parameters( *identifier ...* ) are given, they can be used in the *expression* to refer to the values the function is applied to.
-(=  *name* *identifier ...* *expression*) is interpreted the same as
-(= *name* (^ *identifier ...* *expression*)).
+
+Multiple functions can share a name. In which case their type must differ.
 
 **code 5** *defining a `map` function*
 
 ```lisp
-(= map lst f
-  (nil? lst
-        nil
-        (cons (f (car lst))
-              (map (cdr lst) f))))
+(= (map (List a) (Fn a b) (List b))
+  xs f
+  (nil? xs nil
+        (cons (f (car xs))
+              (map (cdr xs) f))))
 ```
 
 Implementations SHOULD implement tail call otimization.
@@ -170,8 +168,8 @@ Carrot's auto-currying feature togather with lazyness gave us an unexpected gift
 Because the arguments are delayed automaticaly, we can implement booleans as functions.
 
 ```lisp
-(= true t e t)
-(= false t e e)
+(= (true Bool)  t e t)
+(= (false Bool) t e e)
 
 ;scheme
 (if (eq? a b) "equal" "not equal")

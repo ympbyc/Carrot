@@ -1,7 +1,5 @@
-(= (id a a) x x)
-
 ;;bool
-(= (true Bool)  t e t)
+(= (true  Bool) t e t)
 (= (false Bool) t e e)
 (= (not Bool Bool)
    bool (bool false true))
@@ -14,6 +12,7 @@
 (= (flip (Fn a b c) b a c)
    f x y (f y x))
 
+(= (id a a) x x)
 (= (/> a (Fn a b) b)
    x f (f x))
 (= (-> a (Fn b c) (Fn a b) c)
@@ -23,13 +22,13 @@
 
 ;;list
 (= (cons a (List a) (List a))
-   head tail f (f head tail))
+   x xs f (f x xs))
+(= (nil (List a)) 'nil)
 (= (car (List a) a)
    xs (xs true))
 (= (cdr (List a) (List a))
    xs (xs false))
-(= (nil a (List a)) 'nil)
-(= (nil? a Bool) (=? nil))
+(= (nil? a Bool) x (=? nil x))
 
 ;;tuple
 (= (2-tuple a b (Tuple a b)) cons)
