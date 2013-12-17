@@ -9,6 +9,7 @@
   (use srfi-1)
   (use Util)
   (extend Krivine)
+  (use Check)
 
   ;;; Compiler ;;;
 
@@ -55,7 +56,7 @@
         (if (null? expr-type)
             (expand-expr (car (ref types expr)) env types)
             (tx-expr (expand-expr (find
-                                   (fn [fx] (equal? expr-type (tx-type fx)))
+                                   (fn [fx] (unify expr-type (tx-type fx)))
                                    (ref types expr)) env types)))]
 
        [(atom? expr)

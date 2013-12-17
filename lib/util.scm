@@ -20,6 +20,11 @@
           [(f (car xs)) => identity]
           [else (find-map f (cdr xs))]))
 
+  (define (find*map f xs)
+    (cond [(null? xs) #f]
+          [(f (car xs)) => (cut cons (car xs) <>)]
+          [else (find*map f (cdr xs))]))
+
   (define (atom? x)
     (or (string? x)
         (number? x)

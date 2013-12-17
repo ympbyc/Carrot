@@ -37,27 +37,29 @@
                   program)]
            [main (hash-table-get types 'main #f)])
       (cons types (if main
-                      (let* ([fn  (tx-expr (car main))]
-                             [typ (tx-type (car main))]
-                             [params '()] ;; (zip  (drop-right (cdr fn) 1) typ)
-                             [expr (list fn typ)]
-                             [t-expr (check-fn (cons expr params) types)])
-                        (format #t "typed: ~S\n" (show-typed-expr t-expr))
-                        t-expr)
+                      (type-fn (list (list (tx-expr (car main)) (tx-type (car main)))) types)
                       (typed-expr 0 'Number)))))
 
+  (define (t-expr-fn? x)
+    (and (typed-expr? x)
+         (pair? x)
+         (lambda-expr? (tx-expr x))))
+
+  (define (check-fn fx type types)
+    (p type)
+    (let* ([fn    (tx-expr fx)]
+           [params (zip (drop-right (cdr fn) 1) (wrap-list type))]
+           [expr   (list fn type)]
+           [t-expr (type-fn (cons expr params) types)])
+      t-expr))
 
 
-  ;; atom    -> 'Name
-  ;; symbol  -> x | [signature]
-  ;; (^ x y) -> [(Fn 'a 'b)]
-  ;; (f x)   -> [signature]
-  (define (check-fn fn types)
-    (let* ([expr (caar fn)] ;;(xs true)
-           ;;[rett (typed-expr expr (cadar fn))] ;;a
+  (define (type-fn fn types)
+    (let* ([expr (caar fn)]
+           ;;[rett (typed-expr expr (cadar fn))]
            [env  (cdr fn)]
            [tx (type expr env types)])
-      (show-typed-expr tx)
+      (format #t "typed: ~S\n" (show-typed-expr tx))
       tx))
 
 
@@ -77,7 +79,7 @@
      [(symbol?  expr)
       (let1 x (assoc expr env)
             (if x (typed-expr x x)
-                (ref types expr)))]
+                (p (ref types expr))))]
      [(quote-expr? expr) (typed-expr expr 'Symbol)]
      [(lambda-expr? expr)
       (if (= 1 (length (drop-right (cdr expr) 1)))
@@ -91,20 +93,19 @@
 
   ;;e.g. (+ 2 3) -> [([+ . (Number Number Number)] [2 . Number] [2 . Number]) . Number]
   (define (type-generic-app expr env types)
-    (let* ([expr (expand-app (car expr) (cdr expr))]
-           [fxs  (type (car expr) env types)]
-           [agxs (wrap-list (type (cadr expr) env types))]
-           [fx   (find (fn [fx]
-                           (find (^a (unify-app (tx-type fx) (tx-type a)))
-                                 agxs))
-                       fxs)]
-           [ag   (find-map (fn [fx] (find (^a (unify-app (tx-type fx) (tx-type a))) agxs))
-                           fxs)]
-           [fxt (tx-type fx)]
-           [fxt (if (f-type? fxt) (cdr fxt) (list fxt))]) ;;cdr to remove 'Fn
-      (if (<= (length fxt) 2)
-          (list (typed-expr (list fx ag) (last fxt)))
-          (list (typed-expr (list fx ag) (cons 'Fn (cdr fxt)))))))
+    (let* ([fxs    (type (car expr) env types)]
+           [argsxs (map (^a (wrap-list (type a env types))) (cdr expr))]
+           [argts  (map (cut map tx-type <>) argsxs)]
+           [fx*ft  (find*map (fn [fx]
+                                 (cons 'Fn (unify-app (tx-type fx) argts)))
+                             fxs)] ;;unify-app::ft*argtyps->ft
+           [ft (cdr fx*ft)]
+           [fx     (typed-expr (tx-expr (car fx*ft)) ft)]
+           [argxs (map (fn [t argx] (find (^a (call/cc (unify t (tx-type a)))) argx))
+                       (drop-right (cdr ft) 1)
+                       argsxs)]
+           [argxs (append argxs (map car (drop argsxs (length argxs))))])
+      (list (typed-expr (cons fx argxs) (last ft)))))
 
   (define (primitive? t)
     (case t
@@ -128,25 +129,28 @@
     (and (pair? x) (eq? (car x) 'Fn)))
 
 
-  (define (unify-app ft agt)
+  ;;unify-app:: ft * argtyps -> ft
+  (define (unify-app ft agts)
     (let1 ft (if (f-type? ft) ;;which it should be
                  (cdr ft)     ;;cdr to remove 'Fn
                  (list ft))   ;;workaround datatype problem
           (if (= 1 (length ft))
-              (last ft) ;;fully applied
-              (let1 binding (call/cc (unify (car ft) agt))
+              (list (last ft)) ;;fully applied
+              (let1 binding (find-map (^a (call/cc (unify (car ft) a))) (car agts))
                     (and binding
                          (let1 rest-ft
                                (fold (fn [b ft]
                                          (replace-type-var ft (car b) (cdr b)))
                                      (cdr ft) binding)
-                               (list (typed-expr '() (cons 'Fn rest-ft)))))))))
+                               (cons (cond [(assoc (car ft) binding) => cdr]
+                                           [else (car ft)])
+                                     (unify-app (cons 'Fn rest-ft) (cdr agts)))))))))
 
 
   ;;a Number -> ((a Number))
   (define (unify t1 t2)
     (fn [cont]
-        ;;(format #t "~14S ≡? ~S\n" (show-typed-expr t1) (show-typed-expr t2))
+        (format #t "~14S ≡? ~S\n" (show-typed-expr t1) (show-typed-expr t2))
         (cond
          [(and (primitive? t1) (primitive? t2))
           (if (eq? t1 t2) (list (cons t1 t2)) (cont #f))]
