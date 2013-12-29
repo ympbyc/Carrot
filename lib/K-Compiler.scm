@@ -8,8 +8,8 @@
   (export compile)
   (use srfi-1)
   (use Util)
-  (extend Krivine)
   (use Check)
+  (extend Krivine)
 
   ;;; Compiler ;;;
 
@@ -21,6 +21,7 @@
   ;; (= (<name> <T> <T>) <expr>)
   (define (compile t-expr types)
     (ndk-closure (expand-expr t-expr '()  types) '()))
+
 
   ;; (^ x y z exp) -> (^ x (^ y (^ z exp)))
   (define (curry-lambda params expr)
@@ -45,19 +46,22 @@
                       types))))
 
   (define (expand-expr tx env types)
-    ;;(p (show-typed-expr tx))
+    (p (show-typed-expr tx))
     (let ([expr-type (if (typed-expr? tx) (tx-type tx) '())]
           [expr      (if (typed-expr? tx) (tx-expr tx) tx)])
       (cond
        [(and (symbol? expr) (member expr env))
         `(,REF ,expr)]
 
-       [(and (list? expr-type) (symbol? expr))
+       [(symbol? expr)
         (if (null? expr-type)
+            ;;`(,REFG ,expr 0)
+            ;;`(,REFG ,expr ,(list-index (fn [fx] (unify expr-type (tx-type fx)))
+            ;;                           (ref types expr))
             (expand-expr (car (ref types expr)) env types)
-            (tx-expr (expand-expr (find
-                                   (fn [fx] (unify expr-type (tx-type fx)))
-                                   (ref types expr)) env types)))]
+            (expand-expr (find
+                          (fn [fx] (unify expr-type (tx-type fx)))
+                          (ref types expr)) env types))]
 
        [(atom? expr)
         `(,ATOM ,expr)]

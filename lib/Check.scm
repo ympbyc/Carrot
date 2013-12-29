@@ -1,7 +1,7 @@
 (add-load-path "../lib/" :relative)
 
 (define-module Check
-  (export type-program)
+  (export type-program unify)
   (use srfi-1)
   (use srfi-9)
   (use Util)
@@ -28,7 +28,6 @@
                              [generic-cell (or (hash-table-get types name #f) '())]
                              [lam (if (null? params) expr `(^ ,@params ,expr))]
                              [typ (if (null? params) (last sig) (cons 'Fn sig))])
-                        (show-typed-expr (typed-expr lam typ))
                         (hash-table-put! types name
                                          (cons (typed-expr lam typ)
                                                generic-cell))
@@ -79,10 +78,10 @@
      [(symbol?  expr)
       (let1 x (assoc expr env)
             (if x (typed-expr x x)
-                (p (ref types expr))))]
+                (ref types expr)))]
      [(quote-expr? expr) (typed-expr expr 'Symbol)]
      [(lambda-expr? expr)
-      (if (= 1 (length (drop-right (cdr expr) 1)))
+      (if (= 0 (length (drop-right (cdr expr) 1)))
           (typed-expr expr (gensym))
           (list (typed-expr expr  `(Fn ,(gensym) ,(gensym)))))]
      [(pair?    expr)
@@ -93,14 +92,17 @@
 
   ;;e.g. (+ 2 3) -> [([+ . (Number Number Number)] [2 . Number] [2 . Number]) . Number]
   (define (type-generic-app expr env types)
-    (let* ([fxs    (type (car expr) env types)]
+    (let* ([name   (car expr)]
+           [fxs    (type (car expr) env types)]
            [argsxs (map (^a (wrap-list (type a env types))) (cdr expr))]
            [argts  (map (cut map tx-type <>) argsxs)]
            [fx*ft  (find*map (fn [fx]
                                  (cons 'Fn (unify-app (tx-type fx) argts)))
                              fxs)] ;;unify-app::ft*argtyps->ft
-           [ft (cdr fx*ft)]
-           [fx     (typed-expr (tx-expr (car fx*ft)) ft)]
+           [ft     (cdr fx*ft)]
+           [fx     (typed-expr name
+                               ;;(tx-expr (car fx*ft))
+                               ft)]
            [argxs (map (fn [t argx] (find (^a (call/cc (unify t (tx-type a)))) argx))
                        (drop-right (cdr ft) 1)
                        argsxs)]
