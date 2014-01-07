@@ -219,6 +219,7 @@
   (define num->str number->string)
   (define str? string?)
   (define num? number?)
+  (define (read- x) (read))
 
   (define (timed-print time)
     (fn [x]

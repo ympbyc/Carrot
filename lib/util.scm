@@ -44,35 +44,6 @@
   (define (p x) (print x) x)
 
 
-  (define-record-type typed-expression
-    (typed-expr e t)
-    typed-expr?
-    (e tx-expr)
-    (t tx-type))
-
-  (define (show-typed-expr x)
-    (cond [(typed-expr? x) (cons (show-typed-expr (tx-expr x)) (show-typed-expr (tx-type x)))]
-          [(null? x) '()]
-          [(pair? x) (cons (show-typed-expr (car x)) (show-typed-expr (cdr x)))]
-          [else x]))
-
-
-  (define-record-type nadeko-closure
-    (ndk-closure expr env)
-    ndk-closure?
-    (expr clos-expr)
-    (env  clos-env))
-
-
-  #|(define (ndk-closure expr env)
-    `(closure ,expr ,env))
-  (define (ndk-closure? x)
-    (and (pair? expr)
-         (eq? (car x) 'closure)))
-  (define clos-expr cadr)
-  (define clos-env  caddr)|#
-
-
   (define (lambda-expr? exp)
     (eq? (car exp) '^))
 
