@@ -190,8 +190,10 @@ Carrot has no data structures except for closures, yet the type system is rich e
 (= (cons a (List a) (List a))
    x xs f (f x xs))
 (= (nil (List a)) 'nil)
-(= (car (List a) a) (xs true))
-(= (cdr (List a) (List a)) (xs false))
+(= (car (List a) a)
+   xs (xs true))
+(= (cdr (List a) (List a))
+   xs (xs false))
 
 ;; Tuples
 (= (2-tuple a b (Tuple a b)) cons)
@@ -201,11 +203,11 @@ Carrot has no data structures except for closures, yet the type system is rich e
 
 ### Things Start to Get Odd
 
-Carrot's runtime instructions are completely **untyped** (not even dynamicaly typed). As a consequence,  Carrot's type system is completely independent from underlying implementation.  The type checker only looks at type declarations and it is enough to find most of the type-related bugs one might make.
+Carrot's runtime values are completely **untyped** (not even dynamicaly typed). As a consequence,  Carrot's types are completely independent from its underlying implementation.  The type checker only looks at type declarations and it is almost enough to find most of the type-related bugs.
 
 ```lisp
 (= (box a (Box a))
-   x x)                              ;; a boxed value's internal representation is a value itself
+   x x)                              ;; a boxed value's internal representation is the value itself
 (= (takeout (Box a) a)
    x x)                              ;; just return what gets passed in
 
@@ -241,14 +243,12 @@ This looks pretty bad, but in practice, this kind of type bug easily gets detect
 Almost everything is a closure
 -------------------------------
 
-Carrot implementations does not have to provide lists as primitive data type because they can easily be simulated with closures.
-
-Similarly, booleans are closures and `if` can be implemented as a function.
+Carrot spec doesn't specify any data structures except for closures.
 
 S-expression without paren hell
 -------------------------------
 
-Carrot's auto-currying feature togather with lazyness gave us an unexpected gift -- Reduced use  of parentheses.
+Carrot's default currying policy togather with lazyness gave us an unexpected gift -- Reduced use  of parentheses.
 
 Because the arguments are delayed automaticaly, we can implement booleans as functions.
 
