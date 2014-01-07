@@ -9,7 +9,12 @@ programs in examples/ do not work except for prelude.nadeko
 
 
 ```lisp
+;;./Carrot.scm examples/srfi-1.nadeko
 
+(Y (^ f (cons 1 (zipWith f + (cdr f)) -cons 1))
+   -take 10
+   -reverse
+   -fold (compose (compose ++ (++ " : ")) num->str) "")
 ```
 
 <img src="https://rawgithub.com/ympbyc/Carrot/master/docs/carrot.png" width="360px" />

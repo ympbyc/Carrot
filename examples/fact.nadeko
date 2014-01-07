@@ -1,5 +1,6 @@
-(= fact n
-    (=? n 0 1
+(= (fact Number Number)
+   n
+   (=? n 0 1
        (* n (fact (- n 1)))))
 
 (fact 100)

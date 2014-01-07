@@ -1,11 +1,13 @@
-(= inf-int n (cons n (inf-int (+ n 1))))
+(= (inf-int Number (List Number))
+   n (cons n (inf-int (+ n 1))))
 
-(= -remove x xs f
-  (nil? xs (cons x nil)
-    (f x (xs -remove f) (cons x (xs -remove f)))))
+(= (-remove a (List a) (List a))
+   x xs f
+   (nil? xs (cons x nil)
+         (f x (xs -remove f) (cons x (xs -remove f)))))
 
-(= primes (inf-int 2 -sieve))
+(= (primes (List Number)) (inf-int 2 -sieve))
 
-(= -sieve p ps
-  (cons p
-    (ps -remove (^ x (=? (% x p) 0)) -sieve)))
+(= (-sieve Number (List Number))
+   p ps
+   (cons p (ps -remove (^ x (=? (% x p) 0)) -sieve)))
