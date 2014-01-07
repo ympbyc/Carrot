@@ -71,7 +71,7 @@
                        :type (replace-type-var (get-type (car ft)) var t))]
                     [(is-a? (car ft) <crt-function-type>)
                      (make <crt-function-type> :type (replace-type-var (get-type (car ft)) var t))]
-                    [else    (car ft)])
+                    [else (car ft)])
               (replace-type-var (cdr ft) var t))))
 
 

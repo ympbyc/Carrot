@@ -84,8 +84,8 @@
    a (** str? a))
 (= (print Time String Time)
    time str (** timed-print time str))
-(= (read Time (Tuple Time String))
-   time (cons (+ time 1) (** read)))
+(= (read Time String) t
+   (** read- t))
 
 ;;help
 (= (help String)

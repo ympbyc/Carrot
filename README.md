@@ -75,10 +75,11 @@ An identifier is consist of one or more non-whitespace charactors. Some combinat
 ```lisp
 aaa
 -he-lo-
-!#$%&-=^~|@{[]}+:*<>,_
+<hello>
+@#=~
 ```
 
-Implementations SHOULD allow every character not used for literals to be used to construct identifiers.
+Implementations SHOULD allow every character that is not used for literals to be used to construct identifiers.
 
 ### Lambda expressions **(Expression)**
 
@@ -153,6 +154,85 @@ This fills the parameter slots of the `map` function meaning that `listX` gets b
 Implementations SHOLD implement "call-by-need" instead of "call-by-name".
 
 
+Type System
+-----------
+
+Carrot's type system isn't really a type system.  It is aimed to check if the programme's intention was consistent.  The type system is unique and somewhat criptic at first sight:
+
+### How to Type Expressions
+
+The syntactic form `=` gives types to identifiers.
+
+```lisp
+;; typing primitive values
+(= (name String) "Rikka")
+
+;; typing composit values
+(= (names (List String)) (cons "Rikka" (cons "Kozue" (cons "Kamome" nil))))
+
+;; typing functions
+(= (second (List a) a)               ;; (<name> <argument-type>... <return-type>)
+   xs                                ;; parameter...
+   (car (cdr xs)))                   ;; expression
+```
+
+### Twisted Algebraic Data Type
+
+Carrot has no data structures except for closures, yet the type system is rich enough to express something like algebraic data types. No syntax has to be introduced.
+
+```lisp
+;; Lists
+(= (cons a (List a) (List a))
+   x xs f (f x xs))
+(= (nil (List a)) 'nil)
+(= (car (List a) a) (xs true))
+(= (cdr (List a) (List a)) (xs false))
+
+;; Tuples
+(= (2-tuple a b (Tuple a b)) cons)
+(= (fst (Tuple a b) a) car)
+(= (snd (Tuple a b) a) cdr)
+```
+
+### Things Start to Get Odd
+
+Carrot's runtime instructions are completely **untyped** (not even dynamicaly typed). As a consequence,  Carrot's type system is completely independent from underlying implementation.  The type checker only looks at type declarations and it is enough to find most of the type-related bugs one might make.
+
+```lisp
+(= (box a (Box a))
+   x x)                              ;; a boxed value's internal representation is a value itself
+(= (takeout (Box a) a)
+   x x)                              ;; just return what gets passed in
+
+(takeout 7)                          ;;=> TYPE ERROR!
+(takeout (box 7))                    ;;=> 7
+```
+
+### No Fool Proof
+
+Carrot's weird type system allows the following expression to get through it.
+
+```lisp
+(= (stupid-fn Number Number)
+   x "I'm supporse to be a number")
+
+(stupid-fn 1)                        ;;=> "I'm supporse to be a number"
+```
+
+This looks pretty bad, but in practice, this kind of type bug easily gets detected because there should be a function or two that depends upon the results of the bugged function.
+
+```lisp
+;; depending on the fact that `stupid-fn` returns a string
+(= (greet String String) s
+   (++ "Hello, " s))
+(greet (stupid-fn 0))                ;;=> TYPE ERROR!
+
+;; wrongly assuming `stupid-fn` would return a number
+(= (add2 Number Number) (+ 2))
+(add2 (stupid-fn 0))                 ;;=> Bad luck. RUNTIME ERROR!
+```
+
+
 Almost everything is a closure
 -------------------------------
 
@@ -163,7 +243,7 @@ Similarly, booleans are closures and `if` can be implemented as a function.
 S-expression without paren hell
 -------------------------------
 
-Carrot's auto-currying feature togather with lazyness gave us an unexpected gift -- Reducutions of parentheses.
+Carrot's auto-currying feature togather with lazyness gave us an unexpected gift -- Reduced use  of parentheses.
 
 Because the arguments are delayed automaticaly, we can implement booleans as functions.
 
@@ -207,39 +287,25 @@ Pipeline operator in F#, and Synthread in Clojure are useful tool to avoid nesti
 (print 0 (++ (num->str (* (+ 1 2) 3)) " = nine"))
 ```
 
-```lisp
-(-> nil
- -> (cons (cons :x 1))
- -> (cons (cons :y 2))
- -> (cons (cons :z 3))
- -> (flip assoc :y)
- id cdr)
-```
-
 I/O
 ---
 
  I/O in lazy languages are hard because the order of evaluation is not lexical, and if the return value of an I/O operation does not affect the overall result, the operation itself gets ommited. To go around this problem, Haskell uses whta's called an IO Monad. IO Monad is a way to construct a computation, and sideeffects don't happen while the program is executing.
- Carrot takes a saner approach than this. We use what we call a timed-io. Every sideeffectful function F takes an additional argument time X  and F includes a time Y  in its return value. By giving Y to another sideeffectful function G, a clear relation between F and G is formed so Carrot can figure out the evaluation order.
- Every sideeffectful function caches its result based on the time so it works fine even with call-by-name strategy.
+ Carrot takes a saner approach than that. It uses what we call a timed-io. Every sideeffectful function F takes an additional argument time X  and F that usually return `()` instead return a time Y. By giving Y to another sideeffectful function G, a clear relation between F and G gets formed so Carrot can figure out the evaluation order.
+ Every sideeffectful function may cache its results based on the time so it works fine even with call-by-name strategy.
 
 ```lisp
-(-> "What's your name?"
- -> (print 0)
+(-> (print 0 "Hi! What's your name?")
  -> read
- id (^ xs (-> (cdr xs)
-           -> (++ "Hello, ")
-           id (print (car xs)))))
+ -> (^ name  (print 1 (++ (++ "Nice to meet you, " name) ". What do you like?"))))
+ -> read
+ id (^ thing (print 2 (++ thing "? I like it, too!"))))
 ```
 
 Macros
 ------
 
- There is no macro mechanism built in to Carrot at this stage partly because there's no need for it.  However, in case you want them you can write macros in Scheme and put it to lib/standard-macros.scm.
- There is two built in macros:
-
- + `lizt` expands `(lizt 1 2 3)` into `(cons 1 (cons 2 (cons 3 nil)))`.
- + `bind` expands `(bind [x 2 y 3] (* x y))` into `((^ x y (* x y)) 2 3)`
+ There is no macro mechanism built in to Carrot at this stage partly because there's no need for it.
 
 
 Influenced by
@@ -256,6 +322,10 @@ Carrot is influenced by the following languages
 
 CHANGELOG
 ---------
+
+### 1/4/2014
+
+Integrated a type system.
 
 ### 11/17/2013
 

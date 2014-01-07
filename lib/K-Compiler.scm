@@ -14,9 +14,6 @@
 
   ;;; Compiler ;;;
 
-  (define (proper-def? def)
-    (and (pair? def) (eq? (car def) '=)))
-
 
   ;;compile :: {name => expr} -> {name => k-expr}
   ;; (= (<name> <T> <T>) <expr>)
