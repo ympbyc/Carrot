@@ -17,6 +17,7 @@
   (use srfi-9)
   (use util.match)
   (use Util)
+  (use DataTypes)
 
   ;;; Helpers ;;;
 
@@ -36,32 +37,19 @@
       (loc marker-loc))
 
 
-  #|(define (marker loc)
-    `(marker ,loc))
-  (define (marker? x)
-    (and (pair? x)
-         (eq? (car x) 'marker)))
-  (define marker-loc cadr)|#
-
-
   (define heap-size-default 200)
   (define *heap-size-limit* heap-size-default)
 
   (define *global-env* (make-hash-table 'eq?))
 
-  (define (Krivine clos)
-    (print-code "instruction: ~S" (clos-expr clos))
-    (set! *global-env* '())
-    (Krivine- clos '() (make-hash-table 'eq?) '())
-    #|(guard (exc
-            [else (print (string-append "***EXCEPTION*** " (ref exc 'message)))
-                  (set! *step* 0)
-                  '()])
-           (let ([res ])
-             (format #t " | The program took total of ~D steps to compute.\n\n" *step*)
-             (set! *step* 0)
-             res))|#
-    )
+  (define (Krivine exprs-ht)
+    (let ([main (hash-table-get exprs-ht 'main #f)])
+      (if main
+          (begin
+            ;;(print-code "closure: ~S" main)
+            (set! *global-env* exprs-ht)
+            (Krivine- main '() (make-hash-table 'eq?) '()))
+          '())))
 
 
   (define *step* 0)
@@ -78,7 +66,7 @@
 
       ;;(print-code "expr: ~S" expr)
       ;;(print-code "env : ~S" env)
-      ;;(print-code "stak: ~S" (map (^m (clos-expr (ref heap (marker-loc m)))) stack))
+      ;;(print-code "stak: ~S" (map (^m (ref heap (marker-loc m))) stack))
       ;;(print-code "nprc: ~S" nprocs)
       ;;(print-code "heap: ~S" (hash-table->alist heap))
       ;;(newline)
@@ -101,18 +89,18 @@
 
 
   (define (REFG closure args env stack heap nprocs)
-    (let ([clos (hash-table-get *global-env* (car args))])
+    (let ([clos (ref *global-env* (car args))])
       (Krivine- clos stack heap nprocs)))
 
 
   ;;CALL
   (define (FN closure args env stack heap nprocs)
-    (if (or (null? stack))
-        (Krivine- (ndk-closure `(,ATOM ,closure) '()) stack heap nprocs) ;;whnf
+    (if (null? stack)
+        (Krivine- (make <nadeko-closure> :expr `(,ATOM ,closure) :env '()) stack heap nprocs) ;;whnf
         (let* ([param (car args)]
                [body  (cadr args)]
                [mark  (car stack)])
-          (Krivine- (ndk-closure body (acons param mark env))
+          (Krivine- (make <nadeko-closure> :expr body :env (acons param mark env))
                     (cdr stack)
                     heap
                     nprocs))))
@@ -122,14 +110,14 @@
   (define (ATOM closure args env stack heap nprocs)
     (if (null? nprocs)
         (begin
-          (format #t "heap size: ~D/~D\n" (hash-table-num-entries heap) *heap-size-limit*)
+          ;;(format #t "heap size: ~D/~D\n" (hash-table-num-entries heap) *heap-size-limit*)
           (car args))
 
         ;;TODO: break this down
 
         ;;native procedure call
         (let* ([val    (car args)]
-               [v-clos (ndk-closure (list ATOM val) '())]
+               [v-clos (make <nadeko-closure> :expr (list ATOM val) :env '())]
                [x      (car nprocs)]
                [proc   (car  x)]
                [m      (cadr x)]
@@ -139,14 +127,14 @@
           ;;(print-code "~S\n" (map (^m (clos-expr (ref heap (marker-loc m)))) stk))
 
           (if (closure? res)
-              (Krivine- (ndk-closure (list NATIVE res) '())
+              (Krivine- (make <nadeko-closure> :expr (list NATIVE res) :env '())
                         (append stk stack)
                         (hash-table-put-! heap (marker-loc m) v-clos)
                         (cdr nprocs))
               (let* ([-expr (cond
                              [(boolean? res) `(,FN x (,FN y (,REF ,(if res 'x 'y))))]
                              [else            (list ATOM res)])]
-                     [clos (ndk-closure -expr '())])
+                     [clos (make <nadeko-closure> :expr -expr :env '())])
                 (Krivine- clos
                           (append stk stack)
                           (if (boolean? res) heap
@@ -173,9 +161,9 @@
            [N (cadr args)]
            [loc (gensym)]
            [mark (marker loc)])
-      (Krivine- (ndk-closure M env)
+      (Krivine- (make <nadeko-closure> :expr M :env env)
                 (cons mark stack)
-                (hash-table-put-! heap loc (ndk-closure N env))
+                (hash-table-put-! heap loc (make <nadeko-closure> :expr N :env env))
                 nprocs)))
 
 
@@ -184,7 +172,7 @@
     (let* ([M    (car args)]
            [x    (cadadr args)]
            [mark (assoc-ref env x)])
-      (Krivine- (ndk-closure M env) (cons mark stack) heap nprocs)))
+      (Krivine- (make <nadeko-closure> :expr M :env env) (cons mark stack) heap nprocs)))
 
 
 
@@ -194,7 +182,7 @@
     ;;(format #t ".") (flush)
     (if (> (hash-table-num-entries heap) *heap-size-limit*)
         (begin
-          (hash-table-put! heap 'tmp (ndk-closure '() env)) ;;hack
+          (hash-table-put! heap 'tmp (make <nadeko-closure> :expr '() :env env)) ;;hack
           (let ([h (hash-table-fold
                     heap
                     (fn [k clos acc]

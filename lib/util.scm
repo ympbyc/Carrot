@@ -3,6 +3,8 @@
   (use srfi-1)
   (use srfi-9)
 
+  (define (butlast xs) (drop-right xs 1))
+
   ;;h1 > h2
   (define (hash-table-union! h1 h2)
     (hash-table-for-each h2 (lambda [k v]
