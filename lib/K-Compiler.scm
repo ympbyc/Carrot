@@ -8,6 +8,8 @@
   (export compile)
   (use srfi-1)
   (use Util)
+  (use Check)
+  (use DataTypes)
   (extend Krivine)
 
   ;;; Compiler ;;;
@@ -16,10 +18,15 @@
     (and (pair? def) (eq? (car def) '=)))
 
 
-  ;;compile :: typed-expr * {types} -> {'name => instruction}
+  ;;compile :: {name => expr} -> {name => k-expr}
   ;; (= (<name> <T> <T>) <expr>)
-  (define (compile t-expr types)
-    (ndk-closure (expand-expr t-expr '()  types) '()))
+  (define (compile exprs-ht)
+    (alist->hash-table
+     (hash-table-map exprs-ht
+                     (fn [k expr] (cons k (make <nadeko-closure>
+                                            :expr (expand-expr expr '())
+                                            :env  '()))))))
+
 
   ;; (^ x y z exp) -> (^ x (^ y (^ z exp)))
   (define (curry-lambda params expr)
@@ -34,50 +41,42 @@
 
 
   ;; (f x y z) -> (((f x) y) z)
-  (define (expand-app f args env types)
+  (define (expand-app f args env)
     (if (null? args)
         f
-        (let ([ag (expand-expr (car args) env types)])
+        (let ([ag (expand-expr (car args) env)])
           (expand-app (list (if (appv? ag env) APPVAR APP) f ag)
                       (cdr args)
-                      env
-                      types))))
+                      env))))
 
-  (define (expand-expr tx env types)
+  (define (expand-expr expr env)
     ;;(p (show-typed-expr tx))
-    (let ([expr-type (if (typed-expr? tx) (tx-type tx) '())]
-          [expr      (if (typed-expr? tx) (tx-expr tx) tx)])
-      (cond
-       [(and (symbol? expr) (member expr env))
-        `(,REF ,expr)]
+    (cond
+     [(and (symbol? expr) (member expr env))
+      `(,REF ,expr)]
 
-       [(and (list? expr-type) (symbol? expr))
-        (if (null? expr-type)
-            (expand-expr (car (ref types expr)) env types)
-            (tx-expr (expand-expr (find
-                                   (fn [fx] (equal? expr-type (tx-type fx)))
-                                   (ref types expr))) env types))]
+     [(symbol? expr)
+      `(,REFG ,expr)]
 
-       [(atom? expr)
-        `(,ATOM ,expr)]
+     [(atom? expr)
+      `(,ATOM ,expr)]
 
-       [(quote-expr? expr)
-        `(,ATOM ,(cadr expr))]
+     [(quote-expr? expr)
+      `(,ATOM ,(cadr expr))]
 
-       ;;(^ x M)
-       [(lambda-expr? expr)
-        (let ([params (drop-right (cdr expr) 1)])
-          (curry-lambda params
-                        (expand-expr (last expr)
-                                     (append env params)
-                                     types)))]
+     ;;(^ x M)
+     [(lambda-expr? expr)
+      (let ([params (drop-right (cdr expr) 1)])
+        (curry-lambda params
+                      (expand-expr (last expr)
+                                   (append env params))))]
 
-       ;;(** + M L)
-       [(native-expr? expr)
-        (expand-app `(,NATIVE ,(cadr expr)) (cddr expr) env types)]
+     ;;(** + M L)
+     [(native-expr? expr)
+      (expand-app `(,NATIVE ,(cadr expr)) (cddr expr) env)]
 
-       [else
-        ;;(f a b c)
-        (let ([exp (macroexpand expr)])
-          (expand-app (expand-expr (car exp) env types)
-                      (cdr exp) env types))]))))
+     [else
+      ;;(f a b c)
+      (let ([exp (macroexpand expr)])
+        (expand-app (expand-expr (car exp) env)
+                    (cdr exp) env))])))
