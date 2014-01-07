@@ -42,14 +42,15 @@
    f ((^ x (f (x x))) (^ x (f (x x)))))
 
 ;;show
-(= (show String String)
-   x x)
-(= (show Number String)
-   x (num->str x))
-(= (show (List a) String)
+(= (show _ String) x
+   (string? x x
+   (number? x (num->str x)
+   (show-list x))))
+
+(= (show-list (List a) String)
    xs
-   (nil? xs "nil"
-         (++ (show (car xs)) (++ "," (show (cdr xs))))))
+   (nil? xs "[]"
+         (++ (show (car xs)) (++ " : " (show (cdr xs))))))
 
 
 ;;primitive wrapper

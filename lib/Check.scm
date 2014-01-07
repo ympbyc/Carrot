@@ -23,6 +23,7 @@
 
   ;; expr * {types} -> boolean
   (define (check-main expr types-ht)
+    ;;    (type-of expr types-ht)
     (guard
      (exc [else (p (ref exc 'message)) #f])
      (type-of expr types-ht)
@@ -69,7 +70,7 @@
                        :name (type-name (car ft))
                        :type (replace-type-var (get-type (car ft)) var t))]
                     [(is-a? (car ft) <crt-function-type>)
-                     (make <crt-function-type> :type (replace-type-var (get-type (car ft) var t)))]
+                     (make <crt-function-type> :type (replace-type-var (get-type (car ft)) var t))]
                     [else    (car ft)])
               (replace-type-var (cdr ft) var t))))
 
