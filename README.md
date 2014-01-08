@@ -4,10 +4,6 @@ Carrot
 Dec 2012 Minori Yamashita <ympbyc@gmail.com>
 
 
-Status:
-programs in examples/ do not work except for prelude.nadeko
-
-
 ```lisp
 ;;./Carrot.scm examples/srfi-1.nadeko
 
@@ -220,7 +216,7 @@ Carrot's runtime values are completely **untyped** (not even dynamicaly typed). 
 (takeout (box 7))                    ;;=> 7
 ```
 
-### No Fool Proof
+### Pitfall
 
 Carrot's weird type system allows the following expression to get through it.
 

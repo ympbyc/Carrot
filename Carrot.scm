@@ -40,7 +40,7 @@
 
 (define (main args)
   (print banner)
-  (format #t "Loading ~S ... done\n" (cdr args))
+  (format #t "Loading ~S ... done\n" (cons "examples/prelude.nadeko" (cdr args)))
   (load "standard-macros.scm")
   (let* ([fnames (cons "examples/prelude.nadeko" (cdr args))]
          [exprs*types (fold (fn [fname exprs*types]

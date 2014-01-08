@@ -32,6 +32,8 @@
                    (make <crt-composite-type> :name (car x)
                                               :type (map (cut make-unknown-crt-type <> #f) (cdr x))
                                               :checked checked)]
+                  [(char-upper-case? (string-ref (symbol->string x) 0))
+                   (make <crt-composite-type> :name x :type '() :checked checked)]
                   [else (make <crt-type-var>  :type x :checked checked)])]))
 
   (define-method object-equal? ((x <crt-type>) (y <crt-type>))
