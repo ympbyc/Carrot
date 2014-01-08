@@ -32,9 +32,9 @@
   (let* ([res   (read-s-exprs `((show ,code)))]
          [_ (hash-table-union! (car *exprs*types*) (car res))]
          [_ (hash-table-union! (cdr *exprs*types*) (cdr res))]
-         [_ (type-check *exprs*types*)]
-         [whnf  (Krivine (compile (car *exprs*types*)))])
-    whnf))
+         [c (type-check *exprs*types*)])
+    (unless c (raise-error/message "type error"))
+    (Krivine (compile (car *exprs*types*)))))
 
 (test-section "constructors")
 (test* "cons" "1 : 2 : 3 : []" (run `(cons 1 (cons 2 (cons 3 nil)))))
@@ -104,13 +104,13 @@
 
 (test-section "association list")
 (test* "assoc" "nazuna : nori"
-  (run `(assoc (cons (2-tuple "a" 1) (cons (2-tuple "nazuna" "nori") nil)) "nazuna")))
+  (run `(assoc (cons (2-tuple "yuno" "miyako") (cons (2-tuple "nazuna" "nori") nil)) "nazuna")))
 (test* "alist-cons" "yunocchi : miyako"
-  (run `(assoc (alist-cons "yunocchi" "miyako" (cons (2-tuple "a" 1) (cons (2-tuple "nazuna" "nori") nil))) "yunocchi")))
-(test* "alist-copy" "a : 1 : nazuna : nori : []"
-  (run `(alist-copy (cons (2-tuple "a" 1) (cons (2-tuple "nazuna" "nori") nil)))))
-(test* "alist-delete" "nazuna : nori : []"
-  (run `(alist-delete (cons (2-tuple "a" 1) (cons (2-tuple "nazuna" "nori") nil)) "a")))
+  (run `(assoc (alist-cons "yunocchi" "miyako" (cons (2-tuple "yuno" "miyako") (cons (2-tuple "nazuna" "nori") nil))) "yunocchi")))
+(test* "alist-copy" "a : 1 : b : 5 : []"
+  (run `(alist-copy (cons (2-tuple "a" 1) (cons (2-tuple "b" 5) nil)))))
+(test* "alist-delete" "b : 5 : []"
+  (run `(alist-delete (cons (2-tuple "a" 1) (cons (2-tuple "b" 5) nil)) "a")))
 
 
 (test-end :exit-on-failure #t)
