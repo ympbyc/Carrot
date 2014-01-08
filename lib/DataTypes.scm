@@ -8,7 +8,9 @@
 
   (define-class <crt-type> ()
     ((typ :accessor get-type
-          :init-keyword :type)))
+          :init-keyword :type)
+     (checked :init-value #f
+              :init-keyword :checked)))
 
   (define-class <crt-primitive-type> (<crt-type>) ())
 
@@ -20,14 +22,17 @@
     ((name :accessor type-name
            :init-keyword :name)))
 
-  (define (make-unknown-crt-type x)
+  (define (make-unknown-crt-type x checked)
     (case x
-      [(String Number Char Keyword Symbol) (make <crt-primitive-type> :type x)]
+      [(String Number Char Keyword Symbol) (make <crt-primitive-type> :type x :checked checked)]
       [else (cond [(and (pair? x) (eq? 'Fn (car x)))
-                   (make <crt-function-type>  :type (map make-unknown-crt-type (cdr x)))]
+                   (make <crt-function-type>  :type (map (cut make-unknown-crt-type <> #f) (cdr x))
+                                              :checked checked)]
                   [(pair? x)
-                   (make <crt-composite-type> :name (car x) :type (map make-unknown-crt-type (cdr x)))]
-                  [else (make <crt-type-var>  :type x)])]))
+                   (make <crt-composite-type> :name (car x)
+                                              :type (map (cut make-unknown-crt-type <> #f) (cdr x))
+                                              :checked checked)]
+                  [else (make <crt-type-var>  :type x :checked checked)])]))
 
   (define-method object-equal? ((x <crt-type>) (y <crt-type>))
     (equal? (get-type x) (get-type y)))

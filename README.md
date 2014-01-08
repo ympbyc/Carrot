@@ -120,9 +120,11 @@ We will discuss the significance of it later.
 ### Definition (Statement)
 
 The expression
-(=  (*name* *type* ...)  *[identifier ...]* *expression*)
+(=  (*name* *type* ...) *[identifier ...]* *expression*)
+or
+(=c (*name* *type* ...) *[identifier ...]* *expression*)
 Binds the *expression* to the *name*.
-If one or more parameters( *identifier ...* ) are given, they can be used in the *expression* to refer to the values the function is applied to.
+If one or more parameters( *identifier ...* ) are given, they can be used in the *expression* to refer to the values the function is applied to. `=c` directs the compiler to type-check the function body.
 
 Multiple functions can share a name. In which case their type must differ.
 
@@ -198,19 +200,22 @@ Carrot has no data structures except for closures, yet the type system is rich e
 ;; Tuples
 (= (2-tuple a b (Tuple a b)) cons)
 (= (fst (Tuple a b) a) car)
-(= (snd (Tuple a b) a) cdr)
+(= (snd (Tuple a b) b) cdr)
 ```
 
 ### Things Start to Get Odd
 
-Carrot's runtime values are completely **untyped** (not even dynamicaly typed). As a consequence,  Carrot's types are completely independent from its underlying implementation.  The type checker only looks at type declarations and it is almost enough to find most of the type-related bugs.
+Carrot's runtime values are completely **untyped** (not even dynamicaly typed). As a consequence,  Carrot's types are completely independent from its underlying implementation.  The type checker, by default,  only looks at type declarations and it is almost enough to find most of the type-related bugs.
 
 ```lisp
+;;invisible container
+
 (= (box a (Box a))
    x x)                              ;; a boxed value's internal representation is the value itself
 (= (takeout (Box a) a)
    x x)                              ;; just return what gets passed in
 
+(box 7)                              ;;=> 7
 (takeout 7)                          ;;=> TYPE ERROR!
 (takeout (box 7))                    ;;=> 7
 ```
@@ -226,7 +231,7 @@ Carrot's weird type system allows the following expression to get through it.
 (stupid-fn 1)                        ;;=> "I'm supporse to be a number"
 ```
 
-This looks pretty bad, but in practice, this kind of type bug easily gets detected because there should be a function or two that depends upon the results of the bugged function.
+This looks pretty bad, but in practice, this kind of type bug easily gets detected because there should be a function or two that depends upon the results of the bugged function. There's also a syntactic form `=c` that directs the compiler to type-check the expression in the function declaration.
 
 ```lisp
 ;; depending on the fact that `stupid-fn` returns a string
@@ -237,6 +242,11 @@ This looks pretty bad, but in practice, this kind of type bug easily gets detect
 ;; wrongly assuming `stupid-fn` would return a number
 (= (add2 Number Number) (+ 2))
 (add2 (stupid-fn 0))                 ;;=> Bad luck. RUNTIME ERROR!
+
+;;using =c
+(=c (stupid-fn Number Number)
+    x "I'm supporse to be a number")
+(stupid-fn 1)                        ;;=> TYPE ERROR!
 ```
 
 
@@ -296,7 +306,7 @@ I/O
 ---
 
  I/O in lazy languages are hard because the order of evaluation is not lexical, and if the return value of an I/O operation does not affect the overall result, the operation itself gets ommited. To go around this problem, Haskell uses whta's called an IO Monad. IO Monad is a way to construct a computation, and sideeffects don't happen while the program is executing.
- Carrot takes a saner approach than that. It uses what we call a timed-io. Every sideeffectful function F takes an additional argument time X  and F that usually return `()` instead return a time Y. By giving Y to another sideeffectful function G, a clear relation between F and G gets formed so Carrot can figure out the evaluation order.
+ Carrot takes a saner approach than that. It uses what we call a timed-io. Every sideeffectful function F takes an additional argument time X, and F that usually return `()` instead return a time Y. By giving Y to another sideeffectful function G, a clear relation between F and G gets formed so Carrot can figure out the evaluation order.
  Every sideeffectful function may cache its results based on the time so it works fine even with call-by-name strategy.
 
 ```lisp
@@ -304,7 +314,7 @@ I/O
  -> read
  -> (^ name  (print 1 (+++ "Nice to meet you, " name ". What do you like?")))
  -> read
- id (^ thing (print 2 (++ thing "? I like it, too!"))))
+ id (^ thing (print 2 (++ thing "? I like that, too!"))))
 ```
 
 Macros
@@ -324,6 +334,10 @@ Carrot is influenced by the following languages
 + Smalltalk-72 - for messaging notation
 + Clojure
 
+License
+-------
+
+MIT
 
 CHANGELOG
 ---------

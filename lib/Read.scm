@@ -14,7 +14,7 @@
 
 
   (define (proper-def? def)
-    (and (pair? def) (eq? (car def) '=)))
+    (and (pair? def) (case (car def) [(= =c) #t] [else #f])))
 
   ;;;; read-s-exprs :: [S-expr] -> ({name => expr} . {name => type})
   (define (read-s-exprs program)
@@ -32,13 +32,16 @@
 
           [types
            (fold (fn [def types-ht]
-                     (let* ([def  (if (proper-def? def) def `(= (main a) ,def))]
+                     (let* ([def  (if (proper-def? def) def `(=c (main a) ,def))]
                             [name (caadr def)]
                             [type (cdadr def)])
                        (if (= 1 (length type))
-                           (hash-table-put-! types-ht name (make-unknown-crt-type (car type)))
                            (hash-table-put-! types-ht name
-                                             (make <crt-function-type> :type (map make-unknown-crt-type type))))))
+                                             (make-unknown-crt-type (car type) (eq? (car def) '=c)))
+                           (hash-table-put-! types-ht name
+                                             (make <crt-function-type>
+                                               :type (map (cut make-unknown-crt-type <> #f) type)
+                                               :checked (eq? (car def) '=c))))))
                  (make-hash-table 'eq?)
                  program)])
 
