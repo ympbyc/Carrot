@@ -14,7 +14,7 @@ programs in examples/ do not work except for prelude.nadeko
 (Y (^ f (cons 1 (zipWith f + (cdr f)) -cons 1))
    -take 10
    -reverse
-   -fold (compose (compose ++ (++ " : ")) num->str) "")
+   -fold (comp (comp ++ (++ " : ")) num->str) "")
 ```
 
 <img src="https://rawgithub.com/ympbyc/Carrot/master/docs/carrot.png" width="360px" />
@@ -231,7 +231,7 @@ This looks pretty bad, but in practice, this kind of type bug easily gets detect
 ```lisp
 ;; depending on the fact that `stupid-fn` returns a string
 (= (greet String String) s
-   (++ "Hello, " s))
+   (+++ "Hello, " s "!"))
 (greet (stupid-fn 0))                ;;=> TYPE ERROR!
 
 ;; wrongly assuming `stupid-fn` would return a number
@@ -279,7 +279,7 @@ Note this is not a syntactic feature. All these `-take`, `-map` and `-fold` are 
 See the source of this magic in examples/srfi-1.nadeko.
 
 
-Pipeline operator in F#, and Synthread in Clojure are useful tool to avoid nesting of function calls. In Carrot, `->` can be used to compose functions right to left so it reads similarly to the synthread.
+Pipeline operator in F#, and Synthread in Clojure are useful tool to avoid nesting of function calls. In Carrot, `->` can be used to compose functions left to right so it reads similarly to the synthread.
 
 ```lisp
 (-> 1
@@ -302,7 +302,7 @@ I/O
 ```lisp
 (-> (print 0 "Hi! What's your name?")
  -> read
- -> (^ name  (print 1 (++ (++ "Nice to meet you, " name) ". What do you like?"))))
+ -> (^ name  (print 1 (+++ "Nice to meet you, " name ". What do you like?")))
  -> read
  id (^ thing (print 2 (++ thing "? I like it, too!"))))
 ```

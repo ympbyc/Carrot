@@ -1,8 +1,0 @@
-(:= (List l mes)
-  (eq? mes 'car (car l)
-  (eq? mes 'cdr (List (cdr l))
-  (List (cons mes l)))))
-
-(:= (cons*) (List nil))
-
-;(show (cons* 1 2 3 4 'cdr 'cdr 'car))

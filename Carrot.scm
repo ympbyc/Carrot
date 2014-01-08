@@ -24,8 +24,12 @@
          [checks?  (type-check exprs*types)])
     (unless checks?
             (print "Skipping execution due to one or more type errors _(′︿‵｡_)")
+            (hash-table-delete! (car exprs*types) 'main)
+            (hash-table-delete! (cdr exprs*types) 'main)
             (REPL exprs*types (+ ctr 1)))
     (print (Krivine (compile exprs-ht)))
+    (hash-table-delete! (car exprs*types) 'main)
+    (hash-table-delete! (cdr exprs*types) 'main)
     (REPL exprs*types (+ ctr 1))))  ;loop with new global-environment
 
 (define banner
@@ -47,6 +51,7 @@
                             (cons (make-hash-table 'eq?) (make-hash-table 'eq?))
                             fnames)])
     (print (sort (map symbol->string (hash-table-keys (car exprs*types)))))
+    (newline)
     (REPL exprs*types 0)))
 
 ;;string * {types} -> ({types} . typed-expr)

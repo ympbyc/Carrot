@@ -92,7 +92,7 @@
     (list (cons t1 t2)))
 
   (define-method unify (t1 (t2 <crt-type-var>))
-    (list (cons t1 t2)))
+    (list (cons t2 t1)))
 
   (define-method unify ((t1 <crt-function-type>) (t2 <crt-function-type>))
     (unify (make <crt-composite-type> :name 'Fn :type (get-type t1))
