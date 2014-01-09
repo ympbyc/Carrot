@@ -1,9 +1,11 @@
 ;;bool
+(synonym Bool (Fn a a a))
+
 (= (true  Bool) t e t)
 (= (false Bool) t e e)
 (= (not Bool Bool)
    bool (bool false true))
-(= (if Bool a a a) bool bool) ;point-free
+(= (if Bool a a a) bool bool)
 
 ;;function
 (= (comp (Fn b c) (Fn a b) a c)

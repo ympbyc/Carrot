@@ -22,20 +22,6 @@
     ((name :accessor type-name
            :init-keyword :name)))
 
-  (define (make-unknown-crt-type x checked)
-    (case x
-      [(String Number Char Keyword Symbol) (make <crt-primitive-type> :type x :checked checked)]
-      [else (cond [(and (pair? x) (eq? 'Fn (car x)))
-                   (make <crt-function-type>  :type (map (cut make-unknown-crt-type <> #f) (cdr x))
-                                              :checked checked)]
-                  [(pair? x)
-                   (make <crt-composite-type> :name (car x)
-                                              :type (map (cut make-unknown-crt-type <> #f) (cdr x))
-                                              :checked checked)]
-                  [(char-upper-case? (string-ref (symbol->string x) 0))
-                   (make <crt-composite-type> :name x :type '() :checked checked)]
-                  [else (make <crt-type-var>  :type x :checked checked)])]))
-
   (define-method object-equal? ((x <crt-type>) (y <crt-type>))
     (equal? (get-type x) (get-type y)))
 
@@ -58,4 +44,4 @@
            :init-keyword :env)))
 
   (define-method write-object ((c <nadeko-closure>) out)
-    (format out "{~S <= ~S}" (clos-expr c) (clos-env c))))
+    (format out "{~S <= ~S}"  (clos-expr c) (map car (clos-env c)))))
