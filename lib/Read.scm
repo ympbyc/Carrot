@@ -13,36 +13,83 @@
   (use Util)
 
 
+  (define *synonyms* (make-hash-table 'eq?)) ;;fmm
+
   (define (proper-def? def)
     (and (pair? def) (case (car def) [(= =c) #t] [else #f])))
+
+  (define (synonym-definition? x)
+    (and (pair? x) (eq? (car x) 'synonym)))
+
 
   ;;;; read-s-exprs :: [S-expr] -> ({name => expr} . {name => type})
   (define (read-s-exprs program)
     (let ([exprs
            (fold (fn [def exprs-ht]
-                     (let* ([def    (if (proper-def? def) def `(= (main a) ,def))]
-                            [name   (caadr def)]
-                            [params (butlast (cddr def))]
-                            [body   (last def)])
-                       (if (null? params)
-                           (hash-table-put-! exprs-ht name body)
-                           (hash-table-put-! exprs-ht name `(^ ,@params ,body)))))
+                     (if (synonym-definition? def)
+                         exprs-ht
+                         (register-function def exprs-ht)))
                  (make-hash-table 'eq?)
                  program)]
 
           [types
            (fold (fn [def types-ht]
-                     (let* ([def  (if (proper-def? def) def `(=c (main a) ,def))]
-                            [name (caadr def)]
-                            [type (cdadr def)])
-                       (if (= 1 (length type))
-                           (hash-table-put-! types-ht name
-                                             (make-unknown-crt-type (car type) (eq? (car def) '=c)))
-                           (hash-table-put-! types-ht name
-                                             (make <crt-function-type>
-                                               :type (map (cut make-unknown-crt-type <> #f) type)
-                                               :checked (eq? (car def) '=c))))))
+                     (if (synonym-definition? def)
+                         (begin (register-synonym! def *synonyms*)
+                                types-ht)
+                         (register-type def types-ht)))
                  (make-hash-table 'eq?)
                  program)])
 
-      (cons exprs types))))
+      (cons exprs types)))
+
+
+    ;; def-statement * {exprs} -> {exprs}
+  (define (register-function def exprs-ht)
+    (let* ([def    (if (proper-def? def) def `(= (main a) ,def))]
+           [name   (caadr def)]
+           [params (butlast (cddr def))]
+           [body   (last def)])
+      (if (null? params)
+          (hash-table-put-! exprs-ht name body)
+          (hash-table-put-! exprs-ht name `(^ ,@params ,body)))))
+
+  ;; def-statement * {types} -> {types}
+  (define (register-type def types-ht)
+    (let* ([def  (if (proper-def? def) def `(=c (main a) ,def))]
+           [name (caadr def)]
+           [type (cdadr def)])
+      (if (= 1 (length type))
+          (hash-table-put-! types-ht name
+                            (make-unknown-crt-type (car type) (eq? (car def) '=c)))
+          (hash-table-put-! types-ht name
+                            (make <crt-function-type>
+                              :type (map (cut make-unknown-crt-type <> #f) type)
+                              :checked (eq? (car def) '=c))))))
+
+  ;; synonym-statement * {synonyms} -> ()
+  (define (register-synonym! synonym synonyms-ht)
+    (let ([alias  (cadr synonym)]
+          [actual (caddr synonym)])
+      (hash-table-put! synonyms-ht alias actual)))
+
+
+
+  ;; expr * boolean * {synonyms} -> <crt-type>
+  (define (make-unknown-crt-type x checked)
+    (case x
+      [(String Number Char Keyword Symbol) (make <crt-primitive-type> :type x :checked checked)]
+      [else (cond [(and (pair? x) (eq? 'Fn (car x)))
+                   (make <crt-function-type>  :type (map (cut make-unknown-crt-type <> #f) (cdr x))
+                         :checked checked)]
+                  [(pair? x)
+                   (let1 alias (hash-table-get *synonyms* x #f)
+                         (if alias (make-unknown-crt-type alias checked)
+                             (make <crt-composite-type> :name (car x)
+                                   :type (map (cut make-unknown-crt-type <> #f) (cdr x))
+                                   :checked checked)))]
+                  [(char-upper-case? (string-ref (symbol->string x) 0))
+                   (let1 alias (hash-table-get *synonyms* x #f)
+                         (if alias (make-unknown-crt-type alias checked)
+                             (make <crt-composite-type> :name x :type '() :checked checked)))]
+                  [else (make <crt-type-var>  :type x :checked checked)])])))
