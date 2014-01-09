@@ -235,14 +235,17 @@
 
 ;;; Association lists ;;;
 
-(= (assoc (List (Tuple a b)) a (Tuple a b)) axs key
+(= (assq a (List (Tuple a b)) b) axs key
   (nil? axs false
-    (=? (fst (car axs)) key (car axs)
-      (assoc (cdr axs) key))))
+    (=? (fst (car axs)) key (snd (car axs))
+      (assq key (cdr axs)))))
 
 
-(= (alist-cons a b (List (Tuple a b))) key datum axs
+(= (alist-cons a b (List (Tuple a b)) (List (Tuple a b)))
+  key datum axs
   (cons (2-tuple key datum) axs))
+
+(= (acons a b (List (Tuple a b)) (List (Tuple a b))) alist-cons)
 
 
 (= (alist-copy (List (Tuple a b)) (List (Tuple a b))) axs
@@ -334,9 +337,3 @@
    (prefix delete))
 (= (-delete-duplicates a (List a) (List a))
    (prefix delete-duplicates))
-(= (-assoc (Tuple a b) (List (Tuple a b)) a (Tuple a b))
-   (prefix assoc))
-(= (-alist-copy (Tuple a b) (List (Tuple a b)) (List (Tuple a b)))
-   (prefix alist-copy))
-(= (-alist-delete (Tuple a b) (List (Tuple a b)) (List (Tuple a b)))
-   (prefix alist-delete))
