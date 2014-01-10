@@ -302,8 +302,8 @@ Pipeline operator in F#, and Synthread in Clojure are useful tool to avoid nesti
  -> (acons :name "立華")
  -> (acons :favorite "ツナ")
  -> (acons :job "ネットワークエンジニア")
- id (^ rikka (+++ (assq :job     rikka)
-                  (assq :name    rikka)
+ id (^ rikka (+++ (assq :job      rikka)
+                  (assq :name     rikka)
                   (assq :favorite rikka))))
 ```
 

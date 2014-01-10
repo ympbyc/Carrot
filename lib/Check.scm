@@ -15,16 +15,16 @@
   (define *exprs-ht* (make-hash-table 'eq?))
   (define *types-ht* (make-hash-table 'eq?))
 
-  ;; type-check ({exprs} . {types}) -> boolean
+  ;; type-check ({exprs} . {types}) -> (U <crt-type> #f)
   (define (type-check exprs*types)
     (set! *exprs-ht* (car exprs*types))
     (set! *types-ht* (cdr exprs*types))
     (let1 main-expr (hash-table-get *exprs-ht* 'main #f)
           (if main-expr
               (check-fn main-expr (ref *types-ht* 'main))
-              #t)))
+              (make <crt-type> :type 'Unit))))
 
-  ;; (^ prams... expr) * <crt-function-type> * {types} -> boolean
+  ;; (^ prams... expr) * <crt-function-type> * {types} -> (U <crt-type> #f)
   (define-method check-fn ((expr <list>) (type <crt-function-type>))
     (let* ([params (butlast (cdr expr))]
            [expr   (last expr)]
@@ -34,19 +34,21 @@
                (not (is-a? out-t <crt-composite-type>))) ;;dont test composit ts
           (guard
            (exc [else (p (ref exc 'message)) #f])
-           (unify out-t (type-of expr (zip params in-ts)))
-           #t)
-          #t)))
+           (let1 expr-t (type-of expr (zip params in-ts))
+                 (unify out-t expr-t)
+                 expr-t))
+          out-t)))
 
-  ;; expr * <crt-type> * {types} -> boolean
+  ;; expr * <crt-type> * {types} -> (U <crt-type> #f)
   (define-method check-fn (expr (type <crt-type>))
     (if (and (ref type 'checked)
              (not (is-a? type <crt-composite-type>)))
         (guard
          (exc [else (p (ref exc 'message)) #f])
-         (unify type (type-of expr '()))
-         #t)
-        #t))
+         (let1 expr-t (type-of expr '())
+               (unify type expr-t)
+               expr-t))
+        type))
 
 
   (define (gen-type-var)

@@ -47,6 +47,7 @@
 (= (show _ String) x
    (string? x x
    (number? x (num->str x)
+   (keyword? x (kw->str x))
    (show-list x))))
 
 (= (show-list (List a) String)
@@ -81,11 +82,15 @@
 (= (++ String String String)
    a b (** ++ a b))
 (= (num->str Number String)
-   a (** num->str a))
+   a (** number->string a))
+(= (kw->str Keyword String)
+   a (** keyword->string a))
 (= (number? a Bool)
-   a (** num? a))
+   a (** number? a))
 (= (string? a Bool)
-   a (** str? a))
+   a (** string? a))
+(= (keyword? a Bool)
+   a (** keyword? a))
 (= (print Time String Time)
    time str (** timed-print time str))
 (= (read Time String) t

@@ -21,13 +21,13 @@
          [_ (hash-table-union! (car exprs*types) (car res))]
          [_ (hash-table-union! (cdr exprs*types) (cdr res))]
          [exprs-ht (car exprs*types)]
-         [checks?  (type-check exprs*types)])
-    (unless checks?
+         [main-t  (type-check exprs*types)])
+    (unless main-t
             (print "Skipping execution due to one or more type errors _(′︿‵｡_)")
             (hash-table-delete! (car exprs*types) 'main)
             (hash-table-delete! (cdr exprs*types) 'main)
             (REPL exprs*types (+ ctr 1)))
-    (print (Krivine (compile exprs-ht)))
+    (format #t "~S :: ~S\n\n" (Krivine (compile exprs-ht)) main-t)
     (hash-table-delete! (car exprs*types) 'main)
     (hash-table-delete! (cdr exprs*types) 'main)
     (REPL exprs*types (+ ctr 1))))  ;loop with new global-environment

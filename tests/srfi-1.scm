@@ -17,7 +17,7 @@
 (define (read-list port)
   (let ((exp (read port)))
     (if (eof-object? exp) '()
-      (cons exp (read-list port)))))
+        (cons exp (read-list port)))))
 
 (define *exprs*types*
   (fold (fn [fname exprs*types]
@@ -58,15 +58,15 @@
 (test* "length" "10" (run `(length (take integers 10))))
 (test* "append" "0 : 1 : 2 : 0 : 1 : 2 : 3 : []" (run `(append (take integers 3) (take integers 4))))
 #|(test* "concatenate" "0 : 1 : 2 : 0 : 1 : 2 : 3 : []"
-       (run `(concatenate (cons (take integers 3) (cons (take integers 4) nil)))))|#
+         (run `(concatenate (cons (take integers 3) (cons (take integers 4) nil)))))|#
 (test* "reverse" "5 : 4 : 3 : 2 : 1 : 0 : []" (run `(reverse (take integers 6))))
 (test* "zip" "0 : 2 : 1 : 1 : 2 : 0 : []" (run `(zip (take integers 3) (reverse (take integers 3)))))
-;(test* "unzip" "0 : 1 : 2 : []" (run `(fst (unzip (zip (take integers 3) (reverse (take integers 3)))))))
-;(test* "unzip" "2 : 1 : 0 : []" (run `(snd (unzip (zip (take integers 3) (reverse (take integers 3)))))))
+;;(test* "unzip" "0 : 1 : 2 : []" (run `(fst (unzip (zip (take integers 3) (reverse (take integers 3)))))))
+;;(test* "unzip" "2 : 1 : 0 : []" (run `(snd (unzip (zip (take integers 3) (reverse (take integers 3)))))))
 (test* "count1" "3" (run `(count1 (cons 1 (cons 2 (cons 1 (cons 3 (cons 1 nil))))) (=? 1))))
 (test* "count2" "3"
-  (run `(count2 (cons 1 (cons 2 (cons 1 (cons 3 (cons 1 nil)))))
-                (cons 1 (cons 2 (cons 1 (cons 3 (cons 1 nil))))) (^ x y (=? 2 (+ x y))))))
+       (run `(count2 (cons 1 (cons 2 (cons 1 (cons 3 (cons 1 nil)))))
+                     (cons 1 (cons 2 (cons 1 (cons 3 (cons 1 nil))))) (^ x y (=? 2 (+ x y))))))
 
 (test-section "fold : map")
 (test* "fold" "55" (run `(fold (take integers 11) + 0)))
@@ -74,16 +74,16 @@
 (test* "fold-right" "55" (run `(fold-right (take integers 11) + 0)))
 (test* "fold-right" "0 : 1 : 2 : []" (run `(fold-right (take integers 3) cons nil)))
 #|(test* "unfold" "1 : 4 : 9 : 16 : 25 : 36 : 49 : 64 : 81 : 100 : []"
-       (run `(unfold (< 10) (^ x (* x x)) (+ 1) 1)))|#
+         (run `(unfold (< 10) (^ x (* x x)) (+ 1) 1)))|#
 (test* "map" "0 : 2 : 4 : 6 : 8 : []" (run `(map (take integers 5) (* 2))))
 
 (test-section "filtering : partitioning")
 (test* "filter" "1 : 3 : 2 : []"
-  (run `(filter (cons 1 (cons 9 (cons 3 (cons 12 (cons 2 nil))))) (> 5))))
-;(test* "partition" "1 : 3 : []"
-;       (run `(fst (partition (cons 1 (cons "2" (cons 3 (cons "4" nil)))) number?))))
-;(test* "partition" "2 : 4 : []"
-;       (run `(snd (partition (cons 1 (cons "2" (cons 3 (cons "4" nil)))) number?))))
+       (run `(filter (cons 1 (cons 9 (cons 3 (cons 12 (cons 2 nil))))) (> 5))))
+;;(test* "partition" "1 : 3 : []"
+;;       (run `(fst (partition (cons 1 (cons "2" (cons 3 (cons "4" nil)))) number?))))
+;;(test* "partition" "2 : 4 : []"
+;;       (run `(snd (partition (cons 1 (cons "2" (cons 3 (cons "4" nil)))) number?))))
 (test* "remove" "5 : 6 : 7 : []"
        (run `(remove (take integers 8) (> 5))))
 
@@ -100,17 +100,17 @@
 (test* "member" "3 : 4 : 5 : []" (run `(member (take integers 6) 3)))
 (test* "delete" "2 : 3 : []" (run `(delete (cons 1 (cons 2 (cons 1 (cons 3 nil)))) 1)))
 (test* "delete-duplicates" "1 : 2 : 3 : []"
-  (run `(delete-duplicates (cons 1 (cons 2 (cons 1 (cons 3 (cons 2 nil))))))))
+       (run `(delete-duplicates (cons 1 (cons 2 (cons 1 (cons 3 (cons 2 nil))))))))
 
 (test-section "association list")
 (test* "assq" "nori"
-  (run `(assq "nazuna" (cons (2-tuple "yuno" "miyako") (cons (2-tuple "nazuna" "nori") nil)))))
+       (run `(assq "nazuna" (cons (2-tuple "yuno" "miyako") (cons (2-tuple "nazuna" "nori") nil)))))
 (test* "alist-cons" "miyako"
-  (run `(assq "yunocchi" (alist-cons "yunocchi" "miyako" (cons (2-tuple "yuno" "miyako") (cons (2-tuple "nazuna" "nori") nil))))))
+       (run `(assq "yunocchi" (alist-cons "yunocchi" "miyako" (cons (2-tuple "yuno" "miyako") (cons (2-tuple "nazuna" "nori") nil))))))
 (test* "alist-copy" "a : 1 : b : 5 : []"
-  (run `(alist-copy (cons (2-tuple "a" 1) (cons (2-tuple "b" 5) nil)))))
+       (run `(alist-copy (cons (2-tuple "a" 1) (cons (2-tuple "b" 5) nil)))))
 (test* "alist-delete" "b : 5 : []"
-  (run `(alist-delete (cons (2-tuple "a" 1) (cons (2-tuple "b" 5) nil)) "a")))
+       (run `(alist-delete (cons (2-tuple "a" 1) (cons (2-tuple "b" 5) nil)) "a")))
 
 
 (test-end :exit-on-failure #t)

@@ -216,9 +216,6 @@
   (define div (c2 /))
   (define mo (c2 mod))
   (define ++ (c2 string-append))
-  (define num->str number->string)
-  (define str? string?)
-  (define num? number?)
   (define (read- x) (read))
 
   (define (timed-print time)
