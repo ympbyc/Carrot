@@ -8,9 +8,9 @@ Dec 2012 Minori Yamashita <ympbyc@gmail.com>
 ;;./Carrot.scm examples/srfi-1.nadeko
 
 (Y (^ f (cons 1 (zipWith f + (cdr f)) -cons 1))
-   -take 10
+   -take 8
    -reverse
-   -fold (comp (comp ++ (++ " : ")) num->str) "")
+   -foldl (comp (comp ++ (++ " : ")) num->str) "")
 ```
 
 <img src="https://rawgithub.com/ympbyc/Carrot/master/docs/carrot.png" width="360px" />
@@ -273,12 +273,12 @@ We can take the full advantage of the fact that lists are implemented as functio
 
 ```lisp
 ;scheme
-(fold + 0 (map (lambda (x) (* x 2)) (take (iota 100) 5)))
+(foldl + 0 (map (lambda (x) (* x 2)) (take (iota 100) 5)))
 
 ;nadeko
 (integers -take 5
           -map  (* 2)
-          -fold + 0)
+          -foldl + 0)
 ```
 
 Note this is not a syntactic feature. All these `-take`, `-map` and `-fold` are ordinary functions.
@@ -302,9 +302,9 @@ Pipeline operator in F#, and Synthread in Clojure are useful tool to avoid nesti
  -> (acons :name "立華")
  -> (acons :favorite "ツナ")
  -> (acons :job "ネットワークエンジニア")
- id (^ rikka (+++ (assq :job      rikka)
-                  (assq :name     rikka)
-                  (assq :favorite rikka))))
+ id (^ rikka (+++ (pull (assq :job      rikka))
+                  (pull (assq :name     rikka))
+                  (pull (assq :favorite rikka)))))
 ```
 
 I/O

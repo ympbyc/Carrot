@@ -10,6 +10,7 @@
     ((typ :accessor get-type
           :init-keyword :type)
      (checked :init-value #f
+              :accessor   require-check?
               :init-keyword :checked)))
 
   (define-class <crt-primitive-type> (<crt-type>) ())
@@ -27,14 +28,19 @@
 
 
 
-  (define-method write-object ((t <crt-function-type>) out)
-    (format out "~S" (cons 'Fn (get-type t))))
-  (define-method write-object ((t <crt-composite-type>) out)
-    (format out "~S" (cons (type-name t) (get-type t))))
+  (define-method type->data ((t <crt-function-type>))
+    (cons 'Fn (map type->data (get-type t))))
+  (define-method type->data ((t <crt-composite-type>))
+    (let1 s (get-type t)
+          (if (null? s)
+              (type-name t)
+              (cons (type-name t) (map type->data (get-type t))))))
+  (define-method type->data ((t <crt-type>))
+    (get-type t))
+
+
   (define-method write-object ((t <crt-type>) out)
-    (format out "~S" (get-type t)))
-
-
+    (format out "~S" (type->data t)))
 
 
   (define-class <nadeko-closure> ()

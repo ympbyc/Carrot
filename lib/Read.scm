@@ -16,7 +16,7 @@
   (define *synonyms* (make-hash-table 'eq?)) ;;fmm
 
   (define (proper-def? def)
-    (and (pair? def) (case (car def) [(= =c) #t] [else #f])))
+    (and (pair? def) (case (car def) [(= =u) #t] [else #f])))
 
   (define (synonym-definition? x)
     (and (pair? x) (eq? (car x) 'synonym)))
@@ -56,16 +56,16 @@
 
   ;; def-statement * {types} -> {types}
   (define (register-type def types-ht)
-    (let* ([def  (if (proper-def? def) def `(=c (main a) ,def))]
+    (let* ([def  (if (proper-def? def) def `(= (main a) ,def))]
            [name (caadr def)]
            [type (cdadr def)])
       (if (= 1 (length type))
           (hash-table-put-! types-ht name
-                            (make-unknown-crt-type (car type) (eq? (car def) '=c)))
+                            (make-unknown-crt-type (car type) (not (eq? (car def) '=u))))
           (hash-table-put-! types-ht name
                             (make <crt-function-type>
                               :type (map (cut make-unknown-crt-type <> #f) type)
-                              :checked (eq? (car def) '=c))))))
+                              :checked (not (eq? (car def) '=u)))))))
 
   ;; synonym-statement * {synonyms} -> ()
   (define (register-synonym! synonym synonyms-ht)

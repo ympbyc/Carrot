@@ -1,18 +1,14 @@
 ;;;; list functions ;;;;
 
 ;;;;
-; Certain portions of this document -- the specific, marked segments of text describing the R5RS procedures -- were adapted with permission from the R5RS report.
-; All other text is copyright (C) Olin Shivers (1998, 1999). All Rights Reserved.
-; Permission is hereby granted, free of charge, to any? person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-; The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+                                        ; Certain portions of this document -- the specific, marked segments of text describing the R5RS procedures -- were adapted with permission from the R5RS report.
+                                        ; All other text is copyright (C) Olin Shivers (1998, 1999). All Rights Reserved.
+                                        ; Permission is hereby granted, free of charge, to any? person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+                                        ; The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+                                        ; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ;;;;
 
 ;;; Constructors ;;;
-
-(= (cons a (List a) (List a)) x xs f
-   (f x xs))
-(= (nil (List a)) 'nil)
 
 (= (make-integers-from Number (List Number)) n
    (cons n (make-integers-from (+ n 1))))
@@ -24,44 +20,37 @@
 
 ;;; Selectors ;;;
 
-(= (car (List a) a) xs
-   (xs (^ h t h)))
-
-
-(= (cdr (List a) (List a)) xs
-   (xs (^ h t t)))
-
-
-(= (list-ref (List a) a) xs i
-  (nil? xs false
-    (=? i 0 (car xs) (list-ref (cdr xs) (- i 1)))))
+(= (list-ref (List a) Number (Option a)) xs i
+   (nil? xs none
+         (=? i 0 (some (car xs))
+             (list-ref (cdr xs) (- i 1)))))
 
 
 (= (take (List a) Number (List a)) xs n
-  (nil? xs nil
-    (=? n 0 nil
-      (cons (car xs) (take (cdr xs) (- n 1))))))
+   (nil? xs nil
+         (=? n 0 nil
+             (cons (car xs) (take (cdr xs) (- n 1))))))
 
 
 (= (drop (List a) Number (List a)) xs i
-  (nil? xs false
-    (=? i 0 xs (drop (cdr xs) (- i 1)))))
+   (nil? xs nil
+         (=? i 0 xs (drop (cdr xs) (- i 1)))))
 
 
 (= (take-right (List a) Number (List a)) xs i
-  (drop xs (- (length xs) i)))
+   (drop xs (- (length xs) i)))
 
 
 (= (drop-right (List a) Number (List a)) xs i
-  (take xs (- (length xs) i)))
+   (take xs (- (length xs) i)))
 
 
 (= (split-at (List a) Number (Pair (List a) (List a))) xs i
-  (pair (take xs i) (drop xs i)))
+   (pair (take xs i) (drop xs i)))
 
 
 (= (last (List a) a) xs
-  (nil? (cdr xs) (car xs) (last (cdr xs))))
+   (nil? (cdr xs) (car xs) (last (cdr xs))))
 
 
 
@@ -73,78 +62,78 @@
 
 
 (= (append (List a) (List a) (List a)) xs1 xs2
-  (nil? xs1 xs2
-    (cons (car xs1) (append (cdr xs1) xs2))))
+   (nil? xs1 xs2
+         (cons (car xs1) (append (cdr xs1) xs2))))
 
 
 (= (reverse (List a) (List a)) xs
-  (fold xs (^ x ac (cons x ac)) nil))
+   (foldl xs (^ x ac (cons x ac)) nil))
 
 
 (= (zip (List a) (List b) (List (Pair a b))) xs1 xs2
-  (nil? xs1 nil
-    (nil? xs2 nil
-      (cons (pair (car xs1) (car xs2))
-        (zip (cdr xs1) (cdr xs2))))))
+   (nil? xs1 nil
+         (nil? xs2 nil
+               (cons (pair (car xs1) (car xs2))
+                     (zip (cdr xs1) (cdr xs2))))))
 
 
 (= (zipWith (List a) (Fn a b c) (List b) (List c)) xs1 f xs2
-  (nil? xs1 nil
-    (nil? xs2 nil
-      (cons (f (car xs1) (car xs2))
-        (zipWith (cdr xs1) f (cdr xs2))))))
+   (nil? xs1 nil
+         (nil? xs2 nil
+               (cons (f (car xs1) (car xs2))
+                     (zipWith (cdr xs1) f (cdr xs2))))))
 
 
 ;;(= unzip xs (unzip- nil nil (reverse xs)))
 
 
 #|(= unzip- xs1 xs2 zipped
-  (nil? zipped
-    (pair xs1 xs2)
-    (unzip-
-      (cons (fst (car zipped)) xs1)
-      (cons (snd (car zipped)) xs2)
-      (cdr zipped))))|#
+(nil? zipped
+      (pair xs1 xs2)
+      (unzip-
+       (cons (fst (car zipped)) xs1)
+       (cons (snd (car zipped)) xs2)
+       (cdr zipped))))|#
 
 
 (= (count1 (List a) (Fn a Bool) Number) xs pred
-  (nil? xs 0
-    (pred (car xs) (+ 1 (count1 (cdr xs) pred))
-      (count1 (cdr xs) pred))))
+   (nil? xs 0
+         (pred (car xs) (+ 1 (count1 (cdr xs) pred))
+               (count1 (cdr xs) pred))))
 
 
 (= (count2 (List a) (List b) (Fn a b Bool) Number)
-  xs1 xs2 pred
-  (nil? xs1 0
-    (nil? xs2 0
-      (pred (car xs1) (car xs2) (+ 1 (count2 (cdr xs1) (cdr xs2) pred))
-        (count2 (cdr xs1) (cdr xs2) pred)))))
+   xs1 xs2 pred
+   (nil? xs1 0
+         (nil? xs2 0
+               (pred (car xs1) (car xs2) (+ 1 (count2 (cdr xs1) (cdr xs2) pred))
+                     (count2 (cdr xs1) (cdr xs2) pred)))))
 
 
 
 
 ;;; Fold, unfold & map ;;;
 
-(= (fold (List a) (Fn a b c) b c) xs f init
-  (nil? xs init
-    (fold (cdr xs) f (f (car xs) init))))
+(= (foldl (List a) (Fn a b c) b c) xs f init
+   (nil? xs init
+         (foldl (cdr xs) f (f (car xs) init))))
 
 
-(= (fold-right (List a) (Fn a b c) b c) xs f init
-  (nil? xs init
-    (f (car xs) (fold-right (cdr xs) f init))))
+(= (foldr (List a) (Fn a b c) b c) xs f init
+   (nil? xs init
+         (f (car xs) (foldr (cdr xs) f init))))
 
 
 #|(= unfold p f g seed
-  (p seed nil
-    (cons (f seed) (unfold p f g (g seed)))))|#
+(p seed nil
+   (cons (f seed) (unfold p f g (g seed)))))|#
 
 
 ;(= unfold-right ) ;pending
 
 
 (= (map (List a) (Fn a b) (List b)) xs f
-  (nil? xs nil (cons (f (car xs)) (map (cdr xs) f))))
+   (nil? xs nil (cons (f (car xs)) (map (cdr xs) f))))
 
 
 
@@ -152,110 +141,103 @@
 ;;; Filtering & partitioning ;;;
 
 (= (filter (List a) (Fn a Bool) (List a)) xs f
-  (nil? xs nil
-    (f (car xs) (cons (car xs) (filter (cdr xs) f)) (filter (cdr xs) f))))
+   (nil? xs nil
+         (f (car xs) (cons (car xs) (filter (cdr xs) f)) (filter (cdr xs) f))))
 
 
-;(= partition xs (partition- nil nil (reverse xs)))
+;;(= partition xs (partition- nil nil (reverse xs)))
 
-
-#|
-(= partition- acc1 acc2 xs p
-  (nil? xs (pair acc1 acc2)
-    (p (car xs)
-      (partition- (cons (car xs) acc1) acc2 (cdr xs) p)
-      (partition- acc1 (cons (car xs) acc2) (cdr xs) p))))
-|#
 
 (= (remove (List a) (Fn a Bool) (List a)) xs f
-  (nil? xs nil
-    (f (car xs) (remove (cdr xs) f) (cons (car xs) (remove (cdr xs) f)))))
+   (nil? xs nil
+         (f (car xs) (remove (cdr xs) f) (cons (car xs) (remove (cdr xs) f)))))
 
 
 
 
 ;;; Searching ;;;
 
-(= (find (List a) (Fn a Bool) a) xs pred
-  (nil? xs false
-    (pred (car xs) (car xs)
-      (find (cdr xs) pred))))
+(= (find (List a) (Fn a Bool) (Option a)) xs pred
+   (nil? xs none
+         (pred (car xs) (some (car xs))
+               (find (cdr xs) pred))))
 
 
-(= (find-tail (List a) (Fn a Bool) a) xs pred
-  (nil? xs false
-    (pred (car xs) xs
-      (find-tail (cdr xs) pred))))
+(= (find-tail (List a) (Fn a Bool) (List a)) xs pred
+   (nil? xs nil
+         (pred (car xs) xs
+               (find-tail (cdr xs) pred))))
 
 
 (= (take-while (List a) (Fn a Bool) (List a)) xs pred
-  (nil? xs nil
-    (pred (car xs) (cons (car xs) (take-while (cdr xs) pred)) nil)))
+   (nil? xs nil
+         (pred (car xs) (cons (car xs) (take-while (cdr xs) pred)) nil)))
 
 
 (= (drop-while (List a) (Fn a Bool) (List a)) xs pred
-  (nil? xs nil
-    (pred (car xs) (drop-while (cdr xs) pred) xs)))
+   (nil? xs nil
+         (pred (car xs) (drop-while (cdr xs) pred) xs)))
 
 
 (= (any? (List a) (Fn a Bool) Bool) xs pred
-  (nil? xs false
-    (pred (car xs) true (any? (cdr xs) pred))))
+   (nil? xs false
+         (pred (car xs) true (any? (cdr xs) pred))))
 
 
 (= (every? (List a) (Fn a Bool) Bool) xs pred
-  (nil? xs true
-    (pred (car xs) (every? (cdr xs) pred) false)))
+   (nil? xs true
+         (pred (car xs) (every? (cdr xs) pred) false)))
 
 
-(= (list-index (List a) (Fn a Bool) Number) xs pred
-  (nil? xs false
-    (pred (car xs) 0
-      (+ 1 (list-index (cdr xs) pred)))))
+(= (list-index (List a) (Fn a Bool) (Option Number)) xs pred
+   (nil? xs none
+         (pred (car xs) (some 0)
+               (/> (list-index (cdr xs) pred)
+                   (^ x (none? x none
+                               (some (+ 1 (pull x)))))))))
 
 
 (= (member (List a) a (List a)) xs x
-  (nil? xs nil
-    (=? (car xs) x xs (member (cdr xs) x))))
+   (nil? xs nil
+         (=? (car xs) x xs (member (cdr xs) x))))
 
 
 (= (delete (List a) a (List a)) xs x
-  (nil? xs nil
-    (=? (car xs) x
-      (delete (cdr xs) x)
-      (cons (car xs) (delete (cdr xs) x)))))
+   (nil? xs nil
+         (=? (car xs) x
+             (delete (cdr xs) x)
+             (cons (car xs) (delete (cdr xs) x)))))
 
 
 (= (delete-duplicates (List a) (List a)) xs
-  (nil? xs nil
-    (cons (car xs) (delete-duplicates (delete xs (car xs))))))
+   (nil? xs nil
+         (cons (car xs) (delete-duplicates (delete xs (car xs))))))
 
 
 
 
 ;;; Association lists ;;;
 
-(= (assq a (List (Pair a b)) b) axs key
-  (nil? axs false
-    (=? (fst (car axs)) key (snd (car axs))
-      (assq key (cdr axs)))))
+(= (assq a (List (Pair a b)) (Option b)) key axs
+   (nil? axs none
+         (=? (fst (car axs)) key
+             (some (snd (car axs)))
+             (assq key (cdr axs)))))
 
 
-(= (alist-cons a b (List (Pair a b)) (List (Pair a b)))
-  key datum axs
-  (cons (pair key datum) axs))
-
-(= (acons a b (List (Pair a b)) (List (Pair a b))) alist-cons)
+(= (acons a b (List (Pair a b)) (List (Pair a b)))
+   key datum axs
+   (cons (pair key datum) axs))
 
 
 (= (alist-copy (List (Pair a b)) (List (Pair a b))) axs
-  (nil? axs nil
-    (cons (pair (fst (car axs)) (snd (car axs)))
-      (alist-copy (cdr axs)))))
+   (nil? axs nil
+         (cons (pair (fst (car axs)) (snd (car axs)))
+               (alist-copy (cdr axs)))))
 
 
 (= (alist-delete (List (Pair a b)) a (List (Pair a b))) axs key
-  (remove axs (compose (=? key) fst)))
+   (remove axs (compose (=? key) fst)))
 
 
 
@@ -263,77 +245,77 @@
 ;;; predicate ;;;
 
 (= (list-eq? (List a) (List a) Bool) xs1 xs2
-  (nil? xs1 (nil? xs2 true false)
-    (=? (car xs1) (car xs2) (list-eq (cdr xs1) (cdr xs2))
-      false)))
+   (nil? xs1 (nil? xs2 true false)
+         (=? (car xs1) (car xs2) (list-eq (cdr xs1) (cdr xs2))
+             false)))
 
 
 
 ;;; suffix functions ;;;
-(= (prefix (Fn (List a) b) (List a) b) f h t (f (cons h t)))
+(=u (prefix (Fn (List a) b) (List a) b) f h t (f (cons h t)))
 
 
-(= (-cons a (List a) (List a))
+(=u (-cons a (List a) (List a))
    h t _h (cons _h (cons h t)))
-(= (-car a (List a) a)
+(=u (-car a (List a) a)
    (prefix car))
-(= (-cdr a (List a) (List a))
+(=u (-cdr a (List a) (List a))
    (prefix cdr))
-(= (-list-ref a (List a) Number a)
+(=u (-list-ref a (List a) Number a)
    (prefix list-ref))
-(= (-take a (List a) Number (List a))
+(=u (-take a (List a) Number (List a))
    (prefix take))
-(= (-drop a (List a) Number (List a))
+(=u (-drop a (List a) Number (List a))
    (prefix drop))
-(= (-take-right a (List a) Number (List a))
+(=u (-take-right a (List a) Number (List a))
    (prefix take-right))
-(= (-drop-right a (List a) Number (List a))
+(=u (-drop-right a (List a) Number (List a))
    (prefix drop-right))
-(= (-split-at a (List a) Number (Pair (List a) (List a)))
+(=u (-split-at a (List a) Number (Pair (List a) (List a)))
    (prefix split-at))
-(= (-last a (List a) a)
+(=u (-last a (List a) a)
    (prefix last))
-(= (-length a (List a) Number)
+(=u (-length a (List a) Number)
    (prefix length))
-(= (-append a (List a) (List a) (List a))
+(=u (-append a (List a) (List a) (List a))
    (prefix append))
-(= (-reverse a (List a) (List a))
+(=u (-reverse a (List a) (List a))
    (prefix reverse))
-(= (-zip a (List a) (List b) (List (Pair a b)))
+(=u (-zip a (List a) (List b) (List (Pair a b)))
    (prefix zip))
-(= (-zipWith a (List a) (Fn a b c) (List b) (List c))
+(=u (-zipWith a (List a) (Fn a b c) (List b) (List c))
    (prefix zipWith))
-(= (-count1 a (List a) (Fn a Bool) Number)
+(=u (-count1 a (List a) (Fn a Bool) Number)
    (prefix count1))
-(= (-count2 a (List a) (List b) (Fn a b Bool) Number)
+(=u (-count2 a (List a) (List b) (Fn a b Bool) Number)
    (prefix count2))
-(= (-fold a (List a) (Fn a b c) b c)
-   (prefix fold))
-(= (-fold-right a (List a) (Fn a b c) b c)
-   (prefix fold-right))
-(= (-map a (List a) (Fn a b) (List b))
+(=u (-foldl a (List a) (Fn a b c) b c)
+   (prefix foldl))
+(=u (-foldr a (List a) (Fn a b c) b c)
+   (prefix foldr))
+(=u (-map a (List a) (Fn a b) (List b))
    (prefix map))
-(= (-filter a (List a) (Fn a Bool) (List a))
+(=u (-filter a (List a) (Fn a Bool) (List a))
    (prefix filter))
-(= (-remove a (List a) (Fn a Bool) (List a))
+(=u (-remove a (List a) (Fn a Bool) (List a))
    (prefix remove))
-(= (-find a (List a) (Fn a Bool) a)
+(=u (-find a (List a) (Fn a Bool) a)
    (prefix find))
-(= (-find-tail a (List a) (Fn a Bool) a)
+(=u (-find-tail a (List a) (Fn a Bool) a)
    (prefix find-tail))
-(= (-take-while a (List a) (Fn a Bool) (List a))
+(=u (-take-while a (List a) (Fn a Bool) (List a))
    (prefix take-while))
-(= (-drop-while a (List a) (Fn a Bool) (List a))
+(=u (-drop-while a (List a) (Fn a Bool) (List a))
    (prefix drop-while))
-(= (-any? a (List a) (Fn a Bool) Bool)
+(=u (-any? a (List a) (Fn a Bool) Bool)
    (prefix any?))
-(= (-every? a (List a) (Fn a Bool) Bool)
+(=u (-every? a (List a) (Fn a Bool) Bool)
    (prefix every?))
-(= (-list-index a (List a) (Fn a Bool) Number)
+(=u (-list-index a (List a) (Fn a Bool) (Option Number))
    (prefix list-index))
-(= (-member a (List a) a (List a))
+(=u (-member a (List a) a (List a))
    (prefix member))
-(= (-delete a (List a) a (List a))
+(=u (-delete a (List a) a (List a))
    (prefix delete))
-(= (-delete-duplicates a (List a) (List a))
+(=u (-delete-duplicates a (List a) (List a))
    (prefix delete-duplicates))

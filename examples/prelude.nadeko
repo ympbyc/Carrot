@@ -1,5 +1,5 @@
 ;;bool
-(synonym Bool (Fn a a a))
+(synonym Bool (Fn a- a- a-))
 
 (= (true  Bool) t e t)
 (= (false Bool) t e e)
@@ -23,18 +23,26 @@
 
 
 ;;tuple
-(= (pair a b (Pair a b)) x y f (f x y))
+(=u (pair a b (Pair a b))
+    x y f (f x y))
 (= (fst (Pair a b) a) t (t (^ x _ x)))
 (= (snd (Pair a b) b) t (t (^ _ y y)))
 
 ;;list
-(= (cons a (List a) (List a))
-   pair)
-(= (nil (List a)) 'nil)
-(= (car (List a) a) fst)
-(= (cdr (List a) (List a)) snd)
+(=u (cons a (List a) (List a))
+    pair)
+(=u (nil (List a)) 'nil)
+(=u (car (List a) a) fst)
+(=u (cdr (List a) (List a)) snd)
 (= (nil? a Bool) x (=? nil x))
 
+
+;; option
+(=u (some a (Option a)) x x)
+(=u (none (Option a)) 'nil)
+(=  (some? (Option a) Bool) x (not (=? x 'nil)))
+(=  (none? (Option a) Bool) x (=? x 'nil))
+(=  (pull (Option a) a) x x)
 
 ;;Y-combinator
 ;;(= (Y (Fn a a) a) x (x (Y x)))
@@ -43,11 +51,11 @@
    f ((^ x (f (x x))) (^ x (f (x x)))))
 
 ;;show
-(= (show _ String) x
-   (string? x x
-   (number? x (num->str x)
-   (keyword? x (kw->str x))
-   (show-list x))))
+(=u (show _ String) x
+    (string? x x
+    (number? x (num->str x)
+    (keyword? x (kw->str x))
+    (show-list x))))
 
 (= (show-list (List a) String)
    xs
@@ -90,6 +98,10 @@
    a (** string? a))
 (= (keyword? a Bool)
    a (** keyword? a))
+
+;;; I/O
+(synonym Time Number)
+
 (= (print Time String Time)
    time str (** timed-print time str))
 (= (read Time String) t
@@ -97,14 +109,13 @@
 
 ;;help
 (= (help String)
-   "\n\
+   "\n\n\
 |  SYNTAX\n\
 |  ------\n\
-|  (= (name in-type... out-type)
-|     parameter... expression)          ;(statement)  binds a function to a name\n\
-|  (^ parameter ... expression)         ;(expression) lambda expression\n\
-|  (** primitive-name argument ...)     ;(expression) call a primitive function. Most of them are abstructed so you rarely have to use this syntax\n\
-|  (function-name argument ...)         ;(expression) apply a function to values
+|  (= (<name> <in-type>... <out-type>)
+|     <parameter>... <expression>)      ;(statement)  binds a function to a name\n\
+|  (^ <parameter>... <expression>)      ;(expression) lambda expression\n\
+|  (<function> <argument>...)           ;(expression) apply a function to values
 |  \"string\"                             ;(expression)\n\
 |  123456                               ;(expression)\n\
 |  'symbol                              ;(expression)\n|\n\
@@ -114,5 +125,6 @@
 |  * Default currying\n|\n\
 |  REPL\n\
 |  ----\n\
-|  ^C   --  exit\n\
-|  help -- see this help\n")
+|  ^C   -- Exit\n\
+|  help -- See this help\n\
+|  <function-name> -- See the usage of the function (through its type)\n\n")

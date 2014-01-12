@@ -27,7 +27,7 @@
             (hash-table-delete! (car exprs*types) 'main)
             (hash-table-delete! (cdr exprs*types) 'main)
             (REPL exprs*types (+ ctr 1)))
-    (format #t "~A :: ~S\n\n" (Krivine (compile exprs-ht)) main-t)
+    (format #t "      ;=> ~A :: ~S\n\n" (Krivine (compile exprs-ht)) main-t)
     (hash-table-delete! (car exprs*types) 'main)
     (hash-table-delete! (cdr exprs*types) 'main)
     (REPL exprs*types (+ ctr 1))))  ;loop with new global-environment

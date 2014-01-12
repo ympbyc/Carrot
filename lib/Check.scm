@@ -30,10 +30,10 @@
            [expr   (last expr)]
            [in-ts  (butlast (get-type type))]
            [out-t  (last (get-type type))])
-      (if (and (ref type 'checked)
-               (not (is-a? out-t <crt-composite-type>))) ;;dont test composite ts
-          (guard
-           (exc [else (p (ref exc 'message)) #f])
+      (if (and (require-check? type))
+          (begin
+          ; (exc [else (p (ref exc 'message)) #f])
+           (set! (require-check? type) #f) ;;prevent loop
            (let1 expr-t (type-of expr (zip params in-ts))
                  (unify out-t expr-t)
                  expr-t))
@@ -41,10 +41,10 @@
 
   ;; expr * <crt-type> * {types} -> (U <crt-type> #f)
   (define-method check-fn (expr (type <crt-type>))
-    (if (and (ref type 'checked)
-             (not (is-a? type <crt-composite-type>)))
-        (guard
-         (exc [else (p (ref exc 'message)) #f])
+    (if (and (require-check? type))
+        (begin
+        ; (exc [else (p (ref exc 'message)) #f])
+         (set! (require-check? type) #f) ;;prevent loop
          (let1 expr-t (type-of expr '())
                (unify type expr-t)
                expr-t))
@@ -52,7 +52,7 @@
 
 
   (define (gen-type-var)
-    (make <crt-type-var> :type (gensym)))
+    (make <crt-type-var> :type (gensym "t_var")))
 
   ;; expr * {types} -> <crt-type>
   (define-method type-of ((_ <string>)  _) (make <crt-primitive-type> :type 'String))
@@ -60,6 +60,7 @@
   (define-method type-of ((_ <char>)    _) (make <crt-primitive-type> :type 'Char))
   (define-method type-of ((_ <keyword>) _) (make <crt-primitive-type> :type 'Keyword))
   (define-method type-of ((s <symbol>) env)
+    ;(p s)
     (let1 t (assoc s env)
           (if t (cadr t)
               (let* ([t  (ref *types-ht* s)]
@@ -70,10 +71,18 @@
                 t))))
   (define-method type-of ((xs <list>) env)
     (cond [(quote-expr? xs)  (make <crt-primitive-type> :type 'Symbol)]
-          [(lambda-expr? xs) (make <crt-function-type>  :type (list (gen-type-var) (gen-type-var)))] ;;stub
+          [(lambda-expr? xs)
+           (type-of-lambda xs)] ;;stub
           [(native-expr? xs) (gen-type-var)]
           [else (type-of-app (type-of (car xs) env)
                              (map (cut type-of <> env) (cdr xs)))]))
+
+
+  ;; (^ params... expr) -> <crt-type>
+  (define (type-of-lambda xs)
+    (let* ([paramts (cons (gen-type-var) (map (^x (gen-type-var)) (butlast (cdr xs))))]
+           [expr-t  (check-fn xs (make <crt-function-type> :type paramts :checked #t))])
+      (make <crt-function-type> :type (append paramts (list expr-t)))))
 
 
   ;; <crt-type> * [<crt-type>] -> <crt-type>
@@ -89,9 +98,13 @@
                               (replace-type-var ft- (car b) (cdr b)))
                          (cdr ft)
                          binding)]
-           [rest-ft (if (= 1 (length rest-ft))
-                        (car rest-ft)
-                        (type-of-app (make <crt-function-type> :type rest-ft) (cdr ts)))])))
+           [rest-ft (cond [(and (= 1 (length rest-ft))
+                                (is-a? (car rest-ft) <crt-function-type>))
+                           (type-of-app (car rest-ft) (cdr ts))]
+                          [(and (= 1 (length rest-ft)))
+                           (car rest-ft)]
+                          [else
+                           (type-of-app (make <crt-function-type> :type rest-ft) (cdr ts))])])))
 
 
   (define (replace-type-var ft var t)
