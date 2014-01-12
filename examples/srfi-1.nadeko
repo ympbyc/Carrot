@@ -56,8 +56,8 @@
   (take xs (- (length xs) i)))
 
 
-(= (split-at (List a) Number (Tuple (List a) (List a))) xs i
-  (2-tuple (take xs i) (drop xs i)))
+(= (split-at (List a) Number (Pair (List a) (List a))) xs i
+  (pair (take xs i) (drop xs i)))
 
 
 (= (last (List a) a) xs
@@ -81,10 +81,10 @@
   (fold xs (^ x ac (cons x ac)) nil))
 
 
-(= (zip (List a) (List b) (List (Tuple a b))) xs1 xs2
+(= (zip (List a) (List b) (List (Pair a b))) xs1 xs2
   (nil? xs1 nil
     (nil? xs2 nil
-      (cons (2-tuple (car xs1) (car xs2))
+      (cons (pair (car xs1) (car xs2))
         (zip (cdr xs1) (cdr xs2))))))
 
 
@@ -100,7 +100,7 @@
 
 #|(= unzip- xs1 xs2 zipped
   (nil? zipped
-    (2-tuple xs1 xs2)
+    (pair xs1 xs2)
     (unzip-
       (cons (fst (car zipped)) xs1)
       (cons (snd (car zipped)) xs2)
@@ -161,7 +161,7 @@
 
 #|
 (= partition- acc1 acc2 xs p
-  (nil? xs (2-tuple acc1 acc2)
+  (nil? xs (pair acc1 acc2)
     (p (car xs)
       (partition- (cons (car xs) acc1) acc2 (cdr xs) p)
       (partition- acc1 (cons (car xs) acc2) (cdr xs) p))))
@@ -235,26 +235,26 @@
 
 ;;; Association lists ;;;
 
-(= (assq a (List (Tuple a b)) b) axs key
+(= (assq a (List (Pair a b)) b) axs key
   (nil? axs false
     (=? (fst (car axs)) key (snd (car axs))
       (assq key (cdr axs)))))
 
 
-(= (alist-cons a b (List (Tuple a b)) (List (Tuple a b)))
+(= (alist-cons a b (List (Pair a b)) (List (Pair a b)))
   key datum axs
-  (cons (2-tuple key datum) axs))
+  (cons (pair key datum) axs))
 
-(= (acons a b (List (Tuple a b)) (List (Tuple a b))) alist-cons)
+(= (acons a b (List (Pair a b)) (List (Pair a b))) alist-cons)
 
 
-(= (alist-copy (List (Tuple a b)) (List (Tuple a b))) axs
+(= (alist-copy (List (Pair a b)) (List (Pair a b))) axs
   (nil? axs nil
-    (cons (2-tuple (fst (car axs)) (snd (car axs)))
+    (cons (pair (fst (car axs)) (snd (car axs)))
       (alist-copy (cdr axs)))))
 
 
-(= (alist-delete (List (Tuple a b)) a (List (Tuple a b))) axs key
+(= (alist-delete (List (Pair a b)) a (List (Pair a b))) axs key
   (remove axs (compose (=? key) fst)))
 
 
@@ -289,7 +289,7 @@
    (prefix take-right))
 (= (-drop-right a (List a) Number (List a))
    (prefix drop-right))
-(= (-split-at a (List a) Number (Tuple (List a) (List a)))
+(= (-split-at a (List a) Number (Pair (List a) (List a)))
    (prefix split-at))
 (= (-last a (List a) a)
    (prefix last))
@@ -299,7 +299,7 @@
    (prefix append))
 (= (-reverse a (List a) (List a))
    (prefix reverse))
-(= (-zip a (List a) (List b) (List (Tuple a b)))
+(= (-zip a (List a) (List b) (List (Pair a b)))
    (prefix zip))
 (= (-zipWith a (List a) (Fn a b c) (List b) (List c))
    (prefix zipWith))

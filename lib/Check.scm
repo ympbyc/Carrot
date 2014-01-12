@@ -31,7 +31,7 @@
            [in-ts  (butlast (get-type type))]
            [out-t  (last (get-type type))])
       (if (and (ref type 'checked)
-               (not (is-a? out-t <crt-composite-type>))) ;;dont test composit ts
+               (not (is-a? out-t <crt-composite-type>))) ;;dont test composite ts
           (guard
            (exc [else (p (ref exc 'message)) #f])
            (let1 expr-t (type-of expr (zip params in-ts))
@@ -119,7 +119,7 @@
       (if (eq? (type-name t1) (type-name t2))
           (apply append (map (fn [tx ty] (unify tx ty)) (get-type t1) (get-type t2)))
           (raise-error/message
-           (format "Composit type container contradiction: ~S -><- ~S" (type-name t1) (type-name t2))))))
+           (format "Composite type container contradiction: ~S -><- ~S" (type-name t1) (type-name t2))))))
 
   (define-method unify ((t1 <crt-type-var>) (t2 <crt-type>))
     (list (cons t1 t2)))

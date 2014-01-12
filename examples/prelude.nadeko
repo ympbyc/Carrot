@@ -22,20 +22,19 @@
 ;;e.g. (-> 2 -> (+ 1) -> (+ 4) -> (+ 3) id (+ 6))
 
 
+;;tuple
+(= (pair a b (Pair a b)) x y f (f x y))
+(= (fst (Pair a b) a) t (t (^ x _ x)))
+(= (snd (Pair a b) b) t (t (^ _ y y)))
+
 ;;list
 (= (cons a (List a) (List a))
-   x xs f (f x xs))
+   pair)
 (= (nil (List a)) 'nil)
-(= (car (List a) a)
-   xs (xs true))
-(= (cdr (List a) (List a))
-   xs (xs false))
+(= (car (List a) a) fst)
+(= (cdr (List a) (List a)) snd)
 (= (nil? a Bool) x (=? nil x))
 
-;;tuple
-(= (2-tuple a b (Tuple a b)) cons)
-(= (fst (Tuple a b) a) car)
-(= (snd (Tuple a b) b) cdr)
 
 ;;Y-combinator
 ;;(= (Y (Fn a a) a) x (x (Y x)))
