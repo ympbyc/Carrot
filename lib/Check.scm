@@ -30,24 +30,24 @@
            [expr   (last expr)]
            [in-ts  (butlast (get-type type))]
            [out-t  (last (get-type type))])
-      (if (and (require-check? type))
-          (begin
-          ; (exc [else (p (ref exc 'message)) #f])
-           (set! (require-check? type) #f) ;;prevent loop
-           (let1 expr-t (type-of expr (zip params in-ts))
-                 (unify out-t expr-t)
-                 expr-t))
+      (if (and (require-check? type) (not (check-prevented? type)))
+          (guard (exc [else (p (ref exc 'message)) #f])
+                 (set! (check-prevented? type) #t) ;;prevent loop
+                 (let1 expr-t (type-of expr (zip params in-ts))
+                       (unify out-t expr-t)
+                       (set! (check-prevented? type) #f)
+                       expr-t))
           out-t)))
 
   ;; expr * <crt-type> * {types} -> (U <crt-type> #f)
   (define-method check-fn (expr (type <crt-type>))
-    (if (and (require-check? type))
-        (begin
-        ; (exc [else (p (ref exc 'message)) #f])
-         (set! (require-check? type) #f) ;;prevent loop
-         (let1 expr-t (type-of expr '())
-               (unify type expr-t)
-               expr-t))
+    (if (and (require-check? type) (not (check-prevented? type)))
+        (guard (exc [else (p (ref exc 'message)) #f])
+               (set! (check-prevented? type) #t) ;;prevent loop
+               (let1 expr-t (type-of expr '())
+                     (unify type expr-t)
+                     (set! (check-prevented? type) #f)
+                     expr-t))
         type))
 
 

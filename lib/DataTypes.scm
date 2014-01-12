@@ -11,7 +11,9 @@
           :init-keyword :type)
      (checked :init-value #f
               :accessor   require-check?
-              :init-keyword :checked)))
+              :init-keyword :checked)
+     (check-prevented :init-value #f
+                      :accessor check-prevented?)))
 
   (define-class <crt-primitive-type> (<crt-type>) ())
 
