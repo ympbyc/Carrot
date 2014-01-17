@@ -1,4 +1,5 @@
-(Y (^ f (cons 1 (zipWith f + (cdr f)) -cons 1))
-   -take 10
-   -reverse
-   -fold (compose (compose ++ (++ ",")) num->str) "")
+(-> (^ f (cons 1 (zipWith f + (cdr f)) -cons 1))
+ -> Y
+ -> (take 10)
+ -> reverse
+ <- (fold (compose (compose ++ (++ ",")) num->str) ""))

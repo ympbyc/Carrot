@@ -21,11 +21,11 @@
     (set! *types-ht* (cdr exprs*types))
     (let1 main-expr (hash-table-get *exprs-ht* 'main #f)
           (if main-expr
-              (check-fn main-expr (ref *types-ht* 'main))
+              (check-fn main-expr (ref *types-ht* 'main) '())
               (make <crt-type> :type 'Unit))))
 
   ;; (^ prams... expr) * <crt-function-type> * {types} -> (U <crt-type> #f)
-  (define-method check-fn ((expr <list>) (type <crt-function-type>))
+  (define-method check-fn ((expr <list>) (type <crt-function-type>) env)
     (let* ([params (butlast (cdr expr))]
            [expr   (last expr)]
            [in-ts  (butlast (get-type type))]
@@ -33,18 +33,18 @@
       (if (and (require-check? type) (not (check-prevented? type)))
           (guard (exc [else (p (ref exc 'message)) #f])
                  (set! (check-prevented? type) #t) ;;prevent loop
-                 (let1 expr-t (type-of expr (zip params in-ts))
+                 (let1 expr-t (type-of expr (append (zip params in-ts) env))
                        (unify out-t expr-t)
                        (set! (check-prevented? type) #f)
                        expr-t))
           out-t)))
 
   ;; expr * <crt-type> * {types} -> (U <crt-type> #f)
-  (define-method check-fn (expr (type <crt-type>))
+  (define-method check-fn (expr (type <crt-type>) env)
     (if (and (require-check? type) (not (check-prevented? type)))
         (guard (exc [else (p (ref exc 'message)) #f])
                (set! (check-prevented? type) #t) ;;prevent loop
-               (let1 expr-t (type-of expr '())
+               (let1 expr-t (type-of expr env)
                      (unify type expr-t)
                      (set! (check-prevented? type) #f)
                      expr-t))
@@ -65,23 +65,26 @@
           (if t (cadr t)
               (let* ([t  (ref *types-ht* s)]
                      [ex (hash-table-get *exprs-ht* s #f)])
-                (if (and ex (not (check-fn ex t)))
+                (if (and ex (not (check-fn ex t env)))
                     (raise-error/message
                      (format "Declared return type of `~S` doesn't agree with actual value." s)))
                 t))))
   (define-method type-of ((xs <list>) env)
     (cond [(quote-expr? xs)  (make <crt-primitive-type> :type 'Symbol)]
           [(lambda-expr? xs)
-           (type-of-lambda xs)] ;;stub
+           (type-of-lambda xs env)] ;;stub
           [(native-expr? xs) (gen-type-var)]
           [else (type-of-app (type-of (car xs) env)
                              (map (cut type-of <> env) (cdr xs)))]))
 
 
   ;; (^ params... expr) -> <crt-type>
-  (define (type-of-lambda xs)
+  (define (type-of-lambda xs env)
     (let* ([paramts (cons (gen-type-var) (map (^x (gen-type-var)) (butlast (cdr xs))))]
-           [expr-t  (check-fn xs (make <crt-function-type> :type paramts :checked #t))])
+           [expr-t  (check-fn xs
+                              (make <crt-function-type> :type paramts :checked #t)
+                              env)])
+      (unless expr-t (raise-error/message "lambda"))
       (make <crt-function-type> :type (append paramts (list expr-t)))))
 
 

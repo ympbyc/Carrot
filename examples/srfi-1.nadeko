@@ -20,33 +20,33 @@
 
 ;;; Selectors ;;;
 
-(= (list-ref (List a) Number (Option a)) xs i
+(= (list-ref Number (List a) (Option a)) i xs
    (nil? xs none
          (=? i 0 (some (car xs))
-             (list-ref (cdr xs) (- i 1)))))
+             (list-ref (- i 1) (cdr xs)))))
 
 
-(= (take (List a) Number (List a)) xs n
+(= (take Number (List a) (List a)) n xs
    (nil? xs nil
          (=? n 0 nil
-             (cons (car xs) (take (cdr xs) (- n 1))))))
+             (cons (car xs) (take (- n 1) (cdr xs))))))
 
 
-(= (drop (List a) Number (List a)) xs i
+(= (drop Number (List a) (List a)) i xs
    (nil? xs nil
-         (=? i 0 xs (drop (cdr xs) (- i 1)))))
+         (=? i 0 xs (drop (- i 1) (cdr xs)))))
 
 
-(= (take-right (List a) Number (List a)) xs i
-   (drop xs (- (length xs) i)))
+(= (take-right Number (List a) (List a)) i xs
+   (drop (- (length xs) i) xs))
 
 
-(= (drop-right (List a) Number (List a)) xs i
-   (take xs (- (length xs) i)))
+(= (drop-right Number (List a) (List a)) i xs
+   (take (- (length xs) i) xs))
 
 
-(= (split-at (List a) Number (Pair (List a) (List a))) xs i
-   (pair (take xs i) (drop xs i)))
+(= (split-at Number (List a) (Pair (List a) (List a))) i xs
+   (pair (take i xs) (drop i xs)))
 
 
 (= (last (List a) a) xs
@@ -67,7 +67,7 @@
 
 
 (= (reverse (List a) (List a)) xs
-   (foldl xs (^ x ac (cons x ac)) nil))
+   (foldl cons nil xs))
 
 
 (= (zip (List a) (List b) (List (Pair a b))) xs1 xs2
@@ -96,32 +96,32 @@
        (cdr zipped))))|#
 
 
-(= (count1 (List a) (Fn a Bool) Number) xs pred
+(= (count1 (Fn a Bool) (List a) Number) pred xs
    (nil? xs 0
-         (pred (car xs) (+ 1 (count1 (cdr xs) pred))
-               (count1 (cdr xs) pred))))
+         (pred (car xs) (+ 1 (count1 pred (cdr xs)))
+               (count1 pred (cdr xs)))))
 
 
-(= (count2 (List a) (List b) (Fn a b Bool) Number)
-   xs1 xs2 pred
+(= (count2 (Fn a b Bool) (List a) (List b) Number)
+   pred xs1 xs2
    (nil? xs1 0
          (nil? xs2 0
-               (pred (car xs1) (car xs2) (+ 1 (count2 (cdr xs1) (cdr xs2) pred))
-                     (count2 (cdr xs1) (cdr xs2) pred)))))
+               (pred (car xs1) (car xs2) (+ 1 (count2 pred (cdr xs1) (cdr xs2)))
+                     (count2 pred (cdr xs1) (cdr xs2))))))
 
 
 
 
 ;;; Fold, unfold & map ;;;
 
-(= (foldl (List a) (Fn a b c) b c) xs f init
+(= (foldl (Fn a b c) b (List a) c) f init xs
    (nil? xs init
-         (foldl (cdr xs) f (f (car xs) init))))
+         (foldl f (f (car xs) init) (cdr xs))))
 
 
-(= (foldr (List a) (Fn a b c) b c) xs f init
+(= (foldr (Fn a b c) b (List a) c) f init xs
    (nil? xs init
-         (f (car xs) (foldr (cdr xs) f init))))
+         (f (car xs) (foldr f init  (cdr xs)))))
 
 
 #|(= unfold p f g seed
@@ -132,86 +132,90 @@
 ;(= unfold-right ) ;pending
 
 
-(= (map (List a) (Fn a b) (List b)) xs f
-   (nil? xs nil (cons (f (car xs)) (map (cdr xs) f))))
+(= (map  (Fn a b) (List a) (List b)) f xs
+   (nil? xs nil (cons (f (car xs)) (map f (cdr xs)))))
 
 
 
 
 ;;; Filtering & partitioning ;;;
 
-(= (filter (List a) (Fn a Bool) (List a)) xs f
+(= (filter (Fn a Bool) (List a) (List a)) f xs
    (nil? xs nil
-         (f (car xs) (cons (car xs) (filter (cdr xs) f)) (filter (cdr xs) f))))
+         (f (car xs) (cons (car xs) (filter f (cdr xs))) (filter f (cdr xs)))))
 
 
 ;;(= partition xs (partition- nil nil (reverse xs)))
 
 
-(= (remove (List a) (Fn a Bool) (List a)) xs f
+(= (remove (Fn a Bool) (List a) (List a)) f xs
    (nil? xs nil
-         (f (car xs) (remove (cdr xs) f) (cons (car xs) (remove (cdr xs) f)))))
+         (f (car xs) (remove f (cdr xs)) (cons (car xs) (remove f (cdr xs))))))
 
 
 
 
 ;;; Searching ;;;
 
-(= (find (List a) (Fn a Bool) (Option a)) xs pred
+(= (find (Fn a Bool) (List a) (Option a)) pred xs
    (nil? xs none
          (pred (car xs) (some (car xs))
-               (find (cdr xs) pred))))
+               (find pred (cdr xs)))))
 
 
-(= (find-tail (List a) (Fn a Bool) (List a)) xs pred
+(= (find-tail (Fn a Bool) (List a) (List a)) pred xs
    (nil? xs nil
          (pred (car xs) xs
-               (find-tail (cdr xs) pred))))
+               (find-tail pred (cdr xs)))))
 
 
-(= (take-while (List a) (Fn a Bool) (List a)) xs pred
+(= (take-while (Fn a Bool) (List a) (List a)) pred xs
    (nil? xs nil
-         (pred (car xs) (cons (car xs) (take-while (cdr xs) pred)) nil)))
+         (pred (car xs)
+               (cons (car xs) (take-while pred (cdr xs)))
+               nil)))
 
 
-(= (drop-while (List a) (Fn a Bool) (List a)) xs pred
+(= (drop-while (Fn a Bool) (List a) (List a)) pred xs
    (nil? xs nil
-         (pred (car xs) (drop-while (cdr xs) pred) xs)))
+         (pred (car xs)
+               (drop-while pred (cdr xs))
+               xs)))
 
 
-(= (any? (List a) (Fn a Bool) Bool) xs pred
+(= (any? (Fn a Bool) (List a) Bool) pred xs
    (nil? xs false
-         (pred (car xs) true (any? (cdr xs) pred))))
+         (pred (car xs) true (any? pred (cdr xs)))))
 
 
-(= (every? (List a) (Fn a Bool) Bool) xs pred
+(= (every?  (Fn a Bool) (List a) Bool) pred xs
    (nil? xs true
-         (pred (car xs) (every? (cdr xs) pred) false)))
+         (pred (car xs) (every? pred (cdr xs)) false)))
 
 
-(= (list-index (List a) (Fn a Bool) (Option Number)) xs pred
+(= (list-index (Fn a Bool) (List a) (Option Number)) pred xs
    (nil? xs none
          (pred (car xs) (some 0)
-               (/> (list-index (cdr xs) pred)
+               (/> (list-index pred (cdr xs))
                    (^ x (none? x none
                                (some (+ 1 (pull x)))))))))
 
 
-(= (member (List a) a (List a)) xs x
+(= (member a (List a) (List a)) x xs
    (nil? xs nil
-         (=? (car xs) x xs (member (cdr xs) x))))
+         (=? (car xs) x xs (member x (cdr xs)))))
 
 
-(= (delete (List a) a (List a)) xs x
+(= (delete a (List a) (List a)) x xs
    (nil? xs nil
          (=? (car xs) x
-             (delete (cdr xs) x)
-             (cons (car xs) (delete (cdr xs) x)))))
+             (delete x (cdr xs))
+             (cons (car xs) (delete x (cdr xs))))))
 
 
 (= (delete-duplicates (List a) (List a)) xs
    (nil? xs nil
-         (cons (car xs) (delete-duplicates (delete xs (car xs))))))
+         (cons (car xs) (delete-duplicates (delete (car xs) xs)))))
 
 
 
@@ -236,8 +240,8 @@
                (alist-copy (cdr axs)))))
 
 
-(= (alist-delete (List (Pair a b)) a (List (Pair a b))) axs key
-   (remove axs (compose (=? key) fst)))
+(= (alist-delete a (List (Pair a b)) (List (Pair a b))) key axs
+   (remove (compose (=? key) fst) axs))
 
 
 
@@ -248,74 +252,3 @@
    (nil? xs1 (nil? xs2 true false)
          (=? (car xs1) (car xs2) (list-eq (cdr xs1) (cdr xs2))
              false)))
-
-
-
-;;; suffix functions ;;;
-(=u (prefix (Fn (List a) b) (List a) b) f h t (f (cons h t)))
-
-
-(=u (-cons a (List a) (List a))
-   h t _h (cons _h (cons h t)))
-(=u (-car a (List a) a)
-   (prefix car))
-(=u (-cdr a (List a) (List a))
-   (prefix cdr))
-(=u (-list-ref a (List a) Number a)
-   (prefix list-ref))
-(=u (-take a (List a) Number (List a))
-   (prefix take))
-(=u (-drop a (List a) Number (List a))
-   (prefix drop))
-(=u (-take-right a (List a) Number (List a))
-   (prefix take-right))
-(=u (-drop-right a (List a) Number (List a))
-   (prefix drop-right))
-(=u (-split-at a (List a) Number (Pair (List a) (List a)))
-   (prefix split-at))
-(=u (-last a (List a) a)
-   (prefix last))
-(=u (-length a (List a) Number)
-   (prefix length))
-(=u (-append a (List a) (List a) (List a))
-   (prefix append))
-(=u (-reverse a (List a) (List a))
-   (prefix reverse))
-(=u (-zip a (List a) (List b) (List (Pair a b)))
-   (prefix zip))
-(=u (-zipWith a (List a) (Fn a b c) (List b) (List c))
-   (prefix zipWith))
-(=u (-count1 a (List a) (Fn a Bool) Number)
-   (prefix count1))
-(=u (-count2 a (List a) (List b) (Fn a b Bool) Number)
-   (prefix count2))
-(=u (-foldl a (List a) (Fn a b c) b c)
-   (prefix foldl))
-(=u (-foldr a (List a) (Fn a b c) b c)
-   (prefix foldr))
-(=u (-map a (List a) (Fn a b) (List b))
-   (prefix map))
-(=u (-filter a (List a) (Fn a Bool) (List a))
-   (prefix filter))
-(=u (-remove a (List a) (Fn a Bool) (List a))
-   (prefix remove))
-(=u (-find a (List a) (Fn a Bool) a)
-   (prefix find))
-(=u (-find-tail a (List a) (Fn a Bool) a)
-   (prefix find-tail))
-(=u (-take-while a (List a) (Fn a Bool) (List a))
-   (prefix take-while))
-(=u (-drop-while a (List a) (Fn a Bool) (List a))
-   (prefix drop-while))
-(=u (-any? a (List a) (Fn a Bool) Bool)
-   (prefix any?))
-(=u (-every? a (List a) (Fn a Bool) Bool)
-   (prefix every?))
-(=u (-list-index a (List a) (Fn a Bool) (Option Number))
-   (prefix list-index))
-(=u (-member a (List a) a (List a))
-   (prefix member))
-(=u (-delete a (List a) a (List a))
-   (prefix delete))
-(=u (-delete-duplicates a (List a) (List a))
-   (prefix delete-duplicates))

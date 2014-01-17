@@ -49,10 +49,10 @@
        (run `(cons 1 (cons 2 (cons 3 nil)))))
 (test* "make-integers-from"
        '("2 : 3 : 4 : []" (List Number))
-       (run `(take (make-integers-from 2) 3)))
+       (run `(take 3 (make-integers-from 2))))
 (test* "integers"
        '("0 : 1 : 2 : 3 : []" (List Number))
-       (run `(take integers 4)))
+       (run `(take 4 integers)))
 
 (test-section "selectors")
 (test* "car"
@@ -60,34 +60,34 @@
        (run `(car integers)))
 (test* "cdr"
        '("1 : 2 : 3 : []" (List Number))
-       (run `(cdr (take integers 4))))
+       (run `(cdr (take 4 integers))))
 (test* "list-ref"
        '("2" (Option Number))
-       (run `(list-ref integers 2)))
+       (run `(list-ref 2 integers)))
 (test* "list-ref nil"
        '("t" String)
-       (run `(none? (list-ref (cons 1 nil) 8) "t" "f")))
+       (run `(none? (list-ref 8 (cons 1 nil)) "t" "f")))
 (test* "take"
        '("0 : 1 : 2 : 3 : []" (List Number))
-       (run `(take integers 4)))
+       (run `(take 4 integers)))
 (test* "drop"
        '("2 : 3 : []" (List Number))
-       (run `(take (drop integers 2) 2)))
+       (run `(take 2 (drop 2 integers))))
 (test* "take-right"
        '("2 : 3 : 4 : []" (List Number))
-       (run `(take-right (take integers 5) 3)))
+       (run `(take-right 3 (take 5 integers))))
 (test* "drop-right"
        '("0 : 1 : []" (List Number))
-       (run `(drop-right (take integers 5) 3)))
+       (run `(drop-right 3 (take 5 integers))))
 (test* "split-at"
        '("0 : 1 : 2 : 3 : 4 : []" (List Number))
-       (run `(fst (split-at (take integers 10) 5))))
+       (run `(fst (split-at 5 (take 10 integers)))))
 (test* "split-at"
        '("5 : 6 : 7 : 8 : 9 : []" (List Number))
-       (run `(snd (split-at (take integers 10) 5))))
+       (run `(snd (split-at 5 (take 10 integers)))))
 (test* "last"
        '("5" Number)
-       (run `(last (take integers 6))))
+       (run `(last (take 6 integers))))
 
 (test-section "miscellaneous")
 (test* "length"
@@ -95,99 +95,100 @@
        (run `(length nil)))
 (test* "length"
        '("10" Number)
-       (run `(length (take integers 10))))
+       (run `(length (take 10 integers))))
 (test* "append"
        '("0 : 1 : 2 : 0 : 1 : 2 : 3 : []" (List Number))
-       (run `(append (take integers 3) (take integers 4))))
+       (run `(append (take 3 integers) (take 4 integers))))
 #;(test* "concatenate" "0 : 1 : 2 : 0 : 1 : 2 : 3 : []"
        (run `(concatenate (cons (take integers 3) (cons (take integers 4) nil)))))
 (test* "reverse"
        '("5 : 4 : 3 : 2 : 1 : 0 : []" (List Number))
-       (run `(reverse (take integers 6))))
+       (run `(reverse (take 6 integers))))
 (test* "zip"
        '("0 : 2 : 1 : 1 : 2 : 0 : []" (List (Pair Number Number)))
-       (run `(zip (take integers 3) (reverse (take integers 3)))))
+       (run `(zip (take 3 integers) (reverse (take 3 integers)))))
 ;;(test* "unzip" "0 : 1 : 2 : []" (run `(fst (unzip (zip (take integers 3) (reverse (take integers 3)))))))
 ;;(test* "unzip" "2 : 1 : 0 : []" (run `(snd (unzip (zip (take integers 3) (reverse (take integers 3)))))))
 (test* "count1"
        '("3" Number)
-       (run `(count1 (cons 1 (cons 2 (cons 1 (cons 3 (cons 1 nil))))) (=? 1))))
+       (run `(count1  (=? 1) (cons 1 (cons 2 (cons 1 (cons 3 (cons 1 nil))))))))
 (test* "count2"
        '("3" Number)
-       (run `(count2 (cons 1 (cons 2 (cons 1 (cons 3 (cons 1 nil)))))
-                     (cons 1 (cons 2 (cons 1 (cons 3 (cons 1 nil))))) (^ x y (=? 2 (+ x y))))))
+       (run `(count2 (^ x y (=? 2 (+ x y)))
+                     (cons 1 (cons 2 (cons 1 (cons 3 (cons 1 nil)))))
+                     (cons 1 (cons 2 (cons 1 (cons 3 (cons 1 nil))))))))
 
 (test-section "fold : map")
 (test* "fold"
        '("55" Number)
-       (run `(foldl (take integers 11) + 0)))
+       (run `(foldl  + 0 (take 11 integers))))
 (test* "foldl"
        '("2 : 1 : 0 : []" (List Number))
-       (run `(foldl (take integers 3) cons nil)))
+       (run `(foldl cons nil (take 3 integers))))
 (test* "foldr"
        '("55" Number)
-       (run `(foldr (take integers 11) + 0)))
+       (run `(foldr + 0 (take 11 integers))))
 (test* "foldr"
        '("0 : 1 : 2 : []" (List Number))
-       (run `(foldr (take integers 3) cons nil)))
+       (run `(foldr cons nil (take 3 integers))))
 #;(test* "unfold" "1 : 4 : 9 : 16 : 25 : 36 : 49 : 64 : 81 : 100 : []"
        (run `(unfold (< 10) (^ x (* x x)) (+ 1) 1)))
 (test* "map"
        '("0 : 2 : 4 : 6 : 8 : []" (List Number))
-       (run `(map (take integers 5) (* 2))))
+       (run `(map (* 2) (take 5 integers))))
 
 (test-section "filtering : partitioning")
 (test* "filter"
        '("1 : 3 : 2 : []" (List Number))
-       (run `(filter (cons 1 (cons 9 (cons 3 (cons 12 (cons 2 nil))))) (> 5))))
+       (run `(filter (> 5) (cons 1 (cons 9 (cons 3 (cons 12 (cons 2 nil))))))))
 ;;(test* "partition" "1 : 3 : []"
 ;;       (run `(fst (partition (cons 1 (cons "2" (cons 3 (cons "4" nil)))) number?))))
 ;;(test* "partition" "2 : 4 : []"
 ;;       (run `(snd (partition (cons 1 (cons "2" (cons 3 (cons "4" nil)))) number?))))
 (test* "remove"
        '("5 : 6 : 7 : []" (List Number))
-       (run `(remove (take integers 8) (> 5))))
+       (run `(remove (> 5) (take 8 integers))))
 
 (test-section "searching")
 (test* "find"
        '("6" (Option Number))
-       (run `(find (take integers 10) (< 5))))
+       (run `(find  (< 5) (take 10 integers))))
 (test* "find"
        '("none" String)
-       (run `(none? (find (cons 3 nil) (< 5)) "none" "some")))
+       (run `(none? (find (< 5) (cons 3 nil)) "none" "some")))
 (test* "find-tail"
        '("6 : 7 : 8 : 9 : []" (List Number))
-       (run `(find-tail (take integers 10) (< 5))))
+       (run `(find-tail (< 5) (take 10 integers))))
 (test* "take-while"
        '("0 : 1 : 2 : 3 : []" (List Number))
-       (run `(take-while (take integers 8) (> 4))))
+       (run `(take-while (> 4) (take 8 integers))))
 (test* "drop-while"
        '("4 : 5 : 6 : 7 : []" (List Number))
-       (run `(drop-while (take integers 8) (> 4))))
+       (run `(drop-while (> 4) (take 8 integers))))
 (test* "any?"
        '("true" String)
-       (run `(any? (take integers 5) (=? 3) "true" "false")))
+       (run `(any? (=? 3) (take 5 integers) "true" "false")))
 (test* "any?"
        '("false" String)
-       (run `(any? (take integers 5) (=? 100) "true" "false")))
+       (run `(any? (=? 100) (take 5 integers) "true" "false")))
 (test* "every?"
        '("true" String)
-       (run `(every? (take integers 5) (> 8) "true" "false")))
+       (run `(every? (> 8) (take 5 integers) "true" "false")))
 (test* "every?"
        '("false" String)
-       (run `(every? (take integers 5) (> 3) "true" "false")))
+       (run `(every? (> 3) (take 5 integers) "true" "false")))
 (test* "list-index"
        '("7" (Option Number))
-       (run `(list-index (take integers 10) (< 6))))
+       (run `(list-index (< 6) (take 10 integers))))
 (test* "list-index"
        '("none" String)
-       (run `(none? (list-index (take integers 10) (< 20)) "none" "some")))
+       (run `(none? (list-index (< 20) (take 10 integers)) "none" "some")))
 (test* "member"
        '("3 : 4 : 5 : []" (List Number))
-       (run `(member (take integers 6) 3)))
+       (run `(member 3 (take 6 integers))))
 (test* "delete"
        '("2 : 3 : []" (List Number))
-       (run `(delete (cons 1 (cons 2 (cons 1 (cons 3 nil)))) 1)))
+       (run `(delete 1 (cons 1 (cons 2 (cons 1 (cons 3 nil)))))))
 (test* "delete-duplicates"
        '("1 : 2 : 3 : []" (List Number))
        (run `(delete-duplicates (cons 1 (cons 2 (cons 1 (cons 3 (cons 2 nil))))))))
@@ -207,7 +208,7 @@
        (run `(alist-copy (acons "a" 1 (acons "b" 5 nil)))))
 (test* "alist-delete"
        '("b : 5 : []" (List (Pair String Number)))
-       (run `(alist-delete (cons (pair "a" 1) (cons (pair "b" 5) nil)) "a")))
+       (run `(alist-delete "a" (cons (pair "a" 1) (cons (pair "b" 5) nil)))))
 
 
 (test-end :exit-on-failure #t)

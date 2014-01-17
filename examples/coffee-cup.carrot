@@ -1,0 +1,26 @@
+(synonym CupState (Option Number))
+(= (cup Number CupState) x (some x))
+(= (broken-cup CupState) none)
+
+(synonym CupEvent (Pair Keyword Number))        ;;;shame///
+(=u (fill Number CupEvent)  x (pair :fill x))
+(=u (spill Number CupEvent) x (pair :spill x))
+(=u (drop CupEvent) (pair :drop 0))
+
+(= (next-cup-state CupEvent CupState CupState)
+   ce cs
+   (opt>>= cs
+           (^ x (=? (fst ce) :fill  (cup (+ x (snd ce)))
+                (=? (fst ce) :spill (cup (- x (snd ce)))
+                                    broken-cup)))))
+
+(= (example-cup-events (List CupEvent))
+   (-> nil
+    -> (cons (spill 8))
+    -> (cons (fill 10))
+    id (cons (fill 20))))
+
+
+(= (example-main CupState)
+   (opt>>= (foldl example-cup-events next-cup-state (cup 100))
+           pull))
