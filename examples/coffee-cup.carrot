@@ -3,9 +3,9 @@
 (= (broken-cup CupState) none)
 
 (synonym CupEvent (Pair Keyword Number))        ;;;shame///
-(=u (fill Number CupEvent)  x (pair :fill x))
+(=u (fill  Number CupEvent) x (pair :fill  x))
 (=u (spill Number CupEvent) x (pair :spill x))
-(=u (drop CupEvent) (pair :drop 0))
+(=u (drop  CupEvent) (pair :drop 0))
 
 (= (next-cup-state CupEvent CupState CupState)
    ce cs
@@ -17,10 +17,13 @@
 (= (example-cup-events (List CupEvent))
    (-> nil
     -> (cons (spill 8))
-    -> (cons (fill 10))
-    id (cons (fill 20))))
+    -> (cons (fill  10))
+;;  -> (cons drop)
+    -> (cons (spill 40))
+    <- (cons (fill  20))))
 
 
-(= (example-main CupState)
-   (opt>>= (foldl example-cup-events next-cup-state (cup 100))
-           pull))
+(= (example-main Number)
+   (/> (foldl next-cup-state (cup 100) example-cup-events)
+       (^ cs (none? cs (print 0 "The cup is broken")
+                    (print 0 (+++ "The cup has " (num->str (pull cs)) "ml of coffee"))))))
