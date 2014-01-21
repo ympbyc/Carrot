@@ -24,17 +24,17 @@
 
 
 ;;tuple
-(=u (pair a b (Pair a b))
+(= (pair a b (Pair a b))
     x y f (f x y))
 (= (fst (Pair a b) a) t (t (^ x _ x)))
 (= (snd (Pair a b) b) t (t (^ _ y y)))
 
 ;;list
 (=u (cons a (List a) (List a))
-    pair)
+    x y f (f x y))
 (=u (nil (List a)) 'nil)
-(=u (car (List a) a) fst)
-(=u (cdr (List a) (List a)) snd)
+(= (car (List a) a) xs (xs (^ x _ x)))
+(= (cdr (List a) (List a)) xs (xs (^ _ xs xs)))
 (= (nil? a Bool) x (=? nil x))
 
 
@@ -44,7 +44,7 @@
 (=  (some? (Option a) Bool) x (not (=? x 'nil)))
 (=  (none? (Option a) Bool) x (=? x 'nil))
 (=  (pull (Option a) a) x x)
-(= (opt>>= (Option a) (Fn a (Option a)) (Option a))
+(=  (opt>>= (Option a) (Fn a (Option a)) (Option a))
              opt f (none? opt none (f (pull opt))))
 
 
@@ -116,22 +116,38 @@
 
 ;;help
 (= (help String)
-   "\n\n\
-|  SYNTAX\n\
-|  ------\n\
-|  (= (<name> <in-type>... <out-type>)
-|     <parameter>... <expression>)      ;(statement)  binds a function to a name\n\
-|  (^ <parameter>... <expression>)      ;(expression) lambda expression\n\
-|  (<function> <argument>...)           ;(expression) apply a function to values
-|  \"string\"                             ;(expression)\n\
-|  123456                               ;(expression)\n\
-|  'symbol                              ;(expression)\n|\n\
-|  FEATURE\n\
-|  -------\n\
-|  * Default lazy evaluation\n\
-|  * Default currying\n|\n\
-|  REPL\n\
-|  ----\n\
-|  ^C   -- Exit\n\
-|  help -- See this help\n\
+   "                                          \n\n\
+|  SYNTAX                                     \n\
+|  ------                                     \n\
+|  ;; declare the type <t> as an alias of <t'>\n\
+|  (synonym <t> <t'>)                         \n\
+|                                             \n\
+|  ;; bind a function to a name               \n\
+|  (= (<name> <in-type>... <out-type>)        \n\
+|     <parameter>...                          \n\
+|     <expression>)                           \n\
+|                                             \n\
+|  ;; define a constructor for <type>         \n\
+|  (=u (<name> <in-type>... <type>)           \n\
+|     <parameter>...                          \n\
+|     <expression>)                           \n\
+|                                             \n\
+|  ;; lambda expression                       \n\
+|  (^ <parameter>... <expression>)            \n\
+|                                             \n\
+|  ;; function application                    \n\
+|  (<function> <argument>...)                 \n\
+|                                             \n\
+|  ;; literals                                \n\
+|  \"string\" 123456 'symbol :keyword         \n\
+|                                             \n\
+|  FEATURE                                    \n\
+|  -------                                    \n\
+|  * Default lazy evaluation                  \n\
+|  * Default currying                         \n\
+|                                             \n\
+|  REPL                                       \n\
+|  ----                                       \n\
+|  ^C   -- Exit                               \n\
+|  help -- See this help                      \n\
 |  <function-name> -- See the usage of the function (through its type)\n\n")

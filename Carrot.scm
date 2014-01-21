@@ -10,6 +10,7 @@
 (use Krivine)
 (use Check)
 (use Read)
+(use DataTypes)
 (use gauche.parseopt)
 
 ;;; REPL ;;;
@@ -27,7 +28,7 @@
             (hash-table-delete! (car exprs*types) 'main)
             (hash-table-delete! (cdr exprs*types) 'main)
             (REPL exprs*types (+ ctr 1)))
-    (format #t "      ;=> ~A :: ~S\n\n" (Krivine (compile exprs-ht)) main-t)
+    (format #t "      ;=> ~A :: ~S\n\n" (fmt (Krivine (compile exprs-ht))) main-t)
     (hash-table-delete! (car exprs*types) 'main)
     (hash-table-delete! (cdr exprs*types) 'main)
     (REPL exprs*types (+ ctr 1))))  ;loop with new global-environment
@@ -65,4 +66,10 @@
 (define (read-list port)
   (let ((exp (read port)))
     (if (eof-object? exp) '()
-      (cons exp (read-list port)))))
+        (cons exp (read-list port)))))
+
+;; avoid printing closures
+(define (fmt data)
+  (if (is-a? data <nadeko-closure>)
+      (format "#,(function ~A)" (name data))
+      data))

@@ -70,4 +70,14 @@
 
   (define (hash-table-put-! ht k v)
     (hash-table-put! ht k v)
-    ht))
+    ht)
+
+
+
+  (define-record-type <atom>
+    (atom val)
+    atom*?
+    (val deref reset!))
+
+  (define (swap! atom f)
+    (reset! atom (f (deref atom)))))

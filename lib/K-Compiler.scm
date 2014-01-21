@@ -22,7 +22,8 @@
      (hash-table-map exprs-ht
                      (fn [k expr] (cons k (make <nadeko-closure>
                                             :expr (expand-expr expr '())
-                                            :env  '()))))))
+                                            :env  '()
+                                            :name k))))))
 
 
   ;; (^ x y z exp) -> (^ x (^ y (^ z exp)))

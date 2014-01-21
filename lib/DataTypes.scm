@@ -49,7 +49,10 @@
     ((expr :accessor clos-expr
            :init-keyword :expr)
      (env  :accessor clos-env
-           :init-keyword :env)))
+           :init-keyword :env)
+     (name :init-value 'anonymous
+           :accessor name
+           :init-keyword :name)))
 
   (define-method write-object ((c <nadeko-closure>) out)
     (format out "{~S <= ~S}"  (clos-expr c) (map car (clos-env c)))))

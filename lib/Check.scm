@@ -14,15 +14,21 @@
 
   (define *exprs-ht* (make-hash-table 'eq?))
   (define *types-ht* (make-hash-table 'eq?))
+  (define *checking* (atom '(main)))
 
   ;; type-check ({exprs} . {types}) -> (U <crt-type> #f)
   (define (type-check exprs*types)
     (set! *exprs-ht* (car exprs*types))
     (set! *types-ht* (cdr exprs*types))
+    (reset! *checking* '(main))
     (let1 main-expr (hash-table-get *exprs-ht* 'main #f)
           (if main-expr
               (check-fn main-expr (ref *types-ht* 'main) '())
               (make <crt-type> :type 'Unit))))
+
+
+  (define (print-exc exc)
+    (format #t "~A: ~A\n" (deref *checking*) (ref exc 'message)))
 
   ;; (^ prams... expr) * <crt-function-type> * {types} -> (U <crt-type> #f)
   (define-method check-fn ((expr <list>) (type <crt-function-type>) env)
@@ -31,7 +37,7 @@
            [in-ts  (butlast (get-type type))]
            [out-t  (last (get-type type))])
       (if (and (require-check? type) (not (check-prevented? type)))
-          (guard (exc [else (p (ref exc 'message)) #f])
+          (guard (exc [else (print-exc exc) #f])
                  (set! (check-prevented? type) #t) ;;prevent loop
                  (let1 expr-t (type-of expr (append (zip params in-ts) env))
                        (unify out-t expr-t)
@@ -42,7 +48,7 @@
   ;; expr * <crt-type> * {types} -> (U <crt-type> #f)
   (define-method check-fn (expr (type <crt-type>) env)
     (if (and (require-check? type) (not (check-prevented? type)))
-        (guard (exc [else (p (ref exc 'message)) #f])
+        (guard (exc [else (print-exc exc) #f])
                (set! (check-prevented? type) #t) ;;prevent loop
                (let1 expr-t (type-of expr env)
                      (unify type expr-t)
@@ -60,14 +66,14 @@
   (define-method type-of ((_ <char>)    _) (make <crt-primitive-type> :type 'Char))
   (define-method type-of ((_ <keyword>) _) (make <crt-primitive-type> :type 'Keyword))
   (define-method type-of ((s <symbol>) env)
-    ;(p s)
+    (swap! *checking* (cut cons s <>))
     (let1 t (assoc s env)
           (if t (cadr t)
               (let* ([t  (ref *types-ht* s)]
                      [ex (hash-table-get *exprs-ht* s #f)])
-                (if (and ex (not (check-fn ex t env)))
-                    (raise-error/message
-                     (format "Declared return type of `~S` doesn't agree with actual value." s)))
+                (when (and ex (not (check-fn ex t env)))
+                      (raise-error/message
+                       (format "Declared return type of `~S` doesn't agree with actual value." s)))
                 t))))
   (define-method type-of ((xs <list>) env)
     (cond [(quote-expr? xs)  (make <crt-primitive-type> :type 'Symbol)]
