@@ -96,7 +96,8 @@
 
   ;; <crt-type> * [<crt-type>] -> <crt-type>
   (define-method type-of-app ((t <crt-primitive-type>) ts)
-    (raise-error/message (format "Can not apply a ~S to ~S" (get-type t) (map get-type ts))))
+    (raise-error/message (format "Can not apply a ~S to ~S"
+                                 (get-type t) (map get-type ts))))
   (define-method type-of-app ((t <crt-composite-type>) ts) t)
   (define-method type-of-app ((t <crt-type-var>) ts) t)
   (define-method type-of-app ((t <crt-function-type>) (_ <null>)) t)
@@ -106,14 +107,14 @@
            [rest-ft (fold (fn [b ft-]
                               (replace-type-var ft- (car b) (cdr b)))
                          (cdr ft)
-                         binding)]
-           [rest-ft (cond [(and (= 1 (length rest-ft))
-                                (is-a? (car rest-ft) <crt-function-type>))
-                           (type-of-app (car rest-ft) (cdr ts))]
-                          [(and (= 1 (length rest-ft)))
-                           (car rest-ft)]
-                          [else
-                           (type-of-app (make <crt-function-type> :type rest-ft) (cdr ts))])])))
+                         binding)])
+      (cond [(and (= 1 (length rest-ft))
+                  (is-a? (car rest-ft) <crt-function-type>))
+             (type-of-app (car rest-ft) (cdr ts))]
+            [(and (= 1 (length rest-ft)))
+             (car rest-ft)]
+            [else
+             (type-of-app (make <crt-function-type> :type rest-ft) (cdr ts))])))
 
 
   (define (replace-type-var ft var t)
@@ -124,7 +125,8 @@
                        :name (type-name (car ft))
                        :type (replace-type-var (get-type (car ft)) var t))]
                     [(is-a? (car ft) <crt-function-type>)
-                     (make <crt-function-type> :type (replace-type-var (get-type (car ft)) var t))]
+                     (make <crt-function-type> :type (replace-type-var
+                                                      (get-type (car ft)) var t))]
                     [else (car ft)])
               (replace-type-var (cdr ft) var t))))
 
@@ -141,7 +143,8 @@
       (if (eq? (type-name t1) (type-name t2))
           (apply append (map (fn [tx ty] (unify tx ty)) (get-type t1) (get-type t2)))
           (raise-error/message
-           (format "Composite type container contradiction: ~S -><- ~S" (type-name t1) (type-name t2))))))
+           (format "Composite type container contradiction: ~S -><- ~S"
+                   (type-name t1) (type-name t2))))))
 
   (define-method unify ((t1 <crt-type-var>) (t2 <crt-type>))
     (list (cons t1 t2)))
