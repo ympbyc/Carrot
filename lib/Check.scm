@@ -12,18 +12,21 @@
   (use util.match)
   (use DataTypes)
 
-  (define *exprs-ht* (make-hash-table 'eq?))
-  (define *types-ht* (make-hash-table 'eq?))
+  (define *exprs-ht*  (make-hash-table 'eq?))
+  (define *types-ht*  (make-hash-table 'eq?))
+  (define *genmap-ht* (make-hash-table 'eq?))
   (define *checking* (atom '(main)))
 
   ;; type-check ({exprs} . {types}) -> (U <crt-type> #f)
-  (define (type-check exprs*types)
-    (set! *exprs-ht* (car exprs*types))
-    (set! *types-ht* (cdr exprs*types))
+  (define (type-check exprs*types*genmap)
+    (set! *exprs-ht*  (car   exprs*types*genmap))
+    (set! *types-ht*  (cadr  exprs*types*genmap))
+    (set! *genmap-ht* (caddr exprs*types*genmap))
     (reset! *checking* '(main))
-    (let1 main-expr (hash-table-get *exprs-ht* 'main #f)
+    (let* ([main-name (get-main-name (caddr exprs*types*genmap))]
+           [main-expr (hash-table-get *exprs-ht* main-name #f)])
           (if main-expr
-              (check-fn main-expr (ref *types-ht* 'main) '())
+              (check-fn main-expr (ref *types-ht* main-name) '())
               (make <crt-type> :type 'Unit))))
 
 
@@ -37,7 +40,7 @@
            [in-ts  (butlast (get-type type))]
            [out-t  (last (get-type type))])
       (if (and (require-check? type) (not (check-prevented? type)))
-          (guard (exc [else (print-exc exc) #f])
+          (begin ;; (exc [else (print-exc exc) #f])
                  (set! (check-prevented? type) #t) ;;prevent loop
                  (let1 expr-t (type-of expr (append (zip params in-ts) env))
                        (unify out-t expr-t)
@@ -48,7 +51,7 @@
   ;; expr * <crt-type> * {types} -> (U <crt-type> #f)
   (define-method check-fn (expr (type <crt-type>) env)
     (if (and (require-check? type) (not (check-prevented? type)))
-        (guard (exc [else (print-exc exc) #f])
+        (begin ;; (exc [else (print-exc exc) #f])
                (set! (check-prevented? type) #t) ;;prevent loop
                (let1 expr-t (type-of expr env)
                      (unify type expr-t)

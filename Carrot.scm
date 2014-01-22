@@ -14,24 +14,26 @@
 (use gauche.parseopt)
 
 ;;; REPL ;;;
-(define (REPL exprs*types ctr)
+(define (REPL exprs*types*genmap ctr)
+  (p (hash-table->alist (caddr exprs*types*genmap)))
   (format #t "carrot ~S> " ctr)
   (flush)
   (let* ([expr  (read)]
-         [res (read-s-exprs (list expr))]
-         [_ (hash-table-union! (car exprs*types) (car res))]
-         [_ (hash-table-union! (cdr exprs*types) (cdr res))]
-         [exprs-ht (car exprs*types)]
-         [main-t  (type-check exprs*types)])
+         [res (read-s-exprs (list expr) exprs*types*genmap)]
+         [exprs-ht (car   res)]
+         [types-ht (cadr  res)]
+         [genmap   (caddr res)]
+         [main-t   (type-check res)])
     (unless main-t
             (print "Skipping execution due to one or more type errors _(′︿‵｡_)")
-            (hash-table-delete! (car exprs*types) 'main)
-            (hash-table-delete! (cdr exprs*types) 'main)
-            (REPL exprs*types (+ ctr 1)))
-    (format #t "      ;=> ~A :: ~S\n\n" (fmt (Krivine (compile exprs-ht))) main-t)
-    (hash-table-delete! (car exprs*types) 'main)
-    (hash-table-delete! (cdr exprs*types) 'main)
-    (REPL exprs*types (+ ctr 1))))  ;loop with new global-environment
+            (hash-table-delete! exprs-ht (get-main-name genmap))
+            (hash-table-delete! types-ht (get-main-name genmap))
+            (REPL res (+ ctr 1)))
+    (format #t "      ;=> ~A :: ~S\n\n"
+            (fmt (Krivine (compile exprs-ht) genmap)) main-t)
+    (hash-table-delete! exprs-ht (get-main-name genmap))
+    (hash-table-delete! types-ht (get-main-name genmap))
+    (REPL res (inc ctr))))  ;loop with new global-environment
 
 (define banner
 "             ----------------------
@@ -44,24 +46,27 @@
   (format #t "Loading ~S ... done\n" (cons "examples/prelude.nadeko" (cdr args)))
   (load "standard-macros.scm")
   (let* ([fnames (cons "examples/prelude.nadeko" (cdr args))]
-         [exprs*types (fold (fn [fname exprs*types]
-                                (let1 res (load-file fname)
-                                      (hash-table-union! (car exprs*types) (car res))
-                                      (hash-table-union! (cdr exprs*types) (cdr res))
-                                      exprs*types))
-                            (cons (make-hash-table 'eq?) (make-hash-table 'eq?))
-                            fnames)])
-    (print (sort (map symbol->string (hash-table-keys (car exprs*types)))))
+         [exprs*types*genmap (list (make-hash-table 'eq?)
+                                   (make-hash-table 'eq?)
+                                   (make-hash-table 'eq?))]
+         [exprs*types*genmap
+          (fold (fn [fname exprs*types*genmap]
+                    (load-file fname exprs*types*genmap))
+                exprs*types*genmap
+                fnames)])
+    (print (sort (map symbol->string (hash-table-keys (caddr exprs*types*genmap)))))
     (newline)
-    (REPL exprs*types 0)))
+    (REPL exprs*types*genmap 0)))
 
 ;;string * {types} -> ({types} . typed-expr)
-(define (load-file fname)
+(define (load-file fname exprs*types*genmap)
   (call-with-input-file fname
     (fn [file-port]
-        (let* ([exprs*types (read-s-exprs (read-list file-port))]
-               [checks? (type-check exprs*types)])
-          exprs*types))))
+        (let* ([exprs*types*genmap
+                (read-s-exprs (read-list file-port)
+                              exprs*types*genmap)]
+               [checks? (type-check exprs*types*genmap)])
+          exprs*types*genmap))))
 
 (define (read-list port)
   (let ((exp (read port)))

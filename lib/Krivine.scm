@@ -42,8 +42,9 @@
 
   (define *global-env* (make-hash-table 'eq?))
 
-  (define (Krivine exprs-ht)
-    (let ([main (hash-table-get exprs-ht 'main #f)])
+  (define (Krivine exprs-ht genmap)
+    (let* ([main-name (get-main-name genmap)]
+           [main (hash-table-get exprs-ht main-name #f)])
       (if main
           (begin
             ;;(print-code "closure: ~S" main)
