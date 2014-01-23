@@ -24,7 +24,7 @@
 
 
 ;;tuple
-(= (pair a b (Pair a b))
+(=u (pair a b (Pair a b))
     x y f (f x y))
 (= (fst (Pair a b) a) t (t (^ x _ x)))
 (= (snd (Pair a b) b) t (t (^ _ y y)))
@@ -35,14 +35,14 @@
 (=u (nil (List a)) 'nil)
 (= (car (List a) a) xs (xs (^ x _ x)))
 (= (cdr (List a) (List a)) xs (xs (^ _ xs xs)))
-(= (nil? a Bool) x (=? nil x))
+(= (nil? (List a) Bool) xs (=? nil xs))
 
 
 ;; option
 (=u (some a (Option a)) x x)
 (=u (none (Option a)) 'nil)
-(=  (some? (Option a) Bool) x (not (=? x 'nil)))
-(=  (none? (Option a) Bool) x (=? x 'nil))
+(=u (some? (Option a) Bool) x (not (=? x 'nil)))
+(=u (none? (Option a) Bool) x (=? x 'nil))
 (=  (pull (Option a) a) x x)
 (=  (opt>>= (Option a) (Fn a (Option a)) (Option a))
              opt f (none? opt none (f (pull opt))))
@@ -54,57 +54,47 @@
 (= (Y (Fn a a) a)
    f ((^ x (f (x x))) (^ x (f (x x)))))
 
-;;show
-(=u (show _ String) x
-    (string? x x
-    (number? x (num->str x)
-    (keyword? x (kw->str x))
-    (nil? x "[]"
-    (symbol? x (** symbol->string x)
-              (show-list x))))))
-
-(= (show-list (List a) String)
+;;show -- example of a generic function
+(= (show String String)  x x)
+(= (show Number String)  num->str)
+(= (show Keyword String) kw->str)
+(= (show Symbol String)  x (** symbol->string x))
+(= (show (List Number) String)
    xs
-   (+++ (show (car xs)) " : " (show (cdr xs))))
+   (nil? xs "[]"
+            (+++ (show (car xs)) " : " (show (cdr xs)))))
 
 (= (+++ String String String String) s1 s2 s3
    (++ (++ s1 s2) s3))
 
 ;;primitive wrapper
-(= (=? a b Bool)
-   a b (** =? a b))
+(= (=? a a Bool)
+   x y (** =? x y))
 (= (< Number Number Bool)
-   a b (** lt? a b))
+   x y (** lt? x y))
 (= (> Number Number Bool)
-   a b (** gt? a b))
+   x y (** gt? x y))
 (= (<= Number Number Bool)
-   a b (** lte? a b))
+   x y (** lte? x y))
 (= (>= Number Number Bool)
-   a b (** gte? a b))
+   x y (** gte? x y))
 (= (+ Number Number Number)
-   a b (** add a b))
+   x y (** add x y))
 (= (- Number Number Number)
-   a b (** sub a b))
+   x y (** sub x y))
 (= (* Number Number Number)
-   a b (** mul a b))
+   x y (** mul x y))
 (= (/ Number Number Number)
-   a b (** div a b))
+   x y (** div x y))
 (= (% Number Number Number)
-   a b (** mo a b))
+   x y (** mo x y))
 (= (++ String String String)
-   a b (** ++ a b))
+   x y (** ++ x y))
 (= (num->str Number String)
-   a (** number->string a))
+   x (** number->string x))
 (= (kw->str Keyword String)
-   a (** keyword->string a))
-(= (number? a Bool)
-   a (** number? a))
-(= (string? a Bool)
-   a (** string? a))
-(= (keyword? a Bool)
-   a (** keyword? a))
-(= (symbol? a Bool)
-   a (** symbol? a))
+   x (** keyword->string x))
+
 
 ;;; I/O
 (synonym Time Number)
@@ -122,7 +112,7 @@
 |  ;; declare the type <t> as an alias of <t'>\n\
 |  (synonym <t> <t'>)                         \n\
 |                                             \n\
-|  ;; bind a function to a name               \n\
+|  ;; declare a generic function              \n\
 |  (= (<name> <in-type>... <out-type>)        \n\
 |     <parameter>...                          \n\
 |     <expression>)                           \n\
@@ -143,8 +133,12 @@
 |                                             \n\
 |  FEATURE                                    \n\
 |  -------                                    \n\
+|  * Purely functional                        \n\
 |  * Default lazy evaluation                  \n\
 |  * Default currying                         \n\
+|  * Static type checking                     \n\
+|  * Statically resolved multimethod          \n\
+|  * Timed I/O                                \n\
 |                                             \n\
 |  REPL                                       \n\
 |  ----                                       \n\

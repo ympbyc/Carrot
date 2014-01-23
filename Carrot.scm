@@ -8,14 +8,14 @@
 (use Util)
 (use K-Compiler)
 (use Krivine)
-(use Check)
+(use Type)
 (use Read)
 (use DataTypes)
 (use gauche.parseopt)
 
 ;;; REPL ;;;
 (define (REPL exprs*types*genmap ctr)
-  (p (hash-table->alist (caddr exprs*types*genmap)))
+  ;;(p (hash-table->alist (caddr exprs*types*genmap)))
   (format #t "carrot ~S> " ctr)
   (flush)
   (let* ([expr  (read)]
@@ -23,16 +23,20 @@
          [exprs-ht (car   res)]
          [types-ht (cadr  res)]
          [genmap   (caddr res)]
-         [main-t   (type-check res)])
-    (unless main-t
+         [checked-p*t  (acquire-checked-program res)]
+         [checked-p (car checked-p*t)]
+         [main-t    (cdr checked-p*t)])
+    (unless checked-p
             (print "Skipping execution due to one or more type errors _(′︿‵｡_)")
             (hash-table-delete! exprs-ht (get-main-name genmap))
             (hash-table-delete! types-ht (get-main-name genmap))
+            (hash-table-delete! genmap 'main)
             (REPL res (+ ctr 1)))
     (format #t "      ;=> ~A :: ~S\n\n"
-            (fmt (Krivine (compile exprs-ht) genmap)) main-t)
+            (fmt (Krivine (compile checked-p) genmap)) main-t)
     (hash-table-delete! exprs-ht (get-main-name genmap))
     (hash-table-delete! types-ht (get-main-name genmap))
+    (hash-table-delete! genmap 'main)
     (REPL res (inc ctr))))  ;loop with new global-environment
 
 (define banner
@@ -65,7 +69,9 @@
         (let* ([exprs*types*genmap
                 (read-s-exprs (read-list file-port)
                               exprs*types*genmap)]
-               [checks? (type-check exprs*types*genmap)])
+               ;;[checks? (type-check exprs*types*genmap)]
+               )
+          (p (acquire-checked-program exprs*types*genmap))
           exprs*types*genmap))))
 
 (define (read-list port)

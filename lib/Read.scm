@@ -1,8 +1,9 @@
 ;;;; read.scm
 ;;;; 2014 Minori Yamashita <ympbyc@gmail.com>
-;;;; transform a list of s-expressions into a tuple of two hashtables:
-;;;; one mapping names to expressions,
-;;;; one mapping names to types
+;;;; transform a list of s-expressions into a tuple of three hashtables:
+;;;; one mapping unique name to expression,
+;;;; one mapping unique name to type,
+;;;; one mapping generic name to unique names
 
 (add-load-path "../lib/" :relative)
 
@@ -48,10 +49,12 @@
                   [def          (if (proper-def? def) def `(= (main a) ,def))]
                   [generic-name (caadr def)]
                   [uniqn        (length (hash-table-get genmap-ht generic-name '()))]
-                  [uniq-name    (string->symbol
-                                 (string-append
-                                  (symbol->string generic-name)
-                                  (number->string (inc uniqn))))])
+                  [uniq-name    (if (= uniqn 0) ;;use the symbol unchanged
+                                    generic-name
+                                    (string->symbol
+                                     (string-append
+                                      (symbol->string generic-name)
+                                      (number->string (inc uniqn)))))])
              (read-s-exprs* (cdr program)
                             (register-function uniq-name def exprs-ht)
                             (register-type uniq-name def types-ht)
