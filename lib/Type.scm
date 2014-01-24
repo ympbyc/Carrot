@@ -1,6 +1,6 @@
-;;;; Check.scm
+;;;; Type.scm
 ;;;; 2014 Minori Yamashita <ympbyc@gmail.com>
-;;;; Find type errors
+;;;; Type-check and resolve multimethod call
 
 (add-load-path "../lib/" :relative)
 
@@ -21,9 +21,9 @@
   ;;             {uniq-name    => types}
   ;;             {generic-name => [uniq-name]}) -> ({uniq-name => expr} . main-t)
   (define (acquire-checked-program exprs*types*genmap)
-    (set! *exprs-ht*  (car   exprs*types*genmap))
-    (set! *types-ht*  (cadr  exprs*types*genmap))
-    (set! *genmap-ht* (caddr exprs*types*genmap))
+    (set! *exprs-ht*  (fst exprs*types*genmap))
+    (set! *types-ht*  (snd exprs*types*genmap))
+    (set! *genmap-ht* (thd exprs*types*genmap))
     (reset! *checking* '(main))
     (let ([checked-exprs (make-hash-table 'eq?)]
           [mains  (hash-table-get *genmap-ht* 'main #f)])
@@ -33,15 +33,17 @@
            (let1 t (ref *types-ht* name)
                  (if (require-check? t)
                      (hash-table-put! checked-exprs name
-                                      (car (type-toplevel expr t '())))
+                                      (fst (type-toplevel expr t '())))
                      (hash-table-put! checked-exprs name expr)))))
       (if mains
-          (cons checked-exprs
-                (cdr (type-toplevel (ref *exprs-ht* (car mains))
-                                    (ref *types-ht* (car mains)) '())))
-          'Unit)))
+          (let1 main-t (snd (type-toplevel (ref *exprs-ht* (car mains))
+                                           (ref *types-ht* (car mains)) '()))
+           (pair checked-exprs main-t))
+          (pair checked-exprs 'Unit))))
+
   (define (print-exc exc)
-    (format #t "~A: ~A\n" (deref *checking*) (ref exc 'message)))
+    ;;(format #t "~A: ~A\n" (deref *checking*) (ref exc 'message))
+    (print (ref exc 'message)))
 
   ;; (^ prams... expr) * <crt-function-type> * {types} -> (U expr #f)
   (define-method type-toplevel ((expr <list>) (t <crt-function-type>) env)
@@ -49,17 +51,17 @@
            [expr   (last expr)]
            [in-ts  (butlast (get-type t))]
            [out-t  (last (get-type t))])
-      (begin ;; (exc [else (print-exc exc) #f])
+      (guard  (exc [else (print-exc exc) #f])
         (let1 expr*type (type expr (append (zip params in-ts) env))
-              (unify out-t (cdr expr*type))
-              (cons (append (cons '^ params) (list (car expr*type)))
-                    (cdr expr*type))))))
+              (unify out-t (snd expr*type))
+              (pair (append (cons '^ params) (list (fst expr*type)))
+                    (snd expr*type))))))
 
   ;; expr * <crt-type> * {types} -> (U <crt-type> #f)
   (define-method type-toplevel (expr (t <crt-type>) env)
-    (begin ;; (exc [else (print-exc exc) #f])
+    (guard (exc [else (print-exc exc) #f])
       (let1 expr*type (type expr env)
-            (unify t (cdr expr*type))
+            (unify t (snd expr*type))
             expr*type)))
 
 
@@ -70,25 +72,24 @@
     (make <crt-primitive-type> :type x))
 
   ;; expr * {types} -> (expr * <crt-type>)
-  (define-method type ((x <string>)  _) (cons x (prim-type 'String)))
-  (define-method type ((x <number>)  _) (cons x (prim-type 'Number)))
-  (define-method type ((x <char>)    _) (cons x (prim-type 'Char)))
-  (define-method type ((x <keyword>) _) (cons x (prim-type 'Keyword)))
+  (define-method type ((x <string>)  _) (pair x (prim-type 'String)))
+  (define-method type ((x <number>)  _) (pair x (prim-type 'Number)))
+  (define-method type ((x <char>)    _) (pair x (prim-type 'Char)))
+  (define-method type ((x <keyword>) _) (pair x (prim-type 'Keyword)))
   (define-method type ((s <symbol>) env)
     (swap! *checking* (cut cons s <>))
     (let1 t (assoc s env)
           (if t
-              (cons s (cadr t))
+              (pair s (cadr t))
               (let* ([names (ref *genmap-ht* s)])
                 (if (= (length names) 1)
-                    (cons (ref *exprs-ht* (car names))
+                    (pair (ref *exprs-ht* (car names))
                           (ref *types-ht* (car names)))
                     (raise-error/message "Can't select method"))))))
   (define-method type ((xs <list>) env)
-    (cond [(quote-expr? xs)  (cons xs (prim-type 'Symbol))]
-          [(lambda-expr? xs)
-           (type-lambda xs env)] ;;stub
-          [(native-expr? xs) (cons xs (gen-type-var))]
+    (cond [(quote-expr? xs)  (pair xs (prim-type 'Symbol))]
+          [(lambda-expr? xs) (type-lambda xs env)] ;;stub
+          [(native-expr? xs) (pair xs (gen-type-var))]
           [else
            (type-app (car xs) (cdr xs) env)]))
 
@@ -102,37 +103,44 @@
                            (make <crt-function-type> :type paramts :checked #t)
                            env)])
       (unless checked (raise-error/message "Type error inside of a lambda"))
-      (cons xs (make <crt-function-type> :type (append paramts (list (cdr checked)))))))
+      (pair xs (make <crt-function-type> :type (append paramts (list (snd checked)))))))
 
 
   ;; expr * [expr] * [<crt-type>] -> (expr * <crt-type>)
   (define-method type-app [(generic-name <symbol>) (argxs <list>) env]
     (if (guard (_ [else #f]) (type generic-name env)) ;;local fn call or non-gen?
-        (cons (cons generic-name (map (compose car (cut type <> env)) argxs))
-              (type-of-app (cdr (type generic-name env))
-                           (map (compose cdr (cut type <> env)) argxs)))
+        (pair (cons generic-name (map (compose fst (cut type <> env)) argxs))
+              (type-of-app (snd (type generic-name env))
+                           (map (compose snd (cut type <> env)) argxs)))
 
         (let* ([arg-expr*type (map (cut type <> env) argxs)]
-               [arg-ts (map cdr arg-expr*type)]
-               [arg-xs (map car arg-expr*type)]
+               [arg-ts (map snd arg-expr*type)]
+               [arg-xs (map fst arg-expr*type)]
                [selected-uniq-name*type
-                (find-map (fn [uniq-name]
-                              (let1 t (guarded-type-of-app
-                                       (ref *types-ht* uniq-name)
-                                       arg-ts)
-                                    (and t (cons uniq-name t))))
-                          (ref *genmap-ht* generic-name))])
-          (cons (cons (car selected-uniq-name*type) arg-xs)
-                (cdr selected-uniq-name*type)))))
+                (filter-map (fn [uniq-name]
+                                (let1 t (guarded-type-of-app
+                                         (ref *types-ht* uniq-name)
+                                         arg-ts)
+                                      (and t (pair uniq-name t))))
+                            (ref *genmap-ht* generic-name))])
+
+          (when (null? selected-uniq-name*type)
+                (raise-error/message
+                 (format "No applicable method ~A for ~S" generic-name argxs)))
+          (when (> (length selected-uniq-name*type) 1)
+                (format #t "WARNING: ~A is ambiguous for ~S \n" generic-name argxs))
+
+          (pair (cons (fst (car selected-uniq-name*type)) arg-xs)
+                (snd (car selected-uniq-name*type))))))
   (define-method type-app [fx argxs env]
-    (cons (cons fx argxs)
-          (type-of-app (cdr (type fx env))                            ;;type of fn
-                       (map (compose cdr (cut type <> env)) argxs)))) ;;types of args
+    (pair (cons fx argxs)
+          (type-of-app (snd (type fx env))                            ;;type of fn
+                       (map (compose snd (cut type <> env)) argxs)))) ;;types of args
 
 
   (define (replace-type-vars binding remaining-types)
     (fold (fn [b ft-]
-              (replace-type-var ft- (car b) (cdr b)))
+              (replace-type-var ft- (fst b) (snd b)))
           remaining-types
           binding))
 
@@ -182,7 +190,7 @@
   ;;a Number -> ((a Number))
   (define-method unify ((t1 <crt-primitive-type>) (t2 <crt-primitive-type>))
     (if (equal? t1 t2)
-        (list (cons (gen-type-var) t2))
+        (list (pair (gen-type-var) t2))
         (raise-error/message (format "Primitive type contradiction: ~S -><- ~S" t1 t2))))
 
   (define-method unify ((t1 <crt-composite-type>) (t2 <crt-composite-type>))
@@ -195,10 +203,10 @@
                    (type-name t1) (type-name t2))))))
 
   (define-method unify ((t1 <crt-type-var>) (t2 <crt-type>))
-    (list (cons t1 t2)))
+    (list (pair t1 t2)))
 
   (define-method unify ((t1 <crt-type>) (t2 <crt-type-var>))
-    (list (cons t2 t1)))
+    (list (pair t2 t1)))
 
   (define-method unify ((t1 <crt-function-type>) (t2 <crt-function-type>))
     (unify (make <crt-composite-type> :name 'Fn :type (get-type t1))

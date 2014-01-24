@@ -20,12 +20,12 @@
   (flush)
   (let* ([expr  (read)]
          [res (read-s-exprs (list expr) exprs*types*genmap)]
-         [exprs-ht (car   res)]
-         [types-ht (cadr  res)]
-         [genmap   (caddr res)]
+         [exprs-ht (fst res)]
+         [types-ht (snd res)]
+         [genmap   (thd res)]
          [checked-p*t  (acquire-checked-program res)]
-         [checked-p (car checked-p*t)]
-         [main-t    (cdr checked-p*t)])
+         [checked-p (fst checked-p*t)]
+         [main-t    (snd checked-p*t)])
     (unless checked-p
             (print "Skipping execution due to one or more type errors _(′︿‵｡_)")
             (hash-table-delete! exprs-ht (get-main-name genmap))
@@ -41,7 +41,7 @@
 
 (define banner
 "             ----------------------
-             |    CARROT 2.1.2    |
+             |    CARROT 2.2.0    |
              ----------------------
          https://github.com/ympbyc/Carrot\n")
 
@@ -50,15 +50,15 @@
   (format #t "Loading ~S ... done\n" (cons "examples/prelude.nadeko" (cdr args)))
   (load "standard-macros.scm")
   (let* ([fnames (cons "examples/prelude.nadeko" (cdr args))]
-         [exprs*types*genmap (list (make-hash-table 'eq?)
-                                   (make-hash-table 'eq?)
-                                   (make-hash-table 'eq?))]
+         [exprs*types*genmap (triple (make-hash-table 'eq?)
+                                     (make-hash-table 'eq?)
+                                     (make-hash-table 'eq?))]
          [exprs*types*genmap
           (fold (fn [fname exprs*types*genmap]
                     (load-file fname exprs*types*genmap))
                 exprs*types*genmap
                 fnames)])
-    (print (sort (map symbol->string (hash-table-keys (caddr exprs*types*genmap)))))
+    (print (sort (map symbol->string (hash-table-keys (thd exprs*types*genmap)))))
     (newline)
     (REPL exprs*types*genmap 0)))
 

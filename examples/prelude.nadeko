@@ -57,12 +57,40 @@
 ;;show -- example of a generic function
 (= (show String String)  x x)
 (= (show Number String)  num->str)
-(= (show Keyword String) kw->str)
+(= (show Keyword String) x (++ ":" (kw->str x)))
 (= (show Symbol String)  x (** symbol->string x))
 (= (show (List Number) String)
    xs
    (nil? xs "[]"
-            (+++ (show (car xs)) " : " (show (cdr xs)))))
+         (+++ (show (car xs)) " : " (show (cdr xs)))))
+(= (show (Option String) String)
+   x
+   (show (pull x)))
+(= (show (Option Number) String)
+   x
+   (show (pull x)))
+(= (show (List (Pair Number Number)) String)
+   xs
+   (+++ "[ " (show-map-content xs) "]"))
+(= (show (List (Pair Keyword String)) String)
+   xs
+   (+++ "[ " (show-map-content xs) "]"))
+
+
+(= (show-map-content (List (Pair Number Number)) String)
+   xs
+   (nil? xs ""
+         (+++ (+++ "(" (+++ (show (fst (car xs))) " . " (show (snd (car xs)))) ")")
+              " "
+              (show-map-content (cdr xs)))))
+
+(= (show-map-content (List (Pair Keyword String)) String)
+   xs
+   (nil? xs ""
+         (+++ (+++ "(" (+++ (show (fst (car xs))) " . " (show (snd (car xs)))) ")")
+              " "
+              (show-map-content (cdr xs)))))
+
 
 (= (+++ String String String String) s1 s2 s3
    (++ (++ s1 s2) s3))

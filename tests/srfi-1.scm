@@ -5,41 +5,36 @@
 (use Util)
 (use DataTypes)
 (use Read)
-(use Check)
+(use Type)
 
-(define (load-file fname)
+(define (load-file fname exprs*types*genmap)
   (call-with-input-file fname
     (fn [file-port]
-        (let* ([exprs*types (read-s-exprs (read-list file-port))]
-               [checks? (type-check exprs*types)])
-          exprs*types))))
+        (read-s-exprs (read-list file-port) exprs*types*genmap))))
+
+
 
 (define (read-list port)
   (let ((exp (read port)))
     (if (eof-object? exp) '()
         (cons exp (read-list port)))))
 
-(define *exprs*types*
-  (fold (fn [fname exprs*types]
-            (let1 res (load-file fname)
-                  (hash-table-union! (car exprs*types) (car res))
-                  (hash-table-union! (cdr exprs*types) (cdr res))
-                  exprs*types))
-        (cons (make-hash-table 'eq?) (make-hash-table 'eq?))
+(define *exprs*types*genmap
+  (fold (fn [fname exprs*types*genmap]
+            (load-file fname exprs*types*genmap))
+        (triple (make-hash-table 'eq?) (make-hash-table 'eq?) (make-hash-table 'eq?))
         '("examples/prelude.nadeko" "examples/srfi-1.nadeko")))
 
-(define (run- code)
-  (let* ([res (read-s-exprs code)]
-         [_   (hash-table-union! (car *exprs*types*) (car res))]
-         [_   (hash-table-union! (cdr *exprs*types*) (cdr res))]
-         [t   (type-check *exprs*types*)])
-    (unless t (raise-error/message "type error"))
-    (cons (Krivine (compile (car *exprs*types*))) t)))
+(define (run* code)
+  (let* ([res (read-s-exprs code *exprs*types*genmap)]
+         [exprs*t (acquire-checked-program res)])
+    (set! *exprs*types*genmap res)
+    (pair (Krivine (compile (fst exprs*t)) (thd res)) (snd exprs*t))))
 
 (define (run code)
-  (let* ([res1 (run- `((show ,code)))]
-         [res2 (run- `(,code))])
-    (list (car res1) (type->data (cdr res2)))))
+  (let* ([res1 (run* `((show ,code)))]
+         [res2 (run* `(,code))])
+    (list (fst res1) (type->data (snd res2)))))
 
 (test-start "srfi-1-acceptance-test")
 
@@ -105,7 +100,7 @@
        '("5 : 4 : 3 : 2 : 1 : 0 : []" (List Number))
        (run `(reverse (take 6 integers))))
 (test* "zip"
-       '("0 : 2 : 1 : 1 : 2 : 0 : []" (List (Pair Number Number)))
+       '("[ (0 . 2) (1 . 1) (2 . 0) ]" (List (Pair Number Number)))
        (run `(zip (take 3 integers) (reverse (take 3 integers)))))
 ;;(test* "unzip" "0 : 1 : 2 : []" (run `(fst (unzip (zip (take integers 3) (reverse (take integers 3)))))))
 ;;(test* "unzip" "2 : 1 : 0 : []" (run `(snd (unzip (zip (take integers 3) (reverse (take integers 3)))))))
@@ -135,7 +130,7 @@
        (run `(unfold (< 10) (^ x (* x x)) (+ 1) 1)))
 (test* "map"
        '("0 : 2 : 4 : 6 : 8 : []" (List Number))
-       (run `(map (* 2) (take 5 integers))))
+       (run `(take 5 (map (* 2) integers))))
 
 (test-section "filtering : partitioning")
 (test* "filter"
@@ -196,19 +191,20 @@
 (test-section "association list")
 (test* "assq"
        '("nori" (Option String))
-       (run `(assq "nazuna" (cons (pair "yuno" "miyako") (cons (pair "nazuna" "nori") nil)))))
+       (run `(assq :nazuna (acons :yuno "miyako" (acons :nazuna "nori" nil)))))
 (test* "assq"
        '("none" String)
-       (run `(none? (assq "hiro" (cons (pair "yuno" "miyako") (cons (pair "nazuna" "nori") nil))) "none" "some")))
+       (run `(none? (assq :hiro (cons (pair :yuno "miyako") (cons (pair :nazuna "nori") nil))) "none" "some")))
 (test* "acons"
-       '("yunocchi : miyako : yuno : miyako : nazuna : nori : []" (List (Pair String String)))
-       (run `(acons "yunocchi" "miyako" (acons "yuno" "miyako" (acons "nazuna" "nori" nil)))))
+       '("[ (:yunocchi . miyako) (:yuno . miyako) (:nazuna . nori) ]"
+         (List (Pair Keyword String)))
+       (run `(acons :yunocchi "miyako" (acons :yuno "miyako" (acons :nazuna "nori" nil)))))
 (test* "alist-copy"
-       '("a : 1 : b : 5 : []" (List (Pair String Number)))
-       (run `(alist-copy (acons "a" 1 (acons "b" 5 nil)))))
+       '("[ (:a . yuno) (:b . miyako) ]" (List (Pair Keyword String)))
+       (run `(alist-copy (acons :a "yuno" (acons :b "miyako" nil)))))
 (test* "alist-delete"
-       '("b : 5 : []" (List (Pair String Number)))
-       (run `(alist-delete "a" (cons (pair "a" 1) (cons (pair "b" 5) nil)))))
+       '("[ (:b . miyako) ]" (List (Pair Keyword String)))
+       (run `(alist-delete :a (cons (pair :a "yuno") (cons (pair :b "miyako") nil)))))
 
 
 (test-end :exit-on-failure #t)

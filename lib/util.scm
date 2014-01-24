@@ -102,4 +102,25 @@
 
   (define (get-main-name genmap)
     (let1 x (hash-table-get genmap 'main #f)
-          (if x (car x) #f))))
+          (if x (car x) #f)))
+
+
+  ;;tuple
+  (define-class <crt-pair> ()
+    ((x :init-keyword :fst :accessor fst)
+     (y :init-keyword :snd :accessor snd)))
+
+  (define (pair x y)
+    (make <crt-pair> :fst x :snd y))
+
+  (define-class <crt-triple> ()
+    ((x :init-keyword :fst :accessor fst)
+     (y :init-keyword :snd :accessor snd)
+     (z :init-keyword :thd :accessor thd)))
+
+  (define (triple x y z)
+    (make <crt-triple> :fst x :snd y :thd z))
+
+
+  (define-method write-object [(x <crt-pair>) out]
+    (format out "<~S . ~S>" (fst x) (snd x))))
