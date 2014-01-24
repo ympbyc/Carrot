@@ -8,7 +8,7 @@
 (add-load-path "../lib/" :relative)
 
 (define-module Read
-  (export read-s-exprs)
+  (export read-s-exprs read-s-exprs*)
   (use srfi-1)
   (use DataTypes)
   (use Util)
@@ -34,7 +34,6 @@
                    (fst exprs*types*genmap)
                    (snd exprs*types*genmap)
                    (thd exprs*types*genmap)))
-
 
   (define (read-s-exprs* program exprs-ht types-ht genmap-ht)
     (cond [(null? program)

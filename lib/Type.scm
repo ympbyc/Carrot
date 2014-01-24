@@ -128,7 +128,8 @@
                 (raise-error/message
                  (format "No applicable method ~A for ~S" generic-name argxs)))
           (when (> (length selected-uniq-name*type) 1)
-                (format #t "WARNING: ~A is ambiguous for ~S \n" generic-name argxs))
+                (format (standard-error-port)
+                        "WARNING: ~A is ambiguous for ~S \n" generic-name argxs))
 
           (pair (cons (fst (car selected-uniq-name*type)) arg-xs)
                 (snd (car selected-uniq-name*type))))))

@@ -5,6 +5,20 @@
 
   (define (butlast xs) (drop-right xs 1))
 
+  (define (str . xs)
+    (apply string-append (map show xs)))
+
+  (define-method show [(x <string>)] x)
+  (define-method show [(x <keyword>)] (string-append ":" (keyword->string x)))
+  (define-method show [x] (format "~S" x))
+
+  (define (separate x xs)
+    (if (null? xs)
+        '()
+        (let1 tail (separate x (cdr xs))
+              (cons (car xs)
+                    (if (null? tail) tail (cons x tail))))))
+
   ;;h1 > h2
   (define (hash-table-union! h1 h2)
     (hash-table-for-each h2 (lambda [k v]
@@ -45,14 +59,13 @@
 
 
   (define (lambda-expr? exp)
-    (eq? (car exp) '^))
+    (and (pair? exp) (eq? (car exp) '^)))
 
   (define (quote-expr? x)
-    (eq? (car x) 'quote))
-
+    (and (pair? x) (eq? (car x) 'quote)))
 
   (define (native-expr? exp)
-    (eq? (car exp) '**))
+    (and (pair? exp) (eq? (car exp) '**)))
 
 
   (define (flatmap f x)
@@ -102,25 +115,4 @@
 
   (define (get-main-name genmap)
     (let1 x (hash-table-get genmap 'main #f)
-          (if x (car x) #f)))
-
-
-  ;;tuple
-  (define-class <crt-pair> ()
-    ((x :init-keyword :fst :accessor fst)
-     (y :init-keyword :snd :accessor snd)))
-
-  (define (pair x y)
-    (make <crt-pair> :fst x :snd y))
-
-  (define-class <crt-triple> ()
-    ((x :init-keyword :fst :accessor fst)
-     (y :init-keyword :snd :accessor snd)
-     (z :init-keyword :thd :accessor thd)))
-
-  (define (triple x y z)
-    (make <crt-triple> :fst x :snd y :thd z))
-
-
-  (define-method write-object [(x <crt-pair>) out]
-    (format out "<~S . ~S>" (fst x) (snd x))))
+          (if x (car x) #f))))

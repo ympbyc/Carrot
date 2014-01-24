@@ -54,6 +54,16 @@
 (= (Y (Fn a a) a)
    f ((^ x (f (x x))) (^ x (f (x x)))))
 
+;;predicates -- ideally, we don't need these
+(= (string? _        Bool) _ false)
+(= (string? String   Bool) _ true)
+(= (number? _        Bool) _ false)
+(= (number? Number   Bool) _ true)
+(= (keyword? _       Bool) _ false)
+(= (keyword? Keyword Bool) _ true)
+(= (list? _          Bool) _ false)
+(= (list? (List a)   Bool) _ true)
+
 ;;show -- example of a generic function
 (= (show String String)  x x)
 (= (show Number String)  num->str)
@@ -97,27 +107,27 @@
 
 ;;primitive wrapper
 (= (=? a a Bool)
-   x y (** =? x y))
+   x y (** c-equal? x y))
 (= (< Number Number Bool)
-   x y (** lt? x y))
+   x y (** c-< x y))
 (= (> Number Number Bool)
-   x y (** gt? x y))
+   x y (** c-> x y))
 (= (<= Number Number Bool)
-   x y (** lte? x y))
+   x y (** c-<= x y))
 (= (>= Number Number Bool)
-   x y (** gte? x y))
+   x y (** c->= x y))
 (= (+ Number Number Number)
-   x y (** add x y))
+   x y (** c-+ x y))
 (= (- Number Number Number)
-   x y (** sub x y))
+   x y (** c-- x y))
 (= (* Number Number Number)
-   x y (** mul x y))
+   x y (** c-* x y))
 (= (/ Number Number Number)
-   x y (** div x y))
+   x y (** c-/ x y))
 (= (% Number Number Number)
-   x y (** mo x y))
+   x y (** c-mod x y))
 (= (++ String String String)
-   x y (** ++ x y))
+   x y (** c-string-append x y))
 (= (num->str Number String)
    x (** number->string x))
 (= (kw->str Keyword String)
@@ -132,44 +142,62 @@
 (= (read Time String) t
    (** read- t))
 
+
 ;;help
 (= (help String)
-   "                                          \n\n\
-|  SYNTAX                                     \n\
-|  ------                                     \n\
-|  ;; declare the type <t> as an alias of <t'>\n\
-|  (synonym <t> <t'>)                         \n\
-|                                             \n\
-|  ;; declare a generic function              \n\
-|  (= (<name> <in-type>... <out-type>)        \n\
-|     <parameter>...                          \n\
-|     <expression>)                           \n\
-|                                             \n\
-|  ;; define a constructor for <type>         \n\
-|  (=u (<name> <in-type>... <type>)           \n\
-|     <parameter>...                          \n\
-|     <expression>)                           \n\
-|                                             \n\
-|  ;; lambda expression                       \n\
-|  (^ <parameter>... <expression>)            \n\
-|                                             \n\
-|  ;; function application                    \n\
-|  (<function> <argument>...)                 \n\
-|                                             \n\
-|  ;; literals                                \n\
-|  \"string\" 123456 'symbol :keyword         \n\
-|                                             \n\
-|  FEATURE                                    \n\
-|  -------                                    \n\
-|  * Purely functional                        \n\
-|  * Default lazy evaluation                  \n\
-|  * Default currying                         \n\
-|  * Static type checking                     \n\
-|  * Statically resolved multimethod          \n\
-|  * Timed I/O                                \n\
-|                                             \n\
-|  REPL                                       \n\
-|  ----                                       \n\
-|  ^C   -- Exit                               \n\
-|  help -- See this help                      \n\
-|  <function-name> -- See the usage of the function (through its type)\n\n")
+   "
+
+|  SYNTAX
+|  ------
+|  ;; declare the type <t> as an alias of <t'>
+|  (synonym <t> <t'>)
+|
+|  ;; define a generic function
+|  (= (<name> <in-type>... <out-type>)
+|     <parameter>...
+|     <expression>)
+|
+|  ;; define a constructor for <type>
+|  (=u (<name> <in-type>... <type>)
+|     <parameter>...
+|     <expression>)
+|
+|  ;; lambda expression
+|  (^ <parameter>... <expression>)
+|
+|  ;; function application
+|  (<function> <argument>...)
+|
+|  ;; literals
+|  \\\"string\\\" 123456 'symbol :keyword
+|
+|  FEATURE
+|  -------
+|  * Purely functional
+|  * Default lazy evaluation
+|  * Default currying
+|  * Static type checking
+|  * Statically resolved multimethod
+|  * Timed I/O
+|
+|  REPL
+|  ----
+|  ^C   -- Exit
+|  help -- See this help
+|  <function-name> -- See the usage of the function (through its type)
+
+")
+
+(= (language String)
+   "Carrot")
+
+(= (version String)
+   "2.2.0")
+
+(= (code-name String)
+   "Netherland Dwarf")
+
+(= (main String)
+   (show (cons (pair :language  language)
+               (cons (pair :version   version)
+                     (cons (pair :code-name code-name) nil)))))

@@ -33,7 +33,7 @@
             (hash-table-delete! genmap 'main)
             (REPL res (+ ctr 1)))
     (format #t "      ;=> ~A :: ~S\n\n"
-            (fmt (Krivine (compile checked-p) genmap)) main-t)
+            (fmt (Krivine (compile checked-p) (get-main-name genmap))) main-t)
     (hash-table-delete! exprs-ht (get-main-name genmap))
     (hash-table-delete! types-ht (get-main-name genmap))
     (hash-table-delete! genmap 'main)
@@ -48,7 +48,6 @@
 (define (main args)
   (print banner)
   (format #t "Loading ~S ... done\n" (cons "examples/prelude.nadeko" (cdr args)))
-  (load "standard-macros.scm")
   (let* ([fnames (cons "examples/prelude.nadeko" (cdr args))]
          [exprs*types*genmap (triple (make-hash-table 'eq?)
                                      (make-hash-table 'eq?)
