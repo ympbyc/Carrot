@@ -1,7 +1,9 @@
 (add-load-path "../lib/" :relative)
+(add-load-path "../compilers/" :relative)
 
 (use gauche.test)
-(use K-Compiler)
+(use to-carrot-vm)
+(use CarrotVM)
 (use Util)
 (use DataTypes)
 (use Read)
@@ -29,7 +31,7 @@
   (let* ([res (read-s-exprs code *exprs*types*genmap)]
          [exprs*t (acquire-checked-program res)])
     (set! *exprs*types*genmap res)
-    (pair (Krivine (compile (fst exprs*t)) (thd res)) (snd exprs*t))))
+    (pair (CarrotVM (compile (fst exprs*t)) (get-main-name (thd res))) (snd exprs*t))))
 
 (define (run code)
   (let* ([res1 (run* `((show ,code)))]

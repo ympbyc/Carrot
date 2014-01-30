@@ -42,8 +42,7 @@
           (pair checked-exprs 'Unit))))
 
   (define (print-exc exc)
-    ;;(format #t "~A: ~A\n" (deref *checking*) (ref exc 'message))
-    (print (ref exc 'message)))
+    (format (standard-error-port) "~A: ~A\n" (deref *checking*) (ref exc 'message)))
 
   ;; (^ prams... expr) * <crt-function-type> * {types} -> (U expr #f)
   (define-method type-toplevel ((expr <list>) (t <crt-function-type>) env)
@@ -214,4 +213,6 @@
            (make <crt-composite-type> :name 'Fn :type (get-type t2))))
 
   (define-method unify ((t1 <crt-type>) (t2 <crt-type>))
-    (raise-error/message (format "Type contradiction: ~S -><- ~S" t1 t2))))
+    (raise-error/message (format "Type contradiction: ~S -><- ~S"
+                                 (type->data t1)
+                                 (type->data t2)))))

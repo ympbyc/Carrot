@@ -2,7 +2,7 @@
 ;;; 2014 Minori Yamashita <ympbyc@gmail.com>
 ;;;
 
-(define-module Compiler
+(define-module to-js
   (export compile)
   (use srfi-1)
   (use Util)

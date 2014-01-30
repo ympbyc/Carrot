@@ -14,7 +14,8 @@
       (format (standard-error-port)
               "Compiling     your carrot ~A...\n" compiler-name)
       (load (str compiler-name ".scm"))
-      (let1 res (eval `(compile ,(fst exprs*t)) (find-module 'Compiler))
+      (let1 res (eval `(compile ,(fst exprs*t))
+                      (find-module (string->symbol compiler-name)))
             (cond [(hash-table? res)
                    (display (write-hash-table res))]
                   [string? res (display res)]))))

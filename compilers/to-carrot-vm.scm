@@ -4,7 +4,7 @@
 
 (add-load-path "../lib/" :relative)
 
-(define-module Compiler
+(define-module to-carrot-vm
   (export compile)
   (use srfi-1)
   (use DataTypes)
@@ -58,7 +58,7 @@
       (make <crt-inst-refg> :var expr)]
 
      [(string? expr)
-      (make <crt-inst-atom> :val (string-append "\"" expr "\""))]
+      (make <crt-inst-atom> :val expr)]
 
      [(atom? expr)
       (make <crt-inst-atom> :val expr)]

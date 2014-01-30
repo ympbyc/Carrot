@@ -4,10 +4,11 @@
 ;;; 2012 Minori Yamashita <ympbyc@gmail.com> ;;add your name here
 
 (add-load-path "./lib/" :relative)
+(add-load-path "./compilers/" :relative)
 
 (use Util)
-(use K-Compiler)
-(use Krivine)
+(use to-carrot-vm)
+(use CarrotVM)
 (use Type)
 (use Read)
 (use DataTypes)
@@ -33,7 +34,7 @@
             (hash-table-delete! genmap 'main)
             (REPL res (+ ctr 1)))
     (format #t "      ;=> ~A :: ~S\n\n"
-            (fmt (Krivine (compile checked-p) (get-main-name genmap))) main-t)
+            (fmt (CarrotVM (compile checked-p) (get-main-name genmap))) main-t)
     (hash-table-delete! exprs-ht (get-main-name genmap))
     (hash-table-delete! types-ht (get-main-name genmap))
     (hash-table-delete! genmap 'main)
