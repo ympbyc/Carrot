@@ -8,7 +8,7 @@
 (add-load-path "../lib/" :relative)
 
 (define-module Read
-  (export read-s-exprs)
+  (export read-s-exprs read-s-exprs*)
   (use srfi-1)
   (use DataTypes)
   (use Util)
@@ -31,14 +31,13 @@
   ;;;;                              {generic-name => [uniqname]})
   (define (read-s-exprs program exprs*types*genmap)
     (read-s-exprs* program
-                   (car exprs*types*genmap)
-                   (cadr exprs*types*genmap)
-                   (caddr exprs*types*genmap)))
-
+                   (fst exprs*types*genmap)
+                   (snd exprs*types*genmap)
+                   (thd exprs*types*genmap)))
 
   (define (read-s-exprs* program exprs-ht types-ht genmap-ht)
     (cond [(null? program)
-           (list exprs-ht types-ht genmap-ht)]
+           (triple exprs-ht types-ht genmap-ht)]
 
           [(synonym-definition? (car program))
            (register-synonym! (car program) *synonyms*)

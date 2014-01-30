@@ -19,9 +19,9 @@
 
   ;; type-check ({exprs} . {types}) -> (U <crt-type> #f)
   (define (type-check exprs*types*genmap)
-    (set! *exprs-ht*  (car   exprs*types*genmap))
-    (set! *types-ht*  (cadr  exprs*types*genmap))
-    (set! *genmap-ht* (caddr exprs*types*genmap))
+    (set! *exprs-ht*  (fst exprs*types*genmap))
+    (set! *types-ht*  (snd exprs*types*genmap))
+    (set! *genmap-ht* (thd exprs*types*genmap))
     (reset! *checking* '(main))
     (let* ([main-name (get-main-name (caddr exprs*types*genmap))]
            [main-expr (hash-table-get *exprs-ht* main-name #f)])
@@ -42,7 +42,7 @@
       (if (and (require-check? type) (not (check-prevented? type)))
           (begin ;; (exc [else (print-exc exc) #f])
                  (set! (check-prevented? type) #t) ;;prevent loop
-                 (let1 expr-t (type-of expr (append (zip params in-ts) env))
+                 (let1 expr-t (p (type-of expr (append (zip params in-ts) env)))
                        (unify out-t expr-t)
                        (set! (check-prevented? type) #f)
                        expr-t))

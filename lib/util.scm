@@ -5,6 +5,20 @@
 
   (define (butlast xs) (drop-right xs 1))
 
+  (define (str . xs)
+    (apply string-append (map show xs)))
+
+  (define-method show [(x <string>)] x)
+  (define-method show [(x <keyword>)] (string-append ":" (keyword->string x)))
+  (define-method show [x] (format "~S" x))
+
+  (define (separate x xs)
+    (if (null? xs)
+        '()
+        (let1 tail (separate x (cdr xs))
+              (cons (car xs)
+                    (if (null? tail) tail (cons x tail))))))
+
   ;;h1 > h2
   (define (hash-table-union! h1 h2)
     (hash-table-for-each h2 (lambda [k v]
@@ -45,14 +59,13 @@
 
 
   (define (lambda-expr? exp)
-    (eq? (car exp) '^))
+    (and (pair? exp) (eq? (car exp) '^)))
 
   (define (quote-expr? x)
-    (eq? (car x) 'quote))
-
+    (and (pair? x) (eq? (car x) 'quote)))
 
   (define (native-expr? exp)
-    (eq? (car exp) '**))
+    (and (pair? exp) (eq? (car exp) '**)))
 
 
   (define (flatmap f x)
