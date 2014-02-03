@@ -7,10 +7,10 @@ Dec 2012 Minori Yamashita <ympbyc@gmail.com>
 ```lisp
 ;;./Carrot.scm examples/srfi-1.nadeko
 
-(Y (^ f (cons 1 (zipWith f + (cdr f)) -cons 1))
-   -take 8
-   -reverse
-   -foldl (comp (comp ++ (++ " : ")) num->str) "")
+(-> (Y (^ f (cons 1 (cons 1 (zipWith f + (cdr f))))))
+ -> (take 8)
+ -> reverse
+ <- (foldl (comp (comp ++ (++ " : ")) num->str) ""))
 ```
 
 <img src="https://rawgithub.com/ympbyc/Carrot/master/docs/carrot.png" width="360px" />
@@ -118,9 +118,9 @@ We will discuss the significance of it later.
 The expression
 (=  (*name* *type* ...) *[identifier ...]* *expression*)
 or
-(=c (*name* *type* ...) *[identifier ...]* *expression*)
+(=u (*name* *type* ...) *[identifier ...]* *expression*)
 Binds the *expression* to the *name*.
-If one or more parameters( *identifier ...* ) are given, they can be used in the *expression* to refer to the values the function is applied to. `=c` directs the compiler to type-check the function body.
+If one or more parameters( *identifier ...* ) are given, they can be used in the *expression* to refer to the values the function is applied to. `=u` directs the compiler not to type-check the function body.
 
 Multiple functions can share a name. In which case their type must differ.
 
@@ -185,18 +185,13 @@ Carrot has no data structures except for closures, yet the type system is rich e
 
 ```lisp
 ;; Lists
-(= (cons a (List a) (List a))
-   x xs f (f x xs))
-(= (nil (List a)) 'nil)
-(= (car (List a) a)
-   xs (xs true))
-(= (cdr (List a) (List a))
-   xs (xs false))
-
-;; Tuples
-(= (2-tuple a b (Tuple a b)) cons)
-(= (fst (Tuple a b) a) car)
-(= (snd (Tuple a b) b) cdr)
+(=u (cons a (List a) (List a))
+    x xs f (f x xs))
+(=u (nil (List a)) 'nil)
+(=  (car (List a) a)
+    xs (xs true))
+(=  (cdr (List a) (List a))
+    xs (xs false))
 ```
 
 ### Things Start to Get Odd
@@ -206,50 +201,32 @@ Carrot's runtime values are completely **untyped** (not even dynamicaly typed). 
 ```lisp
 ;;invisible container
 
-(= (box a (Box a))
-   x x)                              ;; a boxed value's internal representation is the value itself
-(= (takeout (Box a) a)
-   x x)                              ;; just return what gets passed in
+(=u (box a (Box a))
+    x x)                              ;; a boxed value's internal representation is the value itself
+(=u (takeout (Box a) a)
+    x x)                              ;; just return what gets passed in
 
 (box 7)                              ;;=> 7
 (takeout 7)                          ;;=> TYPE ERROR!
 (takeout (box 7))                    ;;=> 7
 ```
 
-### Pitfall
+Statically-Resolved MultiMethods
+---------------------------------
 
-Carrot's weird type system allows the following expression to get through it.
-
-```lisp
-(= (stupid-fn Number Number)
-   x "I'm supporse to be a number")
-
-(stupid-fn 1)                        ;;=> "I'm supporse to be a number"
-```
-
-This looks pretty bad, but in practice, this kind of type bug easily gets detected because there should be a function or two that depends upon the results of the bugged function. There's also a syntactic form `=c` that directs the compiler to type-check the expression in the function declaration.
+Carrot supports multimethods. Because Carrot's runtime values are untyped, methods have to be selected at compile-time.
 
 ```lisp
-;; depending on the fact that `stupid-fn` returns a string
-(= (greet String String) s
-   (+++ "Hello, " s "!"))
-(greet (stupid-fn 0))                ;;=> TYPE ERROR!
+(=u (dog Dog) :dog)
+(=u (cat Cat) :cat)
 
-;; wrongly assuming `stupid-fn` would return a number
-(= (add2 Number Number) (+ 2))
-(add2 (stupid-fn 0))                 ;;=> Bad luck. RUNTIME ERROR!
+(= (talk Dog String) _ "bow-wow")
+(= (talk Cat String) _ "meoooow")
 
-;;using =c
-(=c (stupid-fn Number Number)
-    x "I'm supporse to be a number")
-(stupid-fn 1)                        ;;=> TYPE ERROR!
+(talk cat)
 ```
 
-
-Almost everything is a closure
--------------------------------
-
-Carrot spec doesn't specify any data structures except for closures.
+Current implementation can't dispatch on generic types like `(List a)`.
 
 S-expression without paren hell
 -------------------------------
@@ -269,7 +246,8 @@ Because the arguments are delayed automaticaly, we can implement booleans as fun
 (=? a b "equal" "not equal")
 ```
 
-We can take the full advantage of the fact that lists are implemented as functions, by applying lists to functions.
+<!--
+ We can take the full advantage of the fact that lists are implemented as functions, by applying lists to functions.
 
 ```lisp
 ;scheme
@@ -283,7 +261,7 @@ We can take the full advantage of the fact that lists are implemented as functio
 
 Note this is not a syntactic feature. All these `-take`, `-map` and `-fold` are ordinary functions.
 See the source of this magic in examples/srfi-1.nadeko.
-
+-->
 
 Pipeline operator in F#, and Synthread in Clojure are useful tool to avoid nesting of function calls. In Carrot, `->` can be used to compose functions left to right so it reads similarly to the synthread.
 
@@ -292,7 +270,7 @@ Pipeline operator in F#, and Synthread in Clojure are useful tool to avoid nesti
  -> (+ 2)
  -> (* 3)
  -> num->str
- id (flip ++ " = nine"))
+ <- (flip ++ " = nine"))
 
 ;;equivalent to
 (print 0 (++ (num->str (* (+ 1 2) 3)) " = nine"))
@@ -302,7 +280,7 @@ Pipeline operator in F#, and Synthread in Clojure are useful tool to avoid nesti
  -> (acons :name "立華")
  -> (acons :favorite "ツナ")
  -> (acons :job "ネットワークエンジニア")
- id (^ rikka (+++ (pull (assq :job      rikka))
+ <- (^ rikka (+++ (pull (assq :job      rikka))
                   (pull (assq :name     rikka))
                   (pull (assq :favorite rikka)))))
 ```
@@ -346,6 +324,10 @@ MIT
 
 CHANGELOG
 ---------
+
+### 1/22/2014
+
+Statically-selected multimethod
 
 ### 1/4/2014
 

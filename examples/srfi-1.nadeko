@@ -196,9 +196,8 @@
 (= (list-index (Fn a Bool) (List a) (Option Number)) pred xs
    (nil? xs none
          (pred (car xs) (some 0)
-               (/> (list-index pred (cdr xs))
-                   (^ x (none? x none
-                               (some (+ 1 (pull x)))))))))
+               (opt>>= (list-index pred (cdr xs))
+                       (comp some (+ 1))))))
 
 
 (= (member a (List a) (List a)) x xs
@@ -249,6 +248,6 @@
 ;;; predicate ;;;
 
 (= (list-eq? (List a) (List a) Bool) xs1 xs2
-   (nil? xs1 (nil? xs2 true false)
-         (=? (car xs1) (car xs2) (list-eq (cdr xs1) (cdr xs2))
+   (nil? xs1 (nil? xs2)
+         (=? (car xs1) (car xs2) (list-eq? (cdr xs1) (cdr xs2))
              false)))

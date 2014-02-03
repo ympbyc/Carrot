@@ -2,11 +2,36 @@
 ;;;; 2014 Minori Yamashita <ympbyc@gmail.com>
 ;;;; define data structures used throughout the system
 
+
 (define-module DataTypes
   (export-all)
   (use srfi-9)
+  (use Util)
 
-  (define-class <crt-type> ()
+
+  (define-class <carrot-serializable> () ())
+
+  (define-method write-object [(x <carrot-serializable>) out]
+    (let* ([class (class-of x)]
+           [serializable-slots (filter (^s (get-keyword :init-keyword (cdr s) #f))
+                                       (class-slots class))]
+           [slot-names (map car serializable-slots)]
+           [init-kws (filter-map (^s (get-keyword :init-keyword (cdr s)))
+                                 serializable-slots)])
+      (apply (pa$ format out (str "#,(crt-serializable ~A "
+                                  (apply str (separate " ~A " init-kws))
+                                  " ~A)")
+                  (class-name class))
+             (map (compose show (cut slot-ref x <>)) slot-names))))
+
+  (define-reader-ctor 'crt-serializable
+    (lambda [class . xs]
+      (apply (pa$ make (eval class (interaction-environment))) xs)))
+
+
+  ;;;; Carrot Types
+
+  (define-class <crt-type> (<carrot-serializable>)
     ((typ :accessor get-type
           :init-keyword :type)
      (checked :init-value #f
@@ -28,6 +53,9 @@
   (define-method object-equal? ((x <crt-type>) (y <crt-type>))
     (equal? (get-type x) (get-type y)))
 
+  (define-method object-equal? ((x <crt-composite-type>) (y <crt-composite-type>))
+    (and (equal? (type-name x) (type-name y))
+         (equal? (get-type x) (get-type y))))
 
 
   (define-method type->data ((t <crt-function-type>))
@@ -41,15 +69,73 @@
     (get-type t))
 
 
-  (define-method write-object ((t <crt-type>) out)
-    (format out "~S" (type->data t)))
 
+  ;;;; CarrotVM closure
 
-  (define-class <nadeko-closure> ()
+  (define-class <nadeko-closure> (<carrot-serializable>)
     ((expr :accessor clos-expr
            :init-keyword :expr)
      (env  :accessor clos-env
-           :init-keyword :env)))
+           :init-keyword :env)
+     (name :init-value 'anonymous
+           :accessor name
+           :init-keyword :name)))
 
-  (define-method write-object ((c <nadeko-closure>) out)
-    (format out "{~S <= ~S}"  (clos-expr c) (map car (clos-env c)))))
+
+  ;;;; CarrotVM instructions
+  (define-class <crt-inst> (<carrot-serializable>) ())
+
+  (define-class <crt-inst-ref> (<crt-inst>)
+    ((var :init-keyword :var
+          :accessor var)))
+
+  (define-class <crt-inst-refg> (<crt-inst-ref>) ())
+
+  (define-class <crt-inst-atom> (<crt-inst>)
+    ((val :init-keyword :val
+          :accessor val)))
+
+  (define-class <crt-inst-lambda> (<crt-inst>)
+    ((param :init-keyword :parameter
+            :accessor parameter)
+     (expr :init-keyword :expression
+           :accessor expression)))
+
+  (define-class <crt-inst-native> (<crt-inst>)
+    ((proc :init-keyword :procedure
+           :accessor procedure)))
+
+  (define-class <crt-inst-app> (<crt-inst>)
+    ((operator :init-keyword :operator
+               :accessor operator)
+     (operand :init-keyword :operand
+              :accessor operand)))
+
+  (define-class <crt-inst-appvar> (<crt-inst-app>) ())
+
+
+  ;;;;Tuples
+
+  (define-class <crt-pair> (<carrot-serializable>)
+    ((x :init-keyword :fst :accessor fst)
+     (y :init-keyword :snd :accessor snd)))
+
+  (define (pair x y)
+    (make <crt-pair> :fst x :snd y))
+
+  (define-class <crt-triple> (<carrot-serializable>)
+    ((x :init-keyword :fst :accessor fst)
+     (y :init-keyword :snd :accessor snd)
+     (z :init-keyword :thd :accessor thd)))
+
+  (define (triple x y z)
+    (make <crt-triple> :fst x :snd y :thd z))
+
+
+
+  ;;;; Hashtables
+
+  (define (write-hash-table ht)
+    (format "#,(hash-table ~S)" (hash-table->alist ht)))
+
+  (define-reader-ctor 'hash-table alist->hash-table))

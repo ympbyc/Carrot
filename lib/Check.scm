@@ -12,17 +12,26 @@
   (use util.match)
   (use DataTypes)
 
-  (define *exprs-ht* (make-hash-table 'eq?))
-  (define *types-ht* (make-hash-table 'eq?))
+  (define *exprs-ht*  (make-hash-table 'eq?))
+  (define *types-ht*  (make-hash-table 'eq?))
+  (define *genmap-ht* (make-hash-table 'eq?))
+  (define *checking* (atom '(main)))
 
   ;; type-check ({exprs} . {types}) -> (U <crt-type> #f)
-  (define (type-check exprs*types)
-    (set! *exprs-ht* (car exprs*types))
-    (set! *types-ht* (cdr exprs*types))
-    (let1 main-expr (hash-table-get *exprs-ht* 'main #f)
+  (define (type-check exprs*types*genmap)
+    (set! *exprs-ht*  (fst exprs*types*genmap))
+    (set! *types-ht*  (snd exprs*types*genmap))
+    (set! *genmap-ht* (thd exprs*types*genmap))
+    (reset! *checking* '(main))
+    (let* ([main-name (get-main-name (caddr exprs*types*genmap))]
+           [main-expr (hash-table-get *exprs-ht* main-name #f)])
           (if main-expr
-              (check-fn main-expr (ref *types-ht* 'main) '())
+              (check-fn main-expr (ref *types-ht* main-name) '())
               (make <crt-type> :type 'Unit))))
+
+
+  (define (print-exc exc)
+    (format #t "~A: ~A\n" (deref *checking*) (ref exc 'message)))
 
   ;; (^ prams... expr) * <crt-function-type> * {types} -> (U <crt-type> #f)
   (define-method check-fn ((expr <list>) (type <crt-function-type>) env)
@@ -31,9 +40,9 @@
            [in-ts  (butlast (get-type type))]
            [out-t  (last (get-type type))])
       (if (and (require-check? type) (not (check-prevented? type)))
-          (guard (exc [else (p (ref exc 'message)) #f])
+          (begin ;; (exc [else (print-exc exc) #f])
                  (set! (check-prevented? type) #t) ;;prevent loop
-                 (let1 expr-t (type-of expr (append (zip params in-ts) env))
+                 (let1 expr-t (p (type-of expr (append (zip params in-ts) env)))
                        (unify out-t expr-t)
                        (set! (check-prevented? type) #f)
                        expr-t))
@@ -42,7 +51,7 @@
   ;; expr * <crt-type> * {types} -> (U <crt-type> #f)
   (define-method check-fn (expr (type <crt-type>) env)
     (if (and (require-check? type) (not (check-prevented? type)))
-        (guard (exc [else (p (ref exc 'message)) #f])
+        (begin ;; (exc [else (print-exc exc) #f])
                (set! (check-prevented? type) #t) ;;prevent loop
                (let1 expr-t (type-of expr env)
                      (unify type expr-t)
@@ -60,14 +69,14 @@
   (define-method type-of ((_ <char>)    _) (make <crt-primitive-type> :type 'Char))
   (define-method type-of ((_ <keyword>) _) (make <crt-primitive-type> :type 'Keyword))
   (define-method type-of ((s <symbol>) env)
-    ;(p s)
+    (swap! *checking* (cut cons s <>))
     (let1 t (assoc s env)
           (if t (cadr t)
               (let* ([t  (ref *types-ht* s)]
                      [ex (hash-table-get *exprs-ht* s #f)])
-                (if (and ex (not (check-fn ex t env)))
-                    (raise-error/message
-                     (format "Declared return type of `~S` doesn't agree with actual value." s)))
+                (when (and ex (not (check-fn ex t env)))
+                      (raise-error/message
+                       (format "Declared return type of `~S` doesn't agree with actual value." s)))
                 t))))
   (define-method type-of ((xs <list>) env)
     (cond [(quote-expr? xs)  (make <crt-primitive-type> :type 'Symbol)]
@@ -90,7 +99,8 @@
 
   ;; <crt-type> * [<crt-type>] -> <crt-type>
   (define-method type-of-app ((t <crt-primitive-type>) ts)
-    (raise-error/message (format "Can not apply a ~S to ~S" (get-type t) (map get-type ts))))
+    (raise-error/message (format "Can not apply a ~S to ~S"
+                                 (get-type t) (map get-type ts))))
   (define-method type-of-app ((t <crt-composite-type>) ts) t)
   (define-method type-of-app ((t <crt-type-var>) ts) t)
   (define-method type-of-app ((t <crt-function-type>) (_ <null>)) t)
@@ -100,14 +110,14 @@
            [rest-ft (fold (fn [b ft-]
                               (replace-type-var ft- (car b) (cdr b)))
                          (cdr ft)
-                         binding)]
-           [rest-ft (cond [(and (= 1 (length rest-ft))
-                                (is-a? (car rest-ft) <crt-function-type>))
-                           (type-of-app (car rest-ft) (cdr ts))]
-                          [(and (= 1 (length rest-ft)))
-                           (car rest-ft)]
-                          [else
-                           (type-of-app (make <crt-function-type> :type rest-ft) (cdr ts))])])))
+                         binding)])
+      (cond [(and (= 1 (length rest-ft))
+                  (is-a? (car rest-ft) <crt-function-type>))
+             (type-of-app (car rest-ft) (cdr ts))]
+            [(and (= 1 (length rest-ft)))
+             (car rest-ft)]
+            [else
+             (type-of-app (make <crt-function-type> :type rest-ft) (cdr ts))])))
 
 
   (define (replace-type-var ft var t)
@@ -118,7 +128,8 @@
                        :name (type-name (car ft))
                        :type (replace-type-var (get-type (car ft)) var t))]
                     [(is-a? (car ft) <crt-function-type>)
-                     (make <crt-function-type> :type (replace-type-var (get-type (car ft)) var t))]
+                     (make <crt-function-type> :type (replace-type-var
+                                                      (get-type (car ft)) var t))]
                     [else (car ft)])
               (replace-type-var (cdr ft) var t))))
 
@@ -135,7 +146,8 @@
       (if (eq? (type-name t1) (type-name t2))
           (apply append (map (fn [tx ty] (unify tx ty)) (get-type t1) (get-type t2)))
           (raise-error/message
-           (format "Composite type container contradiction: ~S -><- ~S" (type-name t1) (type-name t2))))))
+           (format "Composite type container contradiction: ~S -><- ~S"
+                   (type-name t1) (type-name t2))))))
 
   (define-method unify ((t1 <crt-type-var>) (t2 <crt-type>))
     (list (cons t1 t2)))

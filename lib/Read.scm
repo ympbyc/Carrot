@@ -1,13 +1,14 @@
 ;;;; read.scm
 ;;;; 2014 Minori Yamashita <ympbyc@gmail.com>
-;;;; transform a list of s-expressions into a tuple of two hashtables:
-;;;; one mapping names to expressions,
-;;;; one mapping names to types
+;;;; transform a list of s-expressions into a tuple of three hashtables:
+;;;; one mapping unique name to expression,
+;;;; one mapping unique name to type,
+;;;; one mapping generic name to unique names
 
 (add-load-path "../lib/" :relative)
 
 (define-module Read
-  (export read-s-exprs)
+  (export read-s-exprs read-s-exprs*)
   (use srfi-1)
   (use DataTypes)
   (use Util)
@@ -21,48 +22,60 @@
   (define (synonym-definition? x)
     (and (pair? x) (eq? (car x) 'synonym)))
 
-
-  ;;;; read-s-exprs :: [S-expr] -> ({name => expr} . {name => type})
-  (define (read-s-exprs program)
-    (let ([exprs
-           (fold (fn [def exprs-ht]
-                     (if (synonym-definition? def)
-                         exprs-ht
-                         (register-function def exprs-ht)))
-                 (make-hash-table 'eq?)
-                 program)]
-
-          [types
-           (fold (fn [def types-ht]
-                     (if (synonym-definition? def)
-                         (begin (register-synonym! def *synonyms*)
-                                types-ht)
-                         (register-type def types-ht)))
-                 (make-hash-table 'eq?)
-                 program)])
-
-      (cons exprs types)))
+  (define (non-definition? x)
+    (synonym-definition? x))
 
 
-    ;; def-statement * {exprs} -> {exprs}
-  (define (register-function def exprs-ht)
-    (let* ([def    (if (proper-def? def) def `(= (main a) ,def))]
-           [name   (caadr def)]
-           [params (butlast (cddr def))]
-           [body   (last def)])
+  ;;;; read-s-exprs :: [S-expr] -> ({uniq-name    => expr}
+  ;;;;                              {uniq-name    => type}
+  ;;;;                              {generic-name => [uniqname]})
+  (define (read-s-exprs program exprs*types*genmap)
+    (read-s-exprs* program
+                   (fst exprs*types*genmap)
+                   (snd exprs*types*genmap)
+                   (thd exprs*types*genmap)))
+
+  (define (read-s-exprs* program exprs-ht types-ht genmap-ht)
+    (cond [(null? program)
+           (triple exprs-ht types-ht genmap-ht)]
+
+          [(synonym-definition? (car program))
+           (register-synonym! (car program) *synonyms*)
+           (read-s-exprs* (cdr program) exprs-ht types-ht genmap-ht)]
+
+          [else
+           (let* ([def          (car program)]
+                  [def          (if (proper-def? def) def `(= (main a) ,def))]
+                  [generic-name (caadr def)]
+                  [uniqn        (length (hash-table-get genmap-ht generic-name '()))]
+                  [uniq-name    (if (= uniqn 0) ;;use the symbol unchanged
+                                    generic-name
+                                    (string->symbol
+                                     (string-append
+                                      (symbol->string generic-name)
+                                      (number->string (inc uniqn)))))])
+             (read-s-exprs* (cdr program)
+                            (register-function uniq-name def exprs-ht)
+                            (register-type uniq-name def types-ht)
+                            (ht-put-cons genmap-ht generic-name uniq-name)))]))
+
+
+  ;; name * def-statement * {exprs} -> {exprs}
+  (define (register-function uniq-name def exprs-ht)
+    (let* ([params       (butlast (cddr def))]
+           [body         (last def)])
       (if (null? params)
-          (hash-table-put-! exprs-ht name body)
-          (hash-table-put-! exprs-ht name `(^ ,@params ,body)))))
+          (hash-table-put-! exprs-ht uniq-name body)
+          (hash-table-put-! exprs-ht uniq-name `(^ ,@params ,body)))))
 
-  ;; def-statement * {types} -> {types}
-  (define (register-type def types-ht)
-    (let* ([def  (if (proper-def? def) def `(= (main a) ,def))]
-           [name (caadr def)]
-           [type (cdadr def)])
+  ;; name * def-statement * {types} -> {types}
+  (define (register-type uniq-name def types-ht)
+    (let ([type (cdadr def)])
       (if (= 1 (length type))
-          (hash-table-put-! types-ht name
-                            (make-unknown-crt-type (car type) (not (eq? (car def) '=u))))
-          (hash-table-put-! types-ht name
+          (hash-table-put-! types-ht uniq-name
+                            (make-unknown-crt-type (car type)
+                                                   (not (eq? (car def) '=u))))
+          (hash-table-put-! types-ht uniq-name
                             (make <crt-function-type>
                               :type (map (cut make-unknown-crt-type <> #f) type)
                               :checked (not (eq? (car def) '=u)))))))
@@ -75,13 +88,15 @@
 
 
 
-  ;; expr * boolean * {synonyms} -> <crt-type>
+  ;; expr * boolean -> <crt-type>
   (define (make-unknown-crt-type x checked)
     (case x
-      [(String Number Char Keyword Symbol) (make <crt-primitive-type> :type x :checked checked)]
+      [(String Number Char Keyword Symbol)
+       (make <crt-primitive-type> :type x :checked checked)]
       [else (cond [(and (pair? x) (eq? 'Fn (car x)))
-                   (make <crt-function-type>  :type (map (cut make-unknown-crt-type <> #f) (cdr x))
-                         :checked checked)]
+                   (make <crt-function-type>
+                     :type (map (cut make-unknown-crt-type <> #f) (cdr x))
+                     :checked checked)]
                   [(pair? x)
                    (let1 alias (hash-table-get *synonyms* x #f)
                          (if alias (make-unknown-crt-type alias checked)

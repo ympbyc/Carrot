@@ -31,20 +31,20 @@
 
 ;;list
 (=u (cons a (List a) (List a))
-    pair)
+    x y f (f x y))
 (=u (nil (List a)) 'nil)
-(=u (car (List a) a) fst)
-(=u (cdr (List a) (List a)) snd)
-(= (nil? a Bool) x (=? nil x))
+(= (car (List a) a) xs (xs (^ x _ x)))
+(= (cdr (List a) (List a)) xs (xs (^ _ xs xs)))
+(= (nil? (List a) Bool) xs (=? nil xs))
 
 
 ;; option
 (=u (some a (Option a)) x x)
 (=u (none (Option a)) 'nil)
-(=  (some? (Option a) Bool) x (not (=? x 'nil)))
-(=  (none? (Option a) Bool) x (=? x 'nil))
+(=u (some? (Option a) Bool) x (not (=? x 'nil)))
+(=u (none? (Option a) Bool) x (=? x 'nil))
 (=  (pull (Option a) a) x x)
-(= (opt>>= (Option a) (Fn a (Option a)) (Option a))
+(=  (opt>>= (Option a) (Fn a (Option a)) (Option a))
              opt f (none? opt none (f (pull opt))))
 
 
@@ -54,57 +54,85 @@
 (= (Y (Fn a a) a)
    f ((^ x (f (x x))) (^ x (f (x x)))))
 
-;;show
-(=u (show _ String) x
-    (string? x x
-    (number? x (num->str x)
-    (keyword? x (kw->str x))
-    (nil? x "[]"
-    (symbol? x (** symbol->string x)
-              (show-list x))))))
+;;predicates -- ideally, we don't need these
+(= (string? _        Bool) _ false)
+(= (string? String   Bool) _ true)
+(= (number? _        Bool) _ false)
+(= (number? Number   Bool) _ true)
+(= (keyword? _       Bool) _ false)
+(= (keyword? Keyword Bool) _ true)
+(= (list? _          Bool) _ false)
+(= (list? (List a)   Bool) _ true)
 
-(= (show-list (List a) String)
+;;show -- example of a generic function
+(= (show String String)  x x)
+(= (show Number String)  num->str)
+(= (show Keyword String) x (++ ":" (kw->str x)))
+(= (show Symbol String)  x (** symbol->string x))
+(= (show (List Number) String)
    xs
-   (+++ (show (car xs)) " : " (show (cdr xs))))
+   (nil? xs "[]"
+         (+++ (show (car xs)) " : " (show (cdr xs)))))
+(= (show (Option String) String)
+   x
+   (show (pull x)))
+(= (show (Option Number) String)
+   x
+   (show (pull x)))
+(= (show (List (Pair Number Number)) String)
+   xs
+   (+++ "[ " (show-map-content xs) "]"))
+(= (show (List (Pair Keyword String)) String)
+   xs
+   (+++ "[ " (show-map-content xs) "]"))
+
+
+(= (show-map-content (List (Pair Number Number)) String)
+   xs
+   (nil? xs ""
+         (+++ (+++ "(" (+++ (show (fst (car xs))) " . " (show (snd (car xs)))) ")")
+              " "
+              (show-map-content (cdr xs)))))
+
+(= (show-map-content (List (Pair Keyword String)) String)
+   xs
+   (nil? xs ""
+         (+++ (+++ "(" (+++ (show (fst (car xs))) " . " (show (snd (car xs)))) ")")
+              " "
+              (show-map-content (cdr xs)))))
+
 
 (= (+++ String String String String) s1 s2 s3
    (++ (++ s1 s2) s3))
 
 ;;primitive wrapper
-(= (=? a b Bool)
-   a b (** =? a b))
+(= (=? a a Bool)
+   x y (** c-equal? x y))
 (= (< Number Number Bool)
-   a b (** lt? a b))
+   x y (** c-< x y))
 (= (> Number Number Bool)
-   a b (** gt? a b))
+   x y (** c-> x y))
 (= (<= Number Number Bool)
-   a b (** lte? a b))
+   x y (** c-<= x y))
 (= (>= Number Number Bool)
-   a b (** gte? a b))
+   x y (** c->= x y))
 (= (+ Number Number Number)
-   a b (** add a b))
+   x y (** c-+ x y))
 (= (- Number Number Number)
-   a b (** sub a b))
+   x y (** c-- x y))
 (= (* Number Number Number)
-   a b (** mul a b))
+   x y (** c-* x y))
 (= (/ Number Number Number)
-   a b (** div a b))
+   x y (** c-/ x y))
 (= (% Number Number Number)
-   a b (** mo a b))
+   x y (** c-mod x y))
 (= (++ String String String)
-   a b (** ++ a b))
+   x y (** c-string-append x y))
 (= (num->str Number String)
-   a (** number->string a))
+   x (** number->string x))
 (= (kw->str Keyword String)
-   a (** keyword->string a))
-(= (number? a Bool)
-   a (** number? a))
-(= (string? a Bool)
-   a (** string? a))
-(= (keyword? a Bool)
-   a (** keyword? a))
-(= (symbol? a Bool)
-   a (** symbol? a))
+   x (** keyword->string x))
+
 
 ;;; I/O
 (synonym Time Number)
@@ -114,24 +142,62 @@
 (= (read Time String) t
    (** read- t))
 
+
 ;;help
 (= (help String)
-   "\n\n\
-|  SYNTAX\n\
-|  ------\n\
+   "
+
+|  SYNTAX
+|  ------
+|  ;; declare the type <t> as an alias of <t'>
+|  (synonym <t> <t'>)
+|
+|  ;; define a generic function
 |  (= (<name> <in-type>... <out-type>)
-|     <parameter>... <expression>)      ;(statement)  binds a function to a name\n\
-|  (^ <parameter>... <expression>)      ;(expression) lambda expression\n\
-|  (<function> <argument>...)           ;(expression) apply a function to values
-|  \"string\"                             ;(expression)\n\
-|  123456                               ;(expression)\n\
-|  'symbol                              ;(expression)\n|\n\
-|  FEATURE\n\
-|  -------\n\
-|  * Default lazy evaluation\n\
-|  * Default currying\n|\n\
-|  REPL\n\
-|  ----\n\
-|  ^C   -- Exit\n\
-|  help -- See this help\n\
-|  <function-name> -- See the usage of the function (through its type)\n\n")
+|     <parameter>...
+|     <expression>)
+|
+|  ;; define a constructor for <type>
+|  (=u (<name> <in-type>... <type>)
+|     <parameter>...
+|     <expression>)
+|
+|  ;; lambda expression
+|  (^ <parameter>... <expression>)
+|
+|  ;; function application
+|  (<function> <argument>...)
+|
+|  ;; literals
+|  \\\"string\\\" 123456 'symbol :keyword
+|
+|  FEATURE
+|  -------
+|  * Purely functional
+|  * Default lazy evaluation
+|  * Default currying
+|  * Static type checking
+|  * Statically resolved multimethod
+|  * Timed I/O
+|
+|  REPL
+|  ----
+|  ^C   -- Exit
+|  help -- See this help
+|  <function-name> -- See the usage of the function (through its type)
+
+")
+
+(= (language String)
+   "Carrot")
+
+(= (version String)
+   "2.2.0")
+
+(= (code-name String)
+   "Netherland Dwarf")
+
+(= (main String)
+   (show (cons (pair :language  language)
+               (cons (pair :version   version)
+                     (cons (pair :code-name code-name) nil)))))
