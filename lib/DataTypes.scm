@@ -67,6 +67,7 @@
               (cons (type-name t) (map type->data (get-type t))))))
   (define-method type->data ((t <crt-type>))
     (get-type t))
+  (define-method type->data (t) t)
 
 
 

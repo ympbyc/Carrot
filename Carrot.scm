@@ -34,7 +34,8 @@
             (hash-table-delete! genmap 'main)
             (REPL res (+ ctr 1)))
     (format #t "      ;=> ~A :: ~S\n\n"
-            (fmt (CarrotVM (compile checked-p) (get-main-name genmap))) main-t)
+            (fmt (CarrotVM (compile checked-p) (get-main-name genmap)))
+            (type->data main-t))
     (hash-table-delete! exprs-ht (get-main-name genmap))
     (hash-table-delete! types-ht (get-main-name genmap))
     (hash-table-delete! genmap 'main)

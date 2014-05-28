@@ -116,12 +116,14 @@
                [arg-ts (map snd arg-expr*type)]
                [arg-xs (map fst arg-expr*type)]
                [selected-uniq-name*type
-                (filter-map (fn [uniq-name]
-                                (let1 t (guarded-type-of-app
-                                         (ref *types-ht* uniq-name)
-                                         arg-ts)
-                                      (and t (pair uniq-name t))))
-                            (ref *genmap-ht* generic-name))])
+                (sort
+                 (filter-map (fn [uniq-name]
+                                 (let1 t (guarded-type-of-app
+                                          (ref *types-ht* uniq-name)
+                                          arg-ts)
+                                       (and t (pair uniq-name t))))
+                             (ref *genmap-ht* generic-name))
+                 specificity-sorter)])
 
           (when (null? selected-uniq-name*type)
                 (raise-error/message
@@ -215,4 +217,22 @@
   (define-method unify ((t1 <crt-type>) (t2 <crt-type>))
     (raise-error/message (format "Type contradiction: ~S -><- ~S"
                                  (type->data t1)
-                                 (type->data t2)))))
+                                 (type->data t2))))
+
+
+
+  (define (specificity-sorter x y)
+    (print x)
+    (print y)
+    (specific (snd x) (snd y)))
+
+  (define-method specific ((t1 <crt-type-var>) (t2 <crt-type-var>))
+    0)
+  (define-method specific ((t1 <crt-composite-type>) (t2 <crt-composite-type>))
+    (specific (get-type t1) (get-type t2)))
+  (define-method specific ((t1 <crt-type-var>) (t2 <crt-type>))
+    1)
+  (define-method specific ((t1 <crt-type>) (t2 <crt-type-var>))
+    -1)
+  (define-method specific ((t1 <crt-type>) (t2 <crt-type>))
+    0))

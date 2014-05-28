@@ -1,5 +1,6 @@
 ;;bool
-(synonym Bool (Fn a- a- a-))
+(synonym Bool (Fn a a a))
+(synonym Map  (lambda [a b] `(List (Pair ,a ,b))))
 
 (= (true  Bool) t e t)
 (= (false Bool) t e e)
@@ -79,22 +80,22 @@
 (= (show (Option Number) String)
    x
    (show (pull x)))
-(= (show (List (Pair Number Number)) String)
+(= (show (Map Number Number) String)
    xs
    (+++ "[ " (show-map-content xs) "]"))
-(= (show (List (Pair Keyword String)) String)
+(= (show (Map Keyword String) String)
    xs
    (+++ "[ " (show-map-content xs) "]"))
 
 
-(= (show-map-content (List (Pair Number Number)) String)
+(= (show-map-content (Map Number Number) String)
    xs
    (nil? xs ""
          (+++ (+++ "(" (+++ (show (fst (car xs))) " . " (show (snd (car xs)))) ")")
               " "
               (show-map-content (cdr xs)))))
 
-(= (show-map-content (List (Pair Keyword String)) String)
+(= (show-map-content (Map Keyword String) String)
    xs
    (nil? xs ""
          (+++ (+++ "(" (+++ (show (fst (car xs))) " . " (show (snd (car xs)))) ")")
@@ -197,7 +198,7 @@
 (= (code-name String)
    "Netherland Dwarf")
 
-(= (main String)
-   (show (cons (pair :language  language)
+(= (info (Map Keyword String))
+   (cons (pair :language  language)
                (cons (pair :version   version)
-                     (cons (pair :code-name code-name) nil)))))
+                     (cons (pair :code-name code-name) nil))))

@@ -239,15 +239,14 @@
                (alist-copy (cdr axs)))))
 
 
-(= (alist-delete a (List (Pair a b)) (List (Pair a b))) key axs
-   (remove (compose (=? key) fst) axs))
-
-
-
+(= (alist-delete a (List (Pair a b)) (List (Pair a b)))
+   key axs
+   (remove (comp (=? key) fst) axs))
 
 ;;; predicate ;;;
 
 (= (list-eq? (List a) (List a) Bool) xs1 xs2
    (nil? xs1 (nil? xs2)
-         (=? (car xs1) (car xs2) (list-eq? (cdr xs1) (cdr xs2))
+         (=? (car xs1) (car xs2)
+             (list-eq? (cdr xs1) (cdr xs2))
              false)))
