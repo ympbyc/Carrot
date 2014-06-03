@@ -1,9 +1,11 @@
 ;;bool
 (synonym Bool (Fn a a a))
 (synonym Map  (lambda [a b] `(List (Pair ,a ,b))))
+(synonym Pair (lambda [a b] `(Fn (Fn ,a ,b c) c)))
+(synonym List (lambda [a] `(Fn (Fn ,a xs c) c)))
 
-(= (true  Bool) t e t)
-(= (false Bool) t e e)
+(= (true  Bool) tr el tr)
+(= (false Bool) tr el el)
 (= (not Bool Bool)
    bool (bool false true))
 (= (if Bool a a a) bool bool)
@@ -23,12 +25,11 @@
 (= (<- a a) x x)
 ;;e.g. (-> 2 -> (+ 1) -> (+ 4) -> (+ 3) <- (+ 6))
 
-
 ;;tuple
 (=u (pair a b (Pair a b))
     x y f (f x y))
-(= (fst (Pair a b) a) t (t (^ x _ x)))
-(= (snd (Pair a b) b) t (t (^ _ y y)))
+(= (fst (Pair a b) a) p (p (^ x _ x)))
+(= (snd (Pair a b) b) p (p (^ _ y y)))
 
 ;;list
 (=u (cons a (List a) (List a))
@@ -70,32 +71,19 @@
 (= (show Number String)  num->str)
 (= (show Keyword String) x (++ ":" (kw->str x)))
 (= (show Symbol String)  x (** symbol->string x))
-(= (show (List Number) String)
+(= (show (List a) String)
    xs
    (nil? xs "[]"
          (+++ (show (car xs)) " : " (show (cdr xs)))))
-(= (show (Option String) String)
+(= (show (Option a) String)
    x
    (show (pull x)))
-(= (show (Option Number) String)
-   x
-   (show (pull x)))
-(= (show (Map Number Number) String)
-   xs
-   (+++ "[ " (show-map-content xs) "]"))
-(= (show (Map Keyword String) String)
+(= (show (Map a b) String)
    xs
    (+++ "[ " (show-map-content xs) "]"))
 
 
-(= (show-map-content (Map Number Number) String)
-   xs
-   (nil? xs ""
-         (+++ (+++ "(" (+++ (show (fst (car xs))) " . " (show (snd (car xs)))) ")")
-              " "
-              (show-map-content (cdr xs)))))
-
-(= (show-map-content (Map Keyword String) String)
+(= (show-map-content (Map a b) String)
    xs
    (nil? xs ""
          (+++ (+++ "(" (+++ (show (fst (car xs))) " . " (show (snd (car xs)))) ")")

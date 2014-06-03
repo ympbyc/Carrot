@@ -1,22 +1,9 @@
-(=u (cons a (List a) (List a))
-    x y f (f x y))
-(=u (nil (List a)) 'nil)
-(= (car (List a) a) xs (xs (^ x _ x)))
-(= (cdr (List a) (List a)) xs (xs (^ _ xs xs)))
-(= (nil? (List a) Bool) xs (=? nil xs))
+(= (foo Number Number) x 1)
+(= (foo String Number) x 0)
+(= (bar a Number) x (foo x))
+(= (generic-method-dispatch Bool)
+   (=? (bar hello) 0))
 
-(= (+++ String String String String) s1 s2 s3
-   (++ (++ s1 s2) s3))
-(= (++ String String String)
-   x y (** ++ x y))
-(= (=? a a Bool)
-   x y (** =? x y))
-
-(= (show String String)  x x)
-(= (show Number String)  x (** num->str x))
-(= (show Keyword String) x (** kw->str x))
-(= (show Symbol String)  x (** symbol->string x))
-(= (show (List a) String)
-   xs
-   (nil? xs "[]"
-            (+++ (show (car xs)) " : " (show (cdr xs)))))
+(= (main Keyword)
+   (every? id (cons generic-method-dispatch nil)
+           :pass :fail))

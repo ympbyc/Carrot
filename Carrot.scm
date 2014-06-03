@@ -19,7 +19,7 @@
   ;;(p (hash-table->alist (caddr exprs*types*genmap)))
   (format #t "carrot ~S> " ctr)
   (flush)
-  (let* ([expr  (read)]
+  (let* ([expr  (read)] [_ (print expr)]
          [res (read-s-exprs (list expr) exprs*types*genmap)]
          [exprs-ht (fst res)]
          [types-ht (snd res)]
@@ -50,7 +50,7 @@
 (define (main args)
   (print banner)
   (format #t "Loading ~S ... done\n" (cons "examples/prelude.nadeko" (cdr args)))
-  (let* ([fnames (cons "examples/prelude.nadeko" (cdr args))]
+  (let* ([fnames (cdr args)]
          [exprs*types*genmap (triple (make-hash-table 'eq?)
                                      (make-hash-table 'eq?)
                                      (make-hash-table 'eq?))]
@@ -72,7 +72,7 @@
                               exprs*types*genmap)]
                ;;[checks? (type-check exprs*types*genmap)]
                )
-          (p (acquire-checked-program exprs*types*genmap))
+          (acquire-checked-program exprs*types*genmap)
           exprs*types*genmap))))
 
 (define (read-list port)
