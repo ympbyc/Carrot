@@ -1,4 +1,4 @@
-#!/usr/local/bin/gosh
+#!/usr/bin/env gosh
 
 ;;;; Carrot ;;;;
 ;;; 2012 Minori Yamashita <ympbyc@gmail.com> ;;add your name here
