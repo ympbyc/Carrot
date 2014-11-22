@@ -15,6 +15,8 @@ Dec 2012 Minori Yamashita <ympbyc@gmail.com>
 
 <img src="https://rawgithub.com/ympbyc/Carrot/master/docs/carrot.png" width="360px" />
 
+**Check out Carrot 2 (also WIP) too**
+
 
 Installation
 ------------
@@ -122,7 +124,7 @@ or
 Binds the *expression* to the *name*.
 If one or more parameters( *identifier ...* ) are given, they can be used in the *expression* to refer to the values the function is applied to. `=u` directs the compiler not to type-check the function body.
 
-Multiple functions can share a name. In which case their type must differ.
+Multiple functions can share a name. In which case their types must differ.
 
 **code 5** *defining a `map` function*
 
@@ -160,7 +162,7 @@ Implementations SHOLD implement "call-by-need" instead of "call-by-name".
 Type System
 -----------
 
-Carrot's type system isn't really a type system.  It is aimed to check if the programme's intention was consistent.  The type system is unique and somewhat criptic at first sight:
+Carrot's type system is aimed to check if the programme's intention was consistent throughout the program.  The type system is unique and somewhat criptic at first sight:
 
 ### How to Type Expressions
 
@@ -196,7 +198,7 @@ Carrot has no data structures except for closures, yet the type system is rich e
 
 ### Things Start to Get Odd
 
-Carrot's runtime values are completely **untyped** (not even dynamicaly typed). As a consequence,  Carrot's types are completely independent from its underlying implementation.  The type checker, by default,  only looks at type declarations and it is almost enough to find most of the type-related bugs.
+Carrot's runtime values are completely **untyped** (not even dynamicaly typed). As a consequence,  Carrot's types are completely independent from its underlying implementation.
 
 ```lisp
 ;;invisible container
@@ -263,7 +265,7 @@ Note this is not a syntactic feature. All these `-take`, `-map` and `-fold` are 
 See the source of this magic in examples/srfi-1.nadeko.
 -->
 
-Pipeline operator in F#, and Synthread in Clojure are useful tool to avoid nesting of function calls. In Carrot, `->` can be used to compose functions left to right so it reads similarly to the synthread.
+Pipeline operator in F#, and Synthread in Clojure are useful tool to avoid nesting of function calls. In Carrot, `->` can be used to compose functions left to right so it reads similarly to the synthread. `->` is just a `(Fn b c) -> (Fn a b) -> c` function.
 
 ```lisp
 (-> 1
@@ -288,7 +290,7 @@ Pipeline operator in F#, and Synthread in Clojure are useful tool to avoid nesti
 I/O
 ---
 
- I/O in lazy languages are hard because the order of evaluation is not lexical, and if the return value of an I/O operation does not affect the overall result, the operation itself gets ommited. To go around this problem, Haskell uses whta's called an IO Monad. IO Monad is a way to construct a computation, and sideeffects don't happen while the program is executing.
+ I/O in lazy languages are hard because the order of evaluation is not lexical, and if the return value of an I/O operation does not affect the overall result, the operation itself gets ommited. To go around this problem, Haskell uses what's called an IO Monad. IO Monad is a way to construct a computation, and sideeffects don't happen while the program is being evaluated.
  Carrot takes a saner approach than that. It uses what we call a timed-io. Every sideeffectful function F takes an additional argument time X, and F that usually return `()` instead return a time Y. By giving Y to another sideeffectful function G, a clear relation between F and G gets formed so Carrot can figure out the evaluation order.
  Every sideeffectful function may cache its results based on the time so it works fine even with call-by-name strategy.
 
