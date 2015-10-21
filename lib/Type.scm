@@ -222,8 +222,8 @@
 
 
   (define (specificity-sorter x y)
-    (print x)
-    (print y)
+    ;(print x)
+    ;(print y)
     (specific (snd x) (snd y)))
 
   (define-method specific ((t1 <crt-type-var>) (t2 <crt-type-var>))

@@ -55,7 +55,8 @@
       ((_ arg exp ...)
        (lambda arg exp ...))))
 
-  (define (p x) (print x) x)
+  (define (p x) ;(print x)
+    x)
 
 
   (define (lambda-expr? exp)
