@@ -5,7 +5,6 @@
 
   (define (butlast xs) (drop-right xs 1))
 
-
   (define (str . xs)
     (apply string-append (map show xs)))
 

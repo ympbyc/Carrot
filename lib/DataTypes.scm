@@ -18,9 +18,9 @@
            [slot-names (map car serializable-slots)]
            [init-kws (filter-map (^s (get-keyword :init-keyword (cdr s)))
                                  serializable-slots)])
-      (apply (pa$ format out (str "[ ~A" ;"#,(crt-serializable ~A "
+      (apply (pa$ format out (str "#,(crt-serializable ~A "
                                   (apply str (separate " ~A " init-kws))
-                                  " ~A]")
+                                  " ~A)")
                   (class-name class))
              (map (compose show (cut slot-ref x <>)) slot-names))))
 
@@ -40,15 +40,13 @@
      (check-prevented :init-value #f
                       :accessor check-prevented?)))
 
-  (define-class <crt-concrete-type> (<carrot-serializable>) ())
+  (define-class <crt-primitive-type> (<crt-type>) ())
 
-  (define-class <crt-primitive-type> (<crt-type> <crt-concrete-type>) ())
-
-  (define-class <crt-function-type> (<crt-type> <crt-concrete-type>) ())
+  (define-class <crt-function-type> (<crt-type>) ())
 
   (define-class <crt-type-var> (<crt-type>) ())
 
-  (define-class <crt-composite-type> (<crt-type> <crt-concrete-type>)
+  (define-class <crt-composite-type> (<crt-type>)
     ((name :accessor type-name
            :init-keyword :name)))
 

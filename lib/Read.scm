@@ -124,7 +124,7 @@
                   [(pair? x)
                    (let1 alias (hash-table-get *synonyms* (car x) #f)
                          (cond [(and alias (closure? alias))
-                                (make-unknown-crt-type (apply alias (cdr x)) checked)]
+                                (make-unknown-crt-type (p (apply alias (cdr x))) checked)]
                                [alias (make-unknown-crt-type alias checked)]
                                [else (make <crt-composite-type> :name (car x)
                                            :type (map (cut make-unknown-crt-type <> #f) (cdr x))
