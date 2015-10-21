@@ -48,6 +48,8 @@
 (=  (pull (Option a) a) x x)
 (=  (opt>>= (Option a) (Fn a (Option a)) (Option a))
              opt f (none? opt none (f (pull opt))))
+(= (pull-or-else (Option a) a a)
+   x y (some? x (pull x) y))
 
 
 ;;Y-combinator

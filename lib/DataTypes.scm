@@ -40,15 +40,27 @@
      (check-prevented :init-value #f
                       :accessor check-prevented?)))
 
-  (define-class <crt-concrete-type> (<carrot-serializable>) ())
+  (define-class <crt-primitive-type> (<crt-type>) ())
 
-  (define-class <crt-primitive-type> (<crt-type> <crt-concrete-type>) ())
+  (define-class <crt-function-type> (<crt-type>)
+    ([arity :accessor get-arity
+            :init-keyword :arity]
+     [ret-t :accessor get-return-type
+            :init-keyword :return-type]
+     [param-ts :accessor get-param-types
+               :init-keyword :param-types]
+     [instanciator :accessor get-instanciator
+                   :init-value (fn [self . _] self)
+                   :init-keyword instanciator]
+     [name :accessor get-name
+           :init-value 'anonymous
+           :init-keyword :name]))
 
-  (define-class <crt-function-type> (<crt-type> <crt-concrete-type>) ())
+  (define-class <crt-generic-function-type> (<crt-function-type>) ())
 
   (define-class <crt-type-var> (<crt-type>) ())
 
-  (define-class <crt-composite-type> (<crt-type> <crt-concrete-type>)
+  (define-class <crt-composite-type> (<crt-type>)
     ((name :accessor type-name
            :init-keyword :name)))
 
