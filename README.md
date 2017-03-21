@@ -150,8 +150,8 @@ Functions(closures) can be applied to arguments. The application begins with an 
 (map (take integers 5) (+ 2)) ;;B
 ```
 
-In the expression A, the `map` function defined in **code 5** is applied to two arguments; listX and functionX assuming they are defined elsewhere.
-This fills the parameter slots of the `map` function meaning that `listX` gets bound to `lst` and `functionX` gets bound to `f`. The expression inside `map` is then evaluated using both `listX` and `functionX`. Eventually the evaluation completes; producing a value(in this case a new list).
+In the expression A, the map function defined in code 5 is applied to two arguments; listX and functionX assuming they are defined elsewhere.
+This fills the parameter slots of the map function meaning that listX gets bound to xs and functionX gets bound to f. The expression inside map is then evaluated using both listX and functionX. Eventually the evaluation completes; producing a value(in this case a new list).
 
 + Carrot uses call-by-need evaluation strategy (although the implementation is incomplete).
 + Every function is curried.
