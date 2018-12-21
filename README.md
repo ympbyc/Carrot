@@ -244,7 +244,7 @@ Because the arguments are delayed automaticaly, we can implement booleans as fun
 ;scheme
 (if (eq? a b) "equal" "not equal")
 
-;nadeko
+;carrot
 (=? a b "equal" "not equal")
 ```
 
@@ -255,7 +255,7 @@ Because the arguments are delayed automaticaly, we can implement booleans as fun
 ;scheme
 (foldl + 0 (map (lambda (x) (* x 2)) (take (iota 100) 5)))
 
-;nadeko
+;carrot
 (integers -take 5
           -map  (* 2)
           -foldl + 0)
