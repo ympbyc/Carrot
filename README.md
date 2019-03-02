@@ -305,7 +305,34 @@ I/O
 Macros
 ------
 
- There is no macro mechanism built in to Carrot at this stage partly because there's no need for it.
+ There is no macro mechanism built in to Carrot at this stage partly because there's littele need for it.
+
+
+What's Coming or How to contribute
+----------------------------------
+
+Here are the list of features I intend to implement but haven't due to current dayjob situations.  I would love if someboday takes a shot at some of these.  Be sure to email me (ympbyc at gmail) I'm lazy on github.
+
+#### Call-by-Name Macro
+
+Because Carrot is call-by-name, macro effect can be achieved with an operator which tells the compiler to suppress the evaluation of its operand. Type signature might be a good place to do this.
+
+```scm
+(= (example AST AST AST) x y
+   "We'll also need a way to construct lists more easily")
+```
+
+#### Proper Multimethod
+
+Current implementation can't dispatch on composit datatypes.  To make this work, some sort of templating mechanism is needed.  You'll know what I mean if you try.
+
+#### Lambda Folding and Constant Folding
+
+Like Common Lisp compiler
+
+#### Emacs SLIME support
+
+
 
 
 Influenced by
