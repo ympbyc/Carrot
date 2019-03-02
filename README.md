@@ -311,7 +311,7 @@ Macros
 What's Coming or How to contribute
 ----------------------------------
 
-Here are the list of features I intend to implement but haven't due to current dayjob situations.  I would love if someboday takes a shot at some of these.  Be sure to email me (ympbyc at gmail) I'm lazy on github.
+Here are the list of features I intend to implement but haven't due to current dayjob situations (or because I'm flirting with Common Lisp all the time).  I would love if someboday takes a shot at some of these.  Be sure to email me (ympbyc at gmail) I'm lazy on github.
 
 #### Call-by-Name Macro
 
