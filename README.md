@@ -183,7 +183,7 @@ The syntactic form `=` gives types to identifiers.
 
 ### Twisted Algebraic Data Type
 
-Carrot has no data structures except for closures, yet the type system is rich enough to express something like algebraic data types. No syntax has to be introduced.
+Carrot has no data structures except for closures, yet the type system is rich enough to express something like algebraic data types. Use `=u` for constructors instead of `=`.
 
 ```lisp
 ;; Lists
