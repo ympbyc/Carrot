@@ -276,8 +276,8 @@ Pipeline operator in F#, and Synthread in Clojure are useful tool to avoid nesti
  -> num->str
  <- (flip ++ " = nine"))
 
-;;equivalent to
-(print 0 (++ (num->str (* (+ 1 2) 3)) " = nine"))
+;;is equivalent to
+(++ (num->str (* (+ 1 2) 3)) " = nine")
 
 
 (-> nil
