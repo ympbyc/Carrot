@@ -265,7 +265,9 @@ Note this is not a syntactic feature. All these `-take`, `-map` and `-fold` are 
 See the source of this magic in examples/srfi-1.nadeko.
 -->
 
-Pipeline operator in F#, and Synthread in Clojure are useful tool to avoid nesting of function calls. In Carrot, `->` can be used to compose functions left to right so it reads similarly to the synthread. `->` is just a `(Fn b c) -> (Fn a b) -> c` function.
+Pipeline operator in F#, and Synthread in Clojure are useful tool to avoid nesting of function calls. In Carrot, `->` can be used to compose functions left to right so it reads similarly to the synthread.  
+
+`->` is just a `(Fn b c) -> (Fn a b) -> c` function.
 
 ```lisp
 (-> 1
