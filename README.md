@@ -86,7 +86,7 @@ Implementations SHOULD allow every character that is not used for literals to be
 
 ### Lambda expressions **(Expression)**
 
-Lambda expressions create closures. Closures are objects that when applied to a value return another value. They are basically, functions carrying its own environment with it.
+Lambda expressions create closures. Closures are objects that when applied to a value evaluate another value. They are basically, functions carrying its own environment with it.
 
 Lambda expressions have the syntactic form
 (^ *identifier ...* *expression*)
