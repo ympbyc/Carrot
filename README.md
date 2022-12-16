@@ -71,7 +71,7 @@ Implementations must provide at least the following primitives:
 ### Identifiers **(Expression)**
 
 Identifiers are symbols that are or to be bound to another value. They are used to name functions, and as parameters of functions.
-An identifier is consist of one or more non-whitespace charactors. Some combinations are reserved as they are syntactic forms.
+An identifier consists of one or more non-whitespace charactors. Some combinations are reserved as they are syntactic forms.
 
 **code 2** *examples of identifiers*
 
